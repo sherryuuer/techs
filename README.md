@@ -11,6 +11,8 @@
 - [AI 时代提问准则](ml/ai-4-prompt.md)
 - [Tensorflow 解决数据分类问题](ml/tensorflow-classification.md)
 - [Tensorflow 计算机视觉问题](ml/tensorflow-cv.md)
+- [Tensorflow 自然语言处理](ml/nlp.md)
+- [迁移学习：站在巨魔的肩膀上](ml/transfer-learning.md)
 
 ## tools
 
