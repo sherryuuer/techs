@@ -5,6 +5,7 @@
 ## Algorithms & data structure
 
 - [数组算法：滑动窗口](algo/sliding-window.md)
+- [数组算法：双指针](algo/two-pointers.md)
 - [动态规划：怎么会有这么优雅的网格](algo/dp.md)
 
 ## Machine learning
@@ -19,6 +20,7 @@
 ## tools
 
 - [好用的机器学习工具网站](tools/tool-site-for-study.md)
+- [工具代码和函数组合]()
 
 ## Principal
 
