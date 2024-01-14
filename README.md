@@ -10,6 +10,7 @@
 - [数组算法：双指针](algo/two-pointers.md)
 - [数组算法：前缀和](algo/prefix-sums.md)
 - [链表算法：快慢指针](algo/fast-slow-pointers.md)
+- [树算法：前缀树](algo/trie.md)
 - [动态规划：怎么会有这么优雅的网格](algo/dp.md)
 
 ## Machine learning
