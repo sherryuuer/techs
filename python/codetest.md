@@ -150,3 +150,62 @@ pytest -s test_example.py
 ```
 
 `-s` 选项允许 fixture 打印输出，以帮助调试。
+
+### 实践中所得
+
+- 函数名的设置，最好使用动词开头，显示功能。
+
+比如检查 table 是否存在的函数 check_table_exsits 诸如此类。
+
+- 格式的统一
+
+f 方法的统一：文字列统一使用 f 方法而不是 format 方法。
+
+import 改行：import 第三方的库，以及 import 自己的 function 之前添加改行。
+
+功能改行：test 函数中，在准备，执行，确认中添加改行，方便阅读和确认。
+
+生产环境独立：为了和生产环境相互独立，不影响生产环境，比如上面的 table check，最好不使用生产环境的 table，而是独立准备测试用例。
+
+例如：
+
+```python
+@pytest.fixture
+def test_table(client):
+    """create test table"""
+    query = f"""
+        create or replace table temp.test_table
+        (
+            id string
+            ,record_type string
+            ,created_date date
+        )
+    """
+
+    client.query(query).result()
+
+    yield
+
+    drop_query = f"""
+        drop table if exists temp.test_table
+    """
+
+    client.query(drop_query).result()
+```
+
+- .gitignore 添加如下标记可以递归地忽视所有的同类文件夹
+
+```
+**/__pycache__/**
+```
+
+- pytest.init 的设置方法内容
+
+```
+# pytest.init
+[pytest]
+testpaths = tests
+pythonpath = src
+addopts =
+    --strict-markers
+```
