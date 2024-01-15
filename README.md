@@ -11,6 +11,7 @@
 - [数组算法：前缀和](algo/prefix-sums.md)
 - [链表算法：快慢指针](algo/fast-slow-pointers.md)
 - [树算法：前缀树](algo/trie.md)
+- [树算法：并查集](algo/union-find.md)
 - [动态规划：怎么会有这么优雅的网格](algo/dp.md)
 
 ## Machine learning
@@ -21,6 +22,11 @@
 - [Tensorflow 计算机视觉问题](ml/tensorflow-cv.md)
 - [Tensorflow 自然语言处理](ml/nlp.md)
 - [迁移学习：站在巨魔的肩膀上](ml/transfer-learning.md)
+- [生成式 AI](ml/generativeai.md)
+
+## Pythonic
+
+- [Python 代码单元测试](python/codetest.md)
 
 ## tools
 
