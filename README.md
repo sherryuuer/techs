@@ -1,6 +1,4 @@
-# SALLY'S ALGORITHM
-
-## Tech thing make us understand the universe.
+## All you need to understand the universe is Algorithms.
 
 ---
 
@@ -12,6 +10,8 @@
 - [链表算法：快慢指针](algo/fast-slow-pointers.md)
 - [树算法：前缀树](algo/trie.md)
 - [树算法：并查集](algo/union-find.md)
+- [树算法：段树](algo/segmenttree.md)
+- [树算法：迭代深度优先搜索](algo/iterativedfs.md)
 - [动态规划：怎么会有这么优雅的网格](algo/dp.md)
 
 ## Machine learning
