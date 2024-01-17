@@ -39,4 +39,3 @@
 
 - [思考未来十年什么是不变的](principals/whats-not-change.md)
 
-- [test](ml/00_funda_pytorch.ipynb)
