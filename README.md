@@ -13,6 +13,7 @@
 - [树算法：段树](algo/segmenttree.md)
 - [树算法：迭代深度优先搜索](algo/iterativedfs.md)
 - [堆算法：两个堆](algo/two-heaps.md)
+- [回溯算法：子集](algo/subsets.md)
 - [动态规划：怎么会有这么优雅的网格](algo/dp.md)
 
 ## Machine learning
