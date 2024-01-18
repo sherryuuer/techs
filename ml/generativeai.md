@@ -45,3 +45,91 @@ AI-->ML-->DeepLearning&NLP-->LLM
 1，头脑风暴-writing能力：人类的特长就是思考出新的观点，而不只是通过概率进行联系和生成，通过和生成式AI配合，想出新的创意，是提升脑力的好方法。
 
 2，内容分类和总结-reading能力：将内容扔个生成式AI，他会帮你总结该要，阅读重点，分类垃圾邮件等，说白了还是一种文本处理能力。
+
+### 生成式AI快速搭建项目的能力
+
+GanAI让项目搭建变得更加迅速。在之前还需要非常多的代码，进行环境构建，数据训练。但是这之后只需要如同以下的几行代码而已。
+（代码来自Coursera吴恩达课程）
+
+整个代码看起来就是写了几行简单的python代码而已。
+
+同时它的整个生命周期循环，和一般的ai项目一样，需要通过用户反馈进行优化。
+
+```python
+import openai
+import os
+
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+def llm_response(prompt):
+    response = openai.ChatCompletion.create(
+        model='gpt-3.5-turbo',
+        messages=[{'role':'user','content':prompt}],
+        temperature=0
+    )
+    return response.choices[0].message['content']
+
+prompt = '''
+    Classify the following review 
+    as having either a positive or
+    negative sentiment:
+
+    The banana pudding was really tasty!
+'''
+
+response = llm_response(prompt)
+print(response)
+
+all_reviews = [
+    'The mochi is excellent!',
+    'Best soup dumplings I have ever eaten.',
+    'Not worth the 3 month wait for a reservation.',
+    'The colorful tablecloths made me smile!',
+    'The pasta was cold.'
+]
+
+all_sentiments = []
+for review in all_reviews:
+    prompt = f'''
+        Classify the following review 
+        as having either a positive or
+        negative sentiment. State your answer
+        as a single word, either "positive" or
+        "negative":
+
+        {review}
+        '''
+    response = llm_response(prompt)
+    all_sentiments.append(response)
+
+num_positive = 0
+num_negative = 0
+for sentiment in all_sentiments:
+    if sentiment == 'positive':
+        num_positive += 1
+    elif sentiment == 'negative':
+        num_negative += 1
+print(f"There are {num_positive} positive and {num_negative} negative reviews.")
+```
+
+### 检索和生成相结合的能力RAG
+
+在生成式AI领域，RAG 通常指的是"Retrieval-Augmented Generation"，即检索增强生成。这是一种结合了检索（retrieval）和生成（generation）方法的AI模型。RAG 模型的目标是利用检索方法提供的信息来增强生成模型的效果，特别是在自然语言处理任务中。
+
+RAG 模型的核心思想是将检索模块与生成模块结合起来，以提高生成模型在生成文本或回答问题等任务上的性能。一种常见的应用是在问答系统中，其中 RAG 模型可以通过检索阶段获得可能的候选答案，然后在生成阶段进一步完善和生成最终的答案。
+
+RAG 模型通常包含以下关键组件：
+
+1. **Retrieval Module（检索模块）：** 该模块负责从大型文本数据库或知识库中检索相关的信息。这可以通过检索相似问题、相关文本片段等方式实现。
+
+2. **Ranking Module（排序模块）：** 对检索到的信息进行排序，以确定哪些信息更相关，更有可能对生成任务有帮助。
+
+3. **Generation Module（生成模块）：** 该模块负责生成最终的文本或答案。生成模块可以使用预训练的语言模型，例如 GPT（Generative Pre-trained Transformer）。
+
+RAG 模型的优势在于结合了检索和生成的优点，既能利用大规模文本库中的知识，又能根据任务的具体要求生成更具体、更个性化的文本。这种方法常常用于解决开放领域问答、文本生成和对话生成等任务，提高了模型在处理真实场景中的效果。
+
+### 通过迁移学习和微调进行更针对具体任务的AI生成
+
+比如调节成特殊的说话方式，学习更专业的特殊领域知识（比如法律文件，财务文件等）。使用迁移学习，只需要很少的数据量，就可以进行训练了。相比较pretraining，也就是从头训练一个模型，会非常便宜。在kaggle，huggingface等平台就可以得到个人可用的模型进行微调和使用。
+
+相比较来说只有非常大的公司，数据，资金的拥有者，才会进行，pretraining模型。

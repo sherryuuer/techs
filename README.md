@@ -25,6 +25,8 @@
 - [Tensorflow 自然语言处理](ml/nlp.md)
 - [Pytorch初见就有点爱](ml/pytorch-firsttime.md)
 - [迁移学习：站在巨魔的肩膀上](ml/transfer-learning.md)
+- [CNN：卷积神经网络](cnn.md)
+- [RNN：循环神经网络](rnn.md)
 - [生成式AI](ml/generativeai.md)
 
 ## Pythonic
