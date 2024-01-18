@@ -14,6 +14,7 @@
 - [树算法：迭代深度优先搜索](algo/iterativedfs.md)
 - [堆算法：两个堆](algo/two-heaps.md)
 - [回溯算法：子集](algo/subsets.md)
+- [回溯算法：排列](algo/combinations.md)
 - [动态规划：怎么会有这么优雅的网格](algo/dp.md)
 
 ## Machine learning
@@ -25,8 +26,8 @@
 - [Tensorflow 自然语言处理](ml/nlp.md)
 - [Pytorch初见就有点爱](ml/pytorch-firsttime.md)
 - [迁移学习：站在巨魔的肩膀上](ml/transfer-learning.md)
-- [CNN：卷积神经网络](cnn.md)
-- [RNN：循环神经网络](rnn.md)
+- [CNN：卷积神经网络](ml/cnn.md)
+- [RNN：循环神经网络](ml/rnn.md)
 - [生成式AI](ml/generativeai.md)
 
 ## Pythonic
