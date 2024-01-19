@@ -29,6 +29,7 @@
 - [CNN：卷积神经网络](ml/cnn.md)
 - [RNN：循环神经网络](ml/rnn.md)
 - [生成式AI](ml/generativeai.md)
+- [使用Python调用OpenAI的API](ml/open-ai.md)
 
 ## Pythonic
 
