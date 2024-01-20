@@ -22,6 +22,9 @@
 
 - [AI时代提问准则](ml/ai-4-prompt.md)
 - [数据预处理：ML中最重要的步骤](ml/feature-engineering.md)
+- [防止过拟合的技术：正规化&Dropout&EarlyStopping](ml/overfit.md)
+- [梯度消失和梯度爆炸](ml/gradient-problems.md)
+- [评估方法：混淆矩阵family](ml/confusion-matrix.md)
 - [Tensorflow 解决数据分类问题](ml/tensorflow-classification.md)
 - [Tensorflow 计算机视觉问题](ml/tensorflow-cv.md)
 - [Tensorflow 自然语言处理](ml/nlp.md)
@@ -31,6 +34,7 @@
 - [RNN：循环神经网络](ml/rnn.md)
 - [生成式AI](ml/generativeai.md)
 - [使用Python调用OpenAI的API](ml/open-ai.md)
+- [Kaggle王者算法：XGBoost](ml/xgboost.md)
 
 ## Pythonic
 
