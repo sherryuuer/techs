@@ -15,6 +15,7 @@
 - [堆算法：两个堆](algo/two-heaps.md)
 - [回溯算法：子集](algo/subsets.md)
 - [回溯算法：排列](algo/combinations.md)
+- [回溯算法：组合](algo/permutations.md)
 - [动态规划：怎么会有这么优雅的网格](algo/dp.md)
 
 ## Machine learning
@@ -42,5 +43,5 @@
 
 ## Principal
 
-- [思考未来十年什么是不变的](principals/whats-not-change.md)
+- [工程师原则：遵循最重要的那些原则](principals/whats-not-change.md)
 
