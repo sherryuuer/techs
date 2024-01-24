@@ -1,4 +1,4 @@
-## All you need to understand the universe is Algorithms.
+### All you need to understand the universe is Algorithms.
 
 ---
 
@@ -16,7 +16,9 @@
 - [回溯算法：子集](algo/subsets.md)
 - [回溯算法：排列](algo/combinations.md)
 - [回溯算法：组合](algo/permutations.md)
-- [动态规划：怎么会有这么优雅的网格](algo/dp.md)
+- [图算法：最短路径Dijkstra](algo/dijkstra.md)
+- [图算法：最小生成树Prim&Kruskal](algo/prim-kruskal.md)
+- [图算法：拓扑排序](algo/toplogical-sort.md)
 
 ## Machine learning
 
