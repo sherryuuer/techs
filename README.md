@@ -1,4 +1,4 @@
-### All you need to understand the universe is Algorithms.
+#### All you need to understand the universe is Algorithms.
 
 ---
 
@@ -19,6 +19,7 @@
 - [图算法：最短路径Dijkstra](algo/dijkstra.md)
 - [图算法：最小生成树Prim&Kruskal](algo/prim-kruskal.md)
 - [图算法：拓扑排序](algo/toplogical-sort.md)
+- [动态规划：0-1背包问题](algo/01knapsack.md)
 
 ## Machine learning
 
