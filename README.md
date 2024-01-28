@@ -1,4 +1,4 @@
-#### All you need to understand the universe is Algorithms.
+#### Algorithms is all you need.
 
 ---
 
@@ -20,12 +20,15 @@
 - [图算法：最小生成树Prim&Kruskal](algo/prim-kruskal.md)
 - [图算法：拓扑排序](algo/toplogical-sort.md)
 - [动态规划：0-1背包问题](algo/01knapsack.md)
+- [动态规划：无限背包问题](algo/unboundedknapsack.md)
+- [动态规划：最长公共子序列](algo/lcs.md)
 
 ## Machine learning
 
 - [AI时代提问准则](ml/ai-4-prompt.md)
 - [数据预处理：ML中最重要的步骤](ml/feature-engineering.md)
 - [防止过拟合的技术：正规化&Dropout&EarlyStopping](ml/overfit.md)
+- [容易混淆的几个概念：缩放，标准化，归一化，正则化](ml/some-confusion-words.md)
 - [梯度消失和梯度爆炸](ml/gradient-problems.md)
 - [评估方法：混淆矩阵family](ml/confusion-matrix.md)
 - [Tensorflow 解决数据分类问题](ml/tensorflow-classification.md)
@@ -42,13 +45,16 @@
 ## Pythonic
 
 - [Python代码单元测试](python/codetest.md)
+- [JupyterNotebook项目流程]()
 
-## tools
+## Tools
 
 - [好用的机器学习工具网站](tools/tool-site-for-study.md)
 - [工具代码和函数组合]()
+- [信息资源最新paper网站]()
+- [Pandas-toolbox](tools/pandas.md)
 
 ## Principal
 
-- [工程师原则：遵循最重要的那些原则](principals/whats-not-change.md)
-
+- [程序员原则](principals/whats-not-change.md)
+- [计算机思维]
