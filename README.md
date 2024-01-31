@@ -1,13 +1,13 @@
-#### Algorithms is all you need.
-
----
-
 ## Algorithms & data structure
 
+- [数组结构：静态动态数组和堆栈](algo/arrays.md)
 - [数组算法：滑动窗口](algo/sliding-window.md)
 - [数组算法：双指针](algo/two-pointers.md)
 - [数组算法：前缀和](algo/prefix-sums.md)
+- [链表结构：单链双链和队列](algo/linkedlist.md)
 - [链表算法：快慢指针](algo/fast-slow-pointers.md)
+- [排序算法：排序全家桶](algo/sort.md)
+- [递归算法：宇宙的开始和终结](algo/recursion.md)
 - [树算法：前缀树](algo/trie.md)
 - [树算法：并查集](algo/union-find.md)
 - [树算法：段树](algo/segmenttree.md)
@@ -22,6 +22,7 @@
 - [动态规划：0-1背包问题](algo/01knapsack.md)
 - [动态规划：无限背包问题](algo/unboundedknapsack.md)
 - [动态规划：最长公共子序列](algo/lcs.md)
+- [附录：好玩的力扣题](algo/leetcodes.md)
 
 ## Machine learning
 
@@ -50,9 +51,9 @@
 ## Tools
 
 - [好用的机器学习工具网站](tools/tool-site-for-study.md)
-- [工具代码和函数组合]()
-- [信息资源最新paper网站]()
+- [工具代码和函数组合]
 - [Pandas-toolbox](tools/pandas.md)
+- [LangChain大模型框架](tools/langchain.md)
 
 ## Principal
 
