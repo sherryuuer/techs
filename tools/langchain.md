@@ -54,3 +54,8 @@ Langchain可以定义三种信息给模型：系统信息（system message），
 
 **这部分的感受**就是对lc的一个整体的理解。
 
+### Data Connections
+
+是LangChain和外界数据的交互。外界数据比如CSV文件，PDF文件，HTML文件，以及各种网页，云存储还有很多第三方（比如他还有接入hacker news的loader）的数据源，都可以作为信息载体接入使用。他们对LC来说是一个document对象。并且要知道，很多操作需要安装对应的库进行支持。比如HTML需要Beautiful soup，pdf需要python的pypdf包。
+
+一个案例是外接一个wiki的页面，然后根据这个页面和问题，得到答案。

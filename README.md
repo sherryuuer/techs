@@ -18,6 +18,7 @@
 - [回溯算法：子集](algo/subsets.md)
 - [回溯算法：排列](algo/combinations.md)
 - [回溯算法：组合](algo/permutations.md)
+- [树图算法：深度优先和广度优先算法](algo/dfsbfs.md)
 - [图算法：最短路径Dijkstra](algo/dijkstra.md)
 - [图算法：最小生成树Prim&Kruskal](algo/prim-kruskal.md)
 - [图算法：拓扑排序](algo/toplogical-sort.md)
@@ -40,6 +41,8 @@
 - [Pytorch初见就有点爱](ml/pytorch-firsttime.md)
 - [迁移学习：站在巨魔的肩膀上](ml/transfer-learning.md)
 - [CNN：卷积神经网络](ml/cnn.md)
+- [CNN：SqueezeNet和CIFAR10数据集](ml/squeezenet.md)
+- [CNN：ResNet和ImageNet超大数据集](ml/resnet.md)
 - [RNN：循环神经网络](ml/rnn.md)
 - [生成式AI](ml/generativeai.md)
 - [使用Python调用OpenAI的API](ml/open-ai.md)
@@ -48,16 +51,20 @@
 ## Pythonic
 
 - [Python代码单元测试](python/codetest.md)
-- [JupyterNotebook项目流程]()
 
 ## Tools
 
 - [好用的机器学习工具网站](tools/tool-site-for-study.md)
-- [工具代码和函数组合]
-- [Pandas-toolbox](tools/pandas.md)
+- [Pandas工具代码](tools/pandas.md)
 - [LangChain大模型框架](tools/langchain.md)
 
 ## Principal
 
 - [程序员原则](principals/whats-not-change.md)
 - [计算机思维]
+
+## MoreFun
+
+- [full-stack构架一个油管网站]()
+
+

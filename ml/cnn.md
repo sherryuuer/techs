@@ -155,43 +155,7 @@ class MNISTModel(object):
         return logits
 ```
 
-- 对结果logits进行训练和处理的函数：
-
-```python
-def run_model_setup(self, inputs, labels, is_training):
-    logits = self.model_layers(inputs, is_training)
-
-    self.probs = tf.nn.softmax(logits, name='probs')
-
-    self.predictions = tf.math.argmax(
-        self.probs, axis=-1, name='predictions')
-    class_labels = tf.math.argmax(labels, axis=-1)
-
-    is_correct = tf.math.equal(
-        self.predictions, class_labels)
-    is_correct_float = tf.cast(
-        is_correct,
-        tf.float32)
-
-    self.accuracy = tf.math.reduce_mean(
-        is_correct_float)
-
-    if self.is_training:
-        labels_float = tf.cast(
-            labels, tf.float32)
-
-        cross_entropy = tf.nn.softmax_cross_entropy_with_logits_v2(
-            labels=labels_float,
-            logits=logits)
-        self.loss = tf.math.reduce_mean(
-            cross_entropy)
-
-        adam = tf.compat.v1.train.AdamOptimizer()
-        self.train_op = adam.minimize(
-            self.loss, global_step=self.global_step)
-```
-
-一个逐行解释的版本：
+### 结果处理
 
 ```python
 def run_model_setup(self, inputs, labels, is_training):
@@ -242,29 +206,7 @@ def run_model_setup(self, inputs, labels, is_training):
             self.loss, global_step=self.global_step)
 ```
 
-
-- 推理函数：
-
-```python
-def inference(image_path):
-   with tf.compat.v1.gfile.FastGFile(output_optimized_graph_name, 'rb') as f:
-       graph_def = tf.compat.v1.GraphDef()
-       graph_def.ParseFromString(f.read())
-   G = tf.Graph()
-   with tf.compat.v1.Session(graph=G) as sess:
-       # Need extra :0 to convert operation to tensor
-       # name='' removes import/ prefix
-       _ = tf.import_graph_def(graph_def, name='')
-       inputs = sess.graph.get_tensor_by_name('inputs:0')
-       predictions_tensor = sess.graph.get_tensor_by_name('predictions:0')
-       probs_tensor = sess.graph.get_tensor_by_name('probs:0')
-       image_data = imageprepare(image_path)
-       predictions, probs = sess.run((predictions_tensor, probs_tensor), feed_dict={inputs: [image_data]})
-       print("You drew a " + str(predictions[0]) + "!")
-       #print(probs)
-```
-
-一个逐行解释的版本：
+### 推理函数
 
 ```python
 def inference(image_path):
