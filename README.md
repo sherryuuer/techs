@@ -10,11 +10,14 @@
 - [排序算法：排序全家桶](algo/sort.md)
 - [递归算法：宇宙的开始和终结](algo/recursion.md)
 - [树结构：树和二分树BST](algo/binarytree.md)
+- [树结构：树映射TreeMap](algo/treemap.md)
 - [树算法：前缀树](algo/trie.md)
 - [树算法：并查集](algo/union-find.md)
 - [树算法：段树](algo/segmenttree.md)
 - [树算法：迭代深度优先搜索](algo/iterativedfs.md)
+- [堆结构：堆和优先队列的实现](algo/heap.md)
 - [堆算法：两个堆](algo/two-heaps.md)
+- [回溯算法：树迷宫路径问题](algo/treemaze.md)
 - [回溯算法：子集](algo/subsets.md)
 - [回溯算法：排列](algo/combinations.md)
 - [回溯算法：组合](algo/permutations.md)
@@ -38,6 +41,8 @@
 - [Tensorflow 解决数据分类问题](ml/tensorflow-classification.md)
 - [Tensorflow 计算机视觉问题](ml/tensorflow-cv.md)
 - [Tensorflow 自然语言处理](ml/nlp.md)
+- [NLP：词嵌入WordEmbeddings](ml/wordembeddings.md)
+- [NLP：LSTM语言模型构架](ml/lstm-llm.md)
 - [Pytorch初见就有点爱](ml/pytorch-firsttime.md)
 - [迁移学习：站在巨魔的肩膀上](ml/transfer-learning.md)
 - [CNN：卷积神经网络](ml/cnn.md)
@@ -65,6 +70,6 @@
 
 ## MoreFun
 
-- [full-stack构架一个油管网站]()
+- [full-stack构架一个油管网站](morefun/youtube-clone.md)
 
 
