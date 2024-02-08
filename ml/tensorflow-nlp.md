@@ -1,4 +1,4 @@
-## Tensorflow 自然语言处理流程
+## Tensorflow 自然语言处理流程以及kaggle入门级项目代码实践
 
 ---
 
@@ -18,41 +18,6 @@
 - 查看错误的预测，考虑如何通过标签修改提升模型性能
 - 应用部署
 
-### 数据前置处理很重要
-
-_防止数据泄漏_
-
-在学习中，第一次将数据打乱后，从打乱的数据中提取训练数据，很容易把测试数据也混淆进训练数据，造成数据泄漏，以至于训练后的结果异常的好。有时候不要在好的预测精度上高兴的太早，预测结果是否合理，要提前心里有数。
-
-所以在数据分割上要做好功课，先分割，提前分割，尽早分割，然后将 test 集放在一边就不要再动了，直到需要测试的时候，再拿出来用。
-
-活用 sklearn 的分割方法：
-
-```python
-from sklearn.model_selection import train_test_split
-train_sentences, val_sentences, train_labels, val_labels = train_test_split(train_df_shuffled["text"].to_numpy(),
-                                                                            train_df_shuffled["target"].to_numpy(),
-                                                                            test_size=0.1,
-                                                                            random_state=42)
-```
-
-_数据可视化_
-
-即使是文本数据，也有必要进行可视化的处理，提前查看，文本的长度，内容，标签，是否正常。
-
-例如：
-
-```python
-import random
-random_index = random.randint(0, len(train_df)-5)
-for row in train_df_shuffled[["text", "target"]][random_index:random_index+5].itertuples():
-  _, text, target = row
-```
-
-查看全文本数据量，查看全标签是否不平衡。
-
-是否有缺损数据。如果是 kaggle 的数据，大概率没有什么缺损可以直接拿来用。但是生产环境，就需要进行缺损数据的补全，有时候甚至需要机器学习算法来进行更好的补全。
-
 ### 词向量化和词嵌入
 
 对于计算机来说，一切都是数字，所以 nlp 也不例外。
@@ -67,7 +32,7 @@ for row in train_df_shuffled[["text", "target"]][random_index:random_index+5].it
 
 虽然说 CNN 一说起来就是图像识别领域，但是在序列化数据中，使用 1 维的 CNN 模型表现也非常出色。
 
-### 不要小看 sk 的模型
+### sklearn也有自己的自然语言处理模型
 
 基线模型朴素贝叶斯只是用了 tf-idf 处理单词，表现就非常突出，在基础构架中，打败它的只有迁移学习模型 USE。
 
@@ -99,11 +64,16 @@ for row in train_df_shuffled[["text", "target"]][random_index:random_index+5].it
 #### CBOW与Skip-Gram
 
 - **CBOW（Continuous Bag-of-Words）：** 类似于一个连续的词袋，通过前后文窗口移动训练，预测目标是中间的词。但其空间上的向量相加在直观上存在问题，通常被当做预训练模型，用于进一步训练句向量。
+
+这相当于是一种**概率视角**下的语言模型，在t+1个单词和t-1个单词出现的情况下单词t出现的概率是什么。这么想一下其实所有的学习都是在找一个发生的概率。P(wt | wt-1, wt+1) 本质上是一种条件语言模型。在发生前后单词的情况下，中间单词发生的概率。
+
+改变一下视角，将前面的N个单词作为条件，下一个单词发生的概率一样是条件语言模型，而且发现了吗，它是一个马尔可夫模型，或者马尔可夫链。
+
 - **Skip-Gram：** 在理解上更为合理，通过一个词预测其前后的词，适用于一词多义的情况。
 
 #### 两个矩阵：嵌入矩阵与上下文矩阵
 
-词向量的表示通常使用两个矩阵，嵌入矩阵（embedding）和上下文矩阵（context），共同构建出词汇的丰富语义信息。
+词向量的表示通常使用两个矩阵，嵌入矩阵（embedding）和上下文矩阵（context），共同构建出词汇的丰富语义信息。在模型中的目的，就是让这两个矩阵不断进行优化，从而让模型学到丰富的上下文信息的空间表示。
 
 ### 句向量：时间序列的循环奇迹
 
@@ -111,6 +81,13 @@ for row in train_df_shuffled[["text", "target"]][random_index:random_index+5].it
 
 - **Encoding/Decoding：** RNN以其擅长的时间序列预测能力，通过Encoding和Decoding过程实现对句向量的学习。
 - **Seq2Seq：** 在NLP中，Seq2Seq模型利用RNN进行向量化和顺序理解，适用于翻译、情感分析、对话生成等任务。
+
+seq2seq在训练期间，执行两项任务：
+
+输入任务：从输入序列中提取有用信息
+
+输出任务：使用输入序列和输出序列中先前单词的信息计算每个输出时间步的单词概率
+
 - **Beam Search：** 通过关注当前候选词的N个最优策略，提高找到全局最优策略的概率。
 
 另外这三个模型真的挺好玩的 LSTM，GRU，Bidirectional。
@@ -123,7 +100,7 @@ LSTM 是回忆过去的记忆，GRU 是控制是否遗忘记忆，Bidirectional 
 - **主要在Encoder步骤上使用：** 通过并行的卷积计算，加速对句子的理解过程。
 
 
-### Transformer注意力模型：信息交汇的奇迹
+### Transformer注意力模型
 
 他是一种自监督学习。
 
@@ -162,3 +139,90 @@ Transformer的成功与应用主要有：
 
 - **BERT（Bidirectional Encoder Representations from Transformers）：** 谷歌提出的Encoder模型，专注于单纯的句子理解和文本处理。
 - **GPT（Generative Pre-trained Transformer）：** 微软的OpenAI提出的Decoder模型，专注于文本生成任务。通过微调和fine-tuning，可制作个人助手等应用。
+
+### 文本分类项目
+
+**1. input数据是什么样的**
+
+[batch_size, embedding_size]批次大小和嵌入矩阵的大小。
+
+**2. 各个层的解释**
+
+`input`：字符串输入。
+
+`text_vectorizer`：词的处理，词向量化，或者也叫tokenization。
+
+`embedding`：词嵌入，将离散的符号映射到连续的向量空间的工作。
+
+`LSTM`层：带有tanh激活的层。
+
+`output`：使用sigmoid函数输出结果。
+
+中间还会根据需要嵌入一些隐藏层和全联接层。
+
+**3. Kaggle相关项目链接**
+
+[Natural Language Processing with Disaster Tweets](https://www.kaggle.com/competitions/nlp-getting-started)是一个使用自然语言处理对推特文本进行分类，是否含有关于灾难的言论。这个项目是一个kaggle的入门级自然语言处理项目。
+
+数据包括以下项目：
+
+- id- 每条推文的唯一标识符
+- text - 推文的文本
+- location - 推文发送的位置（可能为空）
+- keyword - 推文中的特定关键字（可能为空）
+- target- 仅在train.csv中，这表示推文是否与真正的灾难有关 (1) 或不是 (0)
+
+除了自己进行分析和学习之外，页面中还有很多别人的代码可以进行学习，kaggle大法好。
+
+**4. 用pandas处理数据**
+
+```python
+train_df = pd.read_csv("nlp_data/train.csv")
+test_df = pd.read_csv("nlp_data/test.csv")
+```
+
+对数据进行打乱抽样：
+
+```python
+# shuffled data frac=1，1是百分比表示抽取整个样本
+train_df_shuffled = train_df.sample(frac=1, random_state=42)
+```
+
+通过数据探索`train_df.target.value_counts()`，查看数据是否是平衡数据。可以得到标签为1的数据有3000多，标签为0的数据有4000多，相对来说是平衡数据。
+
+通过len方法查看训练集和测试集的大小，因为是kaggle的官方数据，所以大体上很合理，训练集7000多，测试集3000多。
+
+**5. 数据集的分割**
+
+一般来说数据集的模型拟合需要进行损失计算，那么就需要训练集和测试集，虽然看到kaggle给的数据集中test.csv文件是叫做，测试集，但是它是没有标签的，所以在模型训练中，可以说是没用的，所以需要我们手动分割数据，将train.csv分割为我们需要的训练和测试集。
+
+使用sklearn进行分割：
+
+```python
+# split data by sklearn train_test_split
+from sklearn.model_selection import train_test_split
+train_sentences, val_sentences, train_labels, val_labels = train_test_split(
+    train_df_shuffled["text"].to_numpy(),
+    train_df_shuffled["target"].to_numpy(),
+    test_size=0.1,
+    random_state=42
+)
+```
+
+**6. Tokenization & Embedding**
+
+自然语言处理（NLP）中两个将文本转化为数字表示的主要概念：
+
+一个是**Tokenization（标记化）**包括词级别的标记化，将单词进行映射，还有字符级别的，字符级别的精度更小，还有子词级别的，相对单词会细分一些但是没有到字母级别的精度。将它们表达为数字，就是标记化。
+
+另一个是**Embeddings（嵌入）**，Embedding是自然语言的一种表示，可以通过学习得到。表示采用特征向量的形式。例如，单词"dance"可能被表示为5维向量[-0.8547, 0.4559, -0.3332, 0.9877, 0.1112]。需要注意的是，特征向量的大小是可以调整的。一旦文本被转化为数字（嵌入所需的形式），可以通过嵌入层（例如`tf.keras.layers.Embedding`）将它们传递，并且在模型训练期间将学习嵌入表示。另外还可以**重用预先学习的嵌入**许多在线上存在预先训练的嵌入。这些预训练的嵌入通常是在大量文本语料库（如维基百科）上学到的，因此具有对自然语言的良好基础表示。可以使用预先训练的嵌入来初始化模型，并对其进行微调以适应特定任务。
+  
+很好的一些阅读资源：
+
+https://jalammar.github.io/illustrated-word2vec/
+
+https://nlp.stanford.edu/projects/glove/
+
+总之，嵌入矩阵和上下文矩阵的优化过程，使得模型学到了在嵌入空间中，有意义的向量表示，使得相似的单词具有相似的表示，这些学到的表示可以被用于各种自然语言处理的任务。
+
+

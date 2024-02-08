@@ -292,3 +292,39 @@ df.fillna(method="bfill", limit=1)
 
 ### 数据分析和可视化
 
+group by function
+
+```python
+print(df[["groupby_col","price"]].groupby("groupby_col").mean())
+```
+
+aggregation and sort_values function
+
+```python
+print(
+  grocery.groupby("product_description").agg(
+    avg_price = ("price","mean"),
+    total_sales = ("sales_quantity", "sum")
+  ).sort_values(
+    by="total_sales",
+    ascending=False
+  )
+)
+```
+
+当使用多个col进行groupby的时候，输出的是，用于groupby的所有col的排列组合。
+
+```python
+import pandas as pd
+
+grocery = pd.read_csv("grocery.csv")
+
+print(
+  grocery.groupby(
+    ["product_description", "product_group"]
+  ).agg(
+    avg_price = ("price","mean"),
+    total_sales = ("sales_quantity", "sum")
+  )
+)
+```
