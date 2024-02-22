@@ -8,7 +8,31 @@
 
 它是动态规划问题的经典问题。通过一个简单的状态转移方程，可以迅速求解。从暴力解法，到内存解法，到动态规划数组，到优化的动态规划数组，是一个层层递进的算法优化过程。
 
-暴力求解，其实相当于二叉树问题，每一个商品都决定要不要装包，在暴力循环中找到最大利润。
+暴力求解，其实相当于二叉树问题，每一个商品都决定要不要装包，在暴力循环中找到最大利润。即使是暴力解法，也显示出了递归的美，通过不断呼出helper函数，拿回skip当前物品，和include当前物品的两种情况下的利润，来进行比较，以取得最大利润的值。
+
+从第0个物品开始递归。dfs函数的目的主要是为了呼出helper函数，没有也没关系。关注helper函数的实现内容。
+
+```
+0 
+- skip 
+  1 - skip
+      2 - skip
+      2 - include
+    - include
+      2 - skip
+      2 - include
+      ...
+- include
+  1 - skip
+      2 - skip
+      2 - include
+    - incude
+      2 - skip
+      2 - include
+      ...
+```
+
+通过以上的二叉树递归实现过程和如下的代码实现过程，可以看出暴力求解简明扼要，但是中间存在大量的重复计算。
 
 ```python
 def dfs(profit, weight, capacity):
@@ -21,6 +45,7 @@ def dfsHelper(i, profit, weight, capacity):
     # not include i
     skip = dfsHelper(i + 1, profit, weight, capacity)
     # include i
+    # 更新背包容量
     newCapacity = capacity - weight[i]
     if newCapacity >= 0:
         include = profit[i] + dfsHelper(i + 1, profit, weight, newCapacity)
@@ -29,7 +54,7 @@ def dfsHelper(i, profit, weight, capacity):
     return maxprofit
 ```
 
-内存法，其实是在暴力求解的基础上的优化，因为暴力求解中会有很多的重复计算，所以将他们存入内存数组，可以节省时间和内存。
+内存法，其实是在暴力求解的基础上的优化，通过上面的结构图可知，暴力求解中会有很多的重复计算，所以将他们存入内存数组，可以节省时间和内存。
 从代码中就可以看出，实质上就是将计算结果存入了cache数组，这为后面的动态规划打下基础。
 
 ```python
