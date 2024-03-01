@@ -8,7 +8,7 @@
 
 树的结合，是通过比较他们的 rank 也就是 height 来实现的，将更小的树结合到更大的树上。
 
-主要用于处理一些不相交集合的合并与查询问题。它提供了两个主要操作：查找（Find）和合并（Union）。这种数据结构常常被用于解决一些与集合划分相关的问题，例如连通性问题。
+主要用于处理一些不相交集合的合并与查询问题。它提供了两个主要操作：查找（Find）和合并（Union）。这种数据结构常常被用于解决一些与集合划分相关的问题，例如连通性问题。还用于查找是否有循环。
 
 以下是并查集的一些常见应用：
 
@@ -62,21 +62,57 @@ class UnionFind:
         return True
 ```
 
-### leetcode 逐行解析
+### leetcodes
 
-- 冗余连接[leetcode684 题目描述](https://leetcode.com/problems/redundant-connection/description/)
+- 冗余连接leetcode684[题目描述](https://leetcode.com/problems/redundant-connection/description/)
 
-题意来说就是，给你一个图，让他变成树，因为图中有一条冗余的边，找到他。
+题意给出一个图，无向，通过节点和边连接，但是图中有一条多余的边，去掉这个边之后，图就会成为一个树，实质上，图中有一个循环，目的就是找到这个边。
+
+输入输出如下：如果有多个解，返回最后一个出现的边。
+
+```python
+Input: edges = [[1,2],[1,3],[2,3]]
+Output: [2,3]
+```
+
+解答方案就是使用并查集，解决方法就在union方法中，在该方法中，如果这个边的节点已经无法进行结合了也就是False，那么这就是解答。总之实质上就是找到会造成循环的那个边，或者说，就是找到已经连接好了的那个edge。
+
+```python
+class Solution(object):
+    def findRedundantConnection(self, edges):
+        par = [i for i in range(len(edges) + 1)]
+        rank = [1] * (len(edges) + 1)
+
+        def find(n):
+            p = par[n]
+            while p != par[p]:
+                par[p] = par[par[p]]
+                p = par[p]
+            return p
+        
+        def union(n1, n2):
+            p1, p2 = find(n1), find(n2)
+            if p1 == p2:
+                return False
+            
+            if rank[p1] > rank[p2]:
+                par[p2] = p1
+                rank[p1] += rank[p2]
+            else:
+                par[p1] = p2
+                rank[p2] += rank[p1]
+            return True
+        
+        for n1, n2 in edges:
+            if not union(n1, n2):
+                return [n1, n2]
+```
 
 - 账户合并[leetcode721 题目描述](https://leetcode.com/problems/accounts-merge/description/)
 
 顾名思义就是，一个人的账户列表，可能一个人有好几个账户列表，要判别是同一个人，只要列表的第二个开始的邮件地址有重复的，就可以判别为，是同一个用户。
 
 同一个人一定同名，但是同名的不一定是同一个用户。能判别的只有他们的邮件地址有相同。为每个人建立并查集。
-
-- [leetcode323 题目描述（这是一道 premium 题）](https://leetcode.com/problems/number-of-connected-components-in-an-undirected-graph/)
-
-haven't done yet
 
 - [leetcode128 题目描述](https://leetcode.com/problems/longest-consecutive-sequence/description/)
 

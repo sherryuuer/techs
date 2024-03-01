@@ -210,7 +210,7 @@ age calculate:
 (staff["start_date"] - staff["date_of_birth"]).dt.days / 365
 ```
 
-# DateOffset to get time interval (and timedelta)
+### DateOffset to get time interval (and timedelta)
 
 ```python
 df["new_date"] = df["date"] + pd.DateOffset(years=1)
@@ -290,7 +290,7 @@ print(df["A"].fillna(method="ffill"))
 df.fillna(method="bfill", limit=1)
 ```
 
-### 数据分析和可视化
+### Data analysis
 
 group by function
 
@@ -327,4 +327,105 @@ print(
     total_sales = ("sales_quantity", "sum")
   )
 )
+```
+
+### pivot table
+
+```python
+import pandas as pd
+
+grocery = pd.read_csv("grocery.csv")
+
+# Creating the week column
+grocery["sales_date"] = grocery["sales_date"].astype("datetime64[ns]")
+grocery["week"] = grocery["sales_date"].dt.week
+
+# Creating the pivot table
+print(
+  pd.pivot_table(
+    data = grocery, 
+    values = "sales_quantity", 
+    index = "product_group", 
+    columns = "week",
+    aggfunc = "sum",
+    margins = True,
+    margins_name = "Total"
+  )
+)
+```
+
+It’s possible to show column and row subtotals and the grand total as well. We can do so using the `margins` and `margins_name` parameters. The following example illustrates the use of these parameters.
+
+### where function
+
+```python
+grocery = pd.read_csv("grocery.csv")
+
+grocery["price_updated"] = grocery["price"].where(
+  grocery["price"] >= 3,
+  other = grocery["price"] * 1.1  # update the value that don't match the condition
+)
+```
+
+### visualize with pandas plot function
+
+histogram:
+
+```python
+import pandas as pd
+import matplotlib.pyplot as plt
+
+grocery = pd.read_csv("grocery.csv")
+
+grocery["price"].plot(
+    kind = "hist",
+    figsize = (10, 6),
+    title = "Histogram of grocery prices",
+    xticks = [2,3,4,5,6,7,8,9,10,11,12]
+)
+
+plt.savefig('output/abc.png')
+```
+
+line:
+
+```python
+import pandas as pd
+import matplotlib.pyplot as plt
+
+grocery = pd.read_csv("grocery.csv")
+
+grocery[grocery["product_description"]=="tomato"].plot(
+    x = "sales_date", 
+    y = ["sales_quantity", "price"],
+    kind = "line",
+    figsize = (10,5),
+    title = "Daily tomato sales and prices",
+    # the price will be show at the right of the plot
+    secondary_y = "price"
+)
+
+plt.savefig('output/abc.png')
+```
+
+scatter:this is very important in data science.
+
+```python
+import pandas as pd
+import matplotlib.pyplot as plt
+
+sales = pd.read_csv("sales.csv")
+
+sales.plot(
+    x = "price",
+    y = "cost",
+    kind = "scatter",
+    figsize = (8, 5),
+    title = "Cost vs Price",
+    xlim = (0, 1000),
+    ylim = (0, 800),
+    grid = True
+)
+
+plt.savefig('output/abc.png')
 ```

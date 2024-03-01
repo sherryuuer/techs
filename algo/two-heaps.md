@@ -2,9 +2,9 @@
 
 ---
 
-### 它是什么
+### 概念
 
-简单的说就是一种数据结构，为了实现动态中位数的算法。一个数组将它调整为由两个堆组成的数据结构，一个是最大堆，一个是最小堆。
+简单的说就是一种数据结构，为了实现动态中位数的算法。一个数组将它调整为由两个堆组成的数据结构，一个是最大堆，一个是最小堆。也就是将一个数组一刀切两段。切断的地方就是两个部分的中位数所在的部分，如果完美切段，两边一样长那么中位数就是中间截断部分的平均，如果切开的不等长，有一边长一个元素，那么那个元素就是这个中位数。
 
 通过动态插入，大小和长度调整，实现快速获得中位数的数据结构。
 
@@ -49,6 +49,45 @@ class Median:
 - 从数据流中查找中值[leetcode295 题目描述](https://leetcode.com/problems/find-median-from-data-stream/description/)
 
 完全就是两个堆数据结构堆实现算法。理解原理，记住就好。注意最后的结果需要是小数，所以最后的除数需要也是小数。
+
+```python
+import heapq
+
+
+class MedianFinder(object):
+
+    def __init__(self):
+        self.small, self.large = [], []
+
+    def addNum(self, num):
+        """
+        :type num: int
+        :rtype: None
+        """
+        
+        if self.large and num > self.large[0]:
+            heapq.heappush(self.large, num)
+        else:
+            heapq.heappush(self.small, -1 * num)
+
+        # balance the length
+        if len(self.small) > len(self.large) + 1:
+            val = -1 * heapq.heappop(self.small)
+            heapq.heappush(self.large, val)
+        if len(self.large) > len(self.small) + 1:
+            val = -1 * heapq.heappop(self.large)
+            heapq.heappush(self.small, val)
+
+    def findMedian(self):
+        """
+        :rtype: float
+        """
+        if len(self.small) > len(self.large):
+            return -1 * self.small[0]
+        elif len(self.large) > len(self.small):
+            return self.large[0]
+        return (-1 * self.small[0] + self.large[0]) / 2.0
+```
 
 - [leetcode480 题目描述](https://leetcode.com/problems/sliding-window-median/description/)
 

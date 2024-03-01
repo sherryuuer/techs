@@ -64,10 +64,93 @@ def postorder(root):
                 visit.append(False)
 ```
 
-### leetcode 逐行解析
+### leetcodes
 
 - 二叉树先序遍历[leetcode144 题目描述](https://leetcode.com/problems/binary-tree-preorder-traversal/description/)
 
 - 二叉树后序遍历[leetcode145 题目描述](https://leetcode.com/problems/binary-tree-postorder-traversal/description/)
 
 - 二叉树迭代搜索[leetcode173 题目描述](https://leetcode.com/problems/binary-search-tree-iterator/description/)
+
+题目表达的是对一个二叉树进行inorder的迭代。
+
+我的题解：
+
+```python
+# Definition for a binary tree node.
+class TreeNode(object):
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+
+class BSTIterator(object):
+
+    def __init__(self, root):
+        """
+        :type root: TreeNode
+        """
+        from collections import deque
+        stack = []
+        cur = root
+        self.inorder = deque()
+        while cur or stack:
+            if cur:
+                stack.append(cur)
+                cur = cur.left
+            else:
+                cur = stack.pop()
+                self.inorder.appendleft(cur.val)
+                cur = cur.right
+
+    def next(self):
+        """
+        :rtype: int
+        """
+        return self.inorder.pop()
+
+    def hasNext(self):
+        """
+        :rtype: bool
+        """
+        return True if self.inorder else False
+```
+
+navi的[题解](https://www.youtube.com/watch?v=RXy5RzGF5wo)：
+
+```python
+# Definition for a binary tree node.
+class TreeNode(object):
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+
+class BSTIterator(object):
+
+    def __init__(self, root):
+        """
+        :type root: TreeNode
+        """
+        self.stack = []
+        while root:
+            self.stack.append(root)
+            root = root.left
+
+    def next(self):
+        """
+        :rtype: int
+        """
+        res = self.stack.pop()
+        cur = res.right
+        while cur:
+            self.stack.append(cur)
+            cur = cur.left
+        return res.val
+
+    def hasNext(self):
+        """
+        :rtype: bool
+        """
+        return self.stack != []
+```
