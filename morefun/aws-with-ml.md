@@ -69,7 +69,7 @@ RecordIO和Protobuf都是用于序列化数据的格式，通常在机器学习�
 ### Sagemaker的build-in models
 
 - 最好参考最新的[官方内置模型文档](https://docs.aws.amazon.com/sagemaker/latest/dg/algorithms-choose.html)内有全部的模型和说明。
-- Linear Learner：线性模型，分类或着回归任务。
+- Linear Learner：线性模型，分类或着回归任务。逻辑回归类似于线性回归，不同之处在于逻辑回归生成二元输出。您无法使用逻辑回归预测数值。
 - XGBoost：在XGBoost中，eta参数（也称为学习率）是控制每次迭代中模型参数更新的幅度的一个重要超参数。较小的学习率可以防止模型过度拟合训练数据。另外max_depth如果过深，也会有过拟合风险。
 - Seq2seq：序列到序列处理。机器翻译，文本总结等，用RNN，CNN模型。
 - DeepAR：预测时间序列数据。
@@ -78,22 +78,23 @@ RecordIO和Protobuf都是用于序列化数据的格式，通常在机器学习�
 - ObjectDetection：图像内的物体检测。使用MXNet，Tensorflow模型。这两种模型除了物体检测，还可以进行图像分类。
 - Semantic Segmentation：像素级别图像内物体检测，可以检测出图像边界。只能用GPU进行训练。
 - Random Cut Forest：AWS引以为豪的算法。异常检测，用于各种服务和场景。
-- Neural Topic Model：神经网络和主题建模的结合。
-- LDA：没有神经网络的主题建模。无监督的聚类。
+- Neural Topic Model：神经网络和主题建模的结合。创建主题，不是摘要。
+- LDA：没有神经网络的主题建模。无监督的聚类。是一种分类算法。
 - KNN：有监督的分类和回归算法。
 - K-means：无监督的聚类算法。
 - PCA：利用协方差矩阵进行特征分解，降维算法。
-- Factorization Machine：因子分解机，用于处理推荐系统、回归、分类等任务。Factorization Machine 的提出是为了在高维稀疏数据上进行建模，同时考虑到特征之间的交互。比如推介系统，用户-物品的特征，采用矩阵内积的因式分解，然后得到用户对于物品的喜爱程度的排序。
+- Factorization Machine：因子分解机，有监督模型。用于处理推荐系统、回归、分类等任务。Factorization Machine 的提出是为了在高维稀疏数据上进行建模，同时考虑到特征之间的交互。比如推介系统，用户-物品的特征，采用矩阵内积的因式分解，然后得到用户对于物品的喜爱程度的排序。
 - IP Insights：分析地址是否可疑。
 
 
 ### Sagemaker的生态服务
 
 - Amazon SageMaker Autopilot/AutoML：似乎是我以前就用过的一个功能，只需要选择数据和目标对象，就可以进行自动的，模型选择（甚至可以将模型集成），数据预处理，调参实验，预测推理等功能。也可以进行人工指导。根据文档，从23年11月开始，这个功能集成到了Canvas功能去了。
+- SageMaker Autopilot 进行的 AUC 优化创建了高质量的 ML 模型，即使是*不均衡*的类数据。
 - Amazon SageMaker Canvas：使用场景是商业分析。它和studio同属于sagemaker-domin下面的tab。有完整的modeling过程的操作仪表盘：标签选择，建模，分析，预测等过程被完整提供。
 - Amazon SageMaker Data Wrangler：studio中。从GUI界面简化流程，数据选择，清理，探索，可视化，大规模处理，最终可以生成一个notebook的代码。
 - Amazon SageMaker Ground Truth：打标签。
-- Amazon SageMaker JumpStart：从Sagemaker studio的界面进入的，pretrained自动解决方案，内置很多热门模型仓库。进行微调，部署，评估等工作。
+- Amazon SageMaker JumpStart：从Sagemaker studio的界面进入的，pretrained自动解决方案，内置很多热门模型仓库。进行微调，部署，评估等工作。通过创建一个SageMaker Domain（是一个独立的运行环境，包含用户，权限，VPC配置等，这些实体共享一个开发环境）进行。
 - Amazon SageMaker Pipelines
 - Amazon SageMaker Studio：可视化的IDE机器学习集成开发环境。方便和团队进行协作开发，还可以方便地切换坐落于AWS上的硬件。
 - Amazon SageMaker Experiments：查找，比较，整合，组织，在SageMaker中进行的各种ML实验。
@@ -118,6 +119,7 @@ RecordIO和Protobuf都是用于序列化数据的格式，通常在机器学习�
 - Dropout
 - Earlystopping
 - 激活函数，优化方法，损失函数
+- *数据缺失*：深度学习更适合分类数据的插补。数值型数据使用KNN可以更好地满足数据插补需求。虽然简单地删除缺失数据的行或使用平均值要容易得多，但它们不会导致最好的结果。
 
 
 ### ML相关的AWS服务
@@ -141,6 +143,12 @@ RecordIO和Protobuf都是用于序列化数据的格式，通常在机器学习�
 - AWS Trainium：AWS专门为超过 1000 亿个参数模型的深度学习训练打造的第二代机器学习 (ML) 加速器。**AWS Neuron**SDK，由编译器、运行时和分析工具组成，可以使用这些工具在 AWS Trainium 支持的 Amazon EC2 Trn1 实例上运行高性能训练。
 - AWS Inferentia：是 AWS 设计的一款机器学习推理加速器，可在云中提供高性能和低成本的机器学习推理。
 - Amazon Titan：Amazon Bedrock 独有的 Amazon Titan 系列模型。Amazon Titan 基础模型（FM）通过完全托管的 API 为客户提供广泛的高性能图像、多模式和文本模型选择。主要是生成式人工智能的AWS的自己训练的模型。
+- AWS Panorama：是机器学习 (ML) 设备及软件开发工具包 (SDK) 的集合，可在本地互联网协议 (IP) 摄像头中集成 CV 功能。
+
+**Kinesis Analysis中的两种算法**
+
+- Random Cut forest：异常检测，只允许使用最近的数据（recent history）。
+- Hotspots：数据密集区域检测。
 
 **时间序列预测**
 
@@ -166,7 +174,7 @@ RecordIO和Protobuf都是用于序列化数据的格式，通常在机器学习�
 **代码服务**
 
 - Amazon CodeGuru：自动代码审查。（Java，Python）
-- CodeWhisperer：代码伴驾，自动代码提示，自动完成。
+- CodeWhisperer：代码伴驾，自动代码提示，自动完成。安全扫描。历史代码追踪。偏见避免。使用TLS安全传输协议。（但是Amazon其实可以挖掘你的代码）
 - Amazon SageMaker Data Wrangler：也算是一个自动生成notebook代码的服务。
 
 **部署：可扩展，加速，可靠，安全**
@@ -179,4 +187,5 @@ RecordIO和Protobuf都是用于序列化数据的格式，通常在机器学习�
 - 灵活部署：推理节点自动伸缩功能（Automatic Scaling）和CloudWatch一起工作，决定节点的增减，可以设定最大最小capacity。可以多instance多AZ部署推理节点。另外还有用多少花多少的 Serverless Inference 服务。
 - SageMaker Inference Recommender：如果你不知道用哪种instance type，它可以通过load test推介使用哪种instance type。（Inference & Endpoint （custom load test） Recommendations）
 - SageMaker Inference Pipelines：可以将多个Inference Containers串联起来形成一个pipeline。
+- Production Variants：SageMaker 支持将多个模型（称为生产变体）部署到单个 SageMaker 终端节点中。您可以配置生产变体，以使一小部分实时流量路由到您要验证的模型。您可以对 SageMaker 服务进行简单的调用，以收集有关模型有效性的统计数据以及更改权重。
 

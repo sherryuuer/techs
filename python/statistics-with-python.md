@@ -1,6 +1,7 @@
 ## Python进行统计分析
 
 ---
+（项目学习收录在project-drafts里）
 
 导入Python库。
 
@@ -598,10 +599,453 @@ def p_value_reader(p_value, alpha):
 
 ---
 
-**在已知总体方差的情况下进行假设检验的步骤**：
+**在已知总体方差的情况下进行假设检验（z检验）的步骤**：
 
 - 抽取n个样本，计算出均值。
 - 根据方差，和计算的均值，计算出z分数。
 - 根据z分数在z-table中知道Probability。
 - 比较Probability和显著性水平（一般是0.05）的比较判断是否接受或者拒绝原假设。
 
+Z检验（Z-test）是一种统计方法，用于检验*一个样本的均值是否与总体的均值有显著差异*。它适用于大样本（通常指样本量大于30）和已知总体标准差的情况。Z检验基于正态分布的性质，利用样本均值与总体均值之间的差异，结合样本的标准差和样本大小，计算出一个Z值，然后与标准正态分布的Z分布相比较，以确定差异是否显著。
+
+Z检验通常用于以下场景：
+1. 总体标准差已知，样本大小大于30的情况下，用于检验样本均值与总体均值的差异；
+2. 比较两个样本的均值差异，这时候也可以用Z检验，前提是两个样本都满足正态分布且总体标准差已知。
+
+Z检验的步骤包括：
+1. 提出假设：原假设（H0）通常是样本均值等于总体均值，备择假设（H1）是样本均值不等于总体均值。
+2. 选择显著性水平（α），通常设定为0.05或0.01。
+3. 计算Z值：根据样本数据计算出Z值。
+4. 判断拒绝域：根据显著性水平和自由度确定Z分布的临界值。
+5. 做出决策：比较计算得到的Z值与临界值，如果Z值落在拒绝域内，则拒绝原假设，否则接受原假设。
+
+Z检验的结果告诉我们样本的均值与总体均值之间是否有显著差异，以及这种差异的可能性大小。
+
+Python代码执行z检验：
+
+```python
+# Info
+mean_pop = 54
+sd_pop = 2
+confidence = 0.95
+# 置信水平相对应的显著性水平
+alpha = 1 - confidence
+mean_sample = df_main['Cars Produced'].mean()
+print(f"The sample mean is {mean_sample}")
+sample_size = df_main['Cars Produced'].count()
+print(f"The sample size is {sample_size}")
+
+# Z Test formula (sample mean - pop mean) / (pop sd ( sqrt(sample size)))
+z_score = (mean_sample - mean_pop) / (sd_pop / np.sqrt(sample_size))
+print(f"The Z-score is {z_score}")
+
+# Calculate the p_value from the z-score (two tails)
+tails = 2
+p_value = st.norm.sf(abs(z_score)) * tails
+print(f"The p-value is {p_value}")
+
+# Interpret the p_value
+if p_value < alpha:
+  print("Reject the Null Hypothesis")
+else:
+  print("Fail to reject the p_value")
+```
+
+或者将上面的代码整合为一个函数：
+
+```python
+# Build a function to compute the z-test
+def ztest(mean_pop, mean_sample, sample_size, sd_pop, alpha, tails):
+  # Z Test formula (sample mean - pop mean) / (pop sd ( sqrt(sample size)))
+  z_score = (mean_sample - mean_pop) / (sd_pop / np.sqrt(sample_size))
+  print(f"The Z-score is {z_score}")
+
+  # Calculate the p_value from the z-score (two tails)
+  p_value = st.norm.sf(abs(z_score)) * tails
+  print(f"The p-value is {p_value}")
+  p_value_reader(p_value, alpha)
+
+# Apply the function
+ztest(mean_pop, mean_sample, sample_size, sd_pop, alpha, tails)
+```
+
+---
+**根据z分数计算p值的过程：**
+
+计算 p 值的一种常见方法是使用标准正态分布的累积分布函数 (CDF)。在 Z 分数已知的情况下，我们可以使用标准正态分布的累积分布函数来计算 p 值。
+
+通常，p 值是由标准正态分布的累积分布函数计算得出的，具体步骤如下：
+
+1. 计算 Z 分数的绝对值：`abs(z_score)`
+2. 使用累积分布函数 (`cdf`) 来计算累积概率。由于标准正态分布是对称的，所以可以使用 `1 - cdf(z_score)` 或 `cdf(-z_score)` 来计算右侧的概率，这两者是等价的。
+3. 如果是双侧检验，需要将得到的概率乘以 2。
+
+代码中使用了 `st.norm.sf(abs(z_score))`，其中 `st.norm.sf()` 是 SciPy 中的函数，用于计算标准正态分布的累积分布函数的补码 (1 - CDF)，而 `abs(z_score)` 则是确保计算绝对值的 Z 分数。
+
+所以，p 值计算的代码段为：
+
+```python
+p_value = st.norm.sf(abs(z_score)) * tails
+```
+
+其中 `tails` 表示双侧检验中的尾数，因为双侧检验需要考虑两个尾部。
+
+---
+**在不知道总体方差的情况下进行z检验**：
+
+和之前的情况稍有不同而已，这次使用样本方差，并且使用t分布。
+
+```python
+# Information
+target_mean = 2.2
+mean_sample = df_main['Defects Found'].mean()
+print(f"The sample mean is {mean_sample}")
+sample_size = df_main['Defects Found'].count()
+print(f"The sample size is {sample_size}")
+confidence = 0.95
+alpha = 1 - confidence
+sample_sd = df_main['Defects Found'].std()
+print(f"The SD is {sample_sd}")
+
+# Calculate the t-score
+t_score = (mean_sample - target_mean) / (sample_sd / np.sqrt(sample_size))
+print(f"The T-score is {t_score}")
+
+#Calculate the p_value
+tails = 2
+# 自由度设置为-1
+p_value = st.t.sf(abs(t_score), df = (sample_size - 1)) * tails
+print(f"The p-value is {p_value}")
+
+#Interpret the p_value
+p_value_reader(p_value, alpha)
+```
+
+使用 SciPy 库中的 `ttest_1samp` 函数进行一个样本 t 检验：
+
+```python
+# How to do the 2-tailed test with unknown pop variance
+t_score, p_value = st.ttest_1samp(a = df_main['Defects Found'],
+                                  popmean = target_mean,
+                                  alternative = 'two-sided')
+print(f"T-score: {t_score}")
+print(f"p-value: {p_value}")
+p_value_reader(p_value, alpha)
+```
+
+`alternative='two-sided'` 参数指定了双侧检验，这意味着它将检查样本均值是否与总体均值不同，而不是只关注样本均值是否比总体均值大或小。
+
+---
+
+**配对T检验**
+
+配对 t 检验（paired t-test）是一种用于*比较两组相关样本之间平均值差异是否显著*的统计检验方法。它通常用于分析同一组个体在两种不同条件下的观察结果，比如在不同时间点或者不同处理条件下的观察值。
+
+在进行配对 t 检验时，首先要对每个个体或观察单位进行两次测量，然后比较这两组测量值的平均数。配对 t 检验的假设是这两组测量值的平均数没有显著差异，也就是说，它们来自同一总体。如果在统计上发现这两组测量值的平均数存在显著差异，那么我们就可以拒绝原假设，认为这两组测量值来自不同的总体，或者在两种条件下有显著不同的平均值。
+
+配对 t 检验的优点在于可以减少个体间的变异性对结果的影响，因为它比较的是同一组个体在不同条件下的变化，而不是不同个体之间的差异。这使得配对 t 检验在实验设计中非常有用，特别是在涉及时间序列数据或者重复测量的情况下。比如pre-post用药前后对比数据等。
+
+使用Python进行配对t检验：
+
+```python
+# Data
+differences = df_paired['Month 2'] - df_paired['Month 1']
+mean_difference = differences.mean()
+sd_difference = differences.std()
+sample_size = differences.count()
+print(f"The mean difference is {mean_difference}")
+
+# Info of the test
+dof = sample_size - 1
+tails = 2
+confidence = 0.95
+alpha = 1 - confidence
+
+# Computing the t-score: (x1_avg - x2_avg) / (SD_diff / SQRT(sample size))
+t_score = mean_difference / (sd_difference / np.sqrt(sample_size))
+print(f"The T-score is {t_score}")
+
+# Compute the p_value
+p_value = st.t.sf(abs(t_score), df = dof) * tails
+print(f"The p-value is {p_value}")
+p_value_reader(p_value, alpha)
+```
+
+同样，更简便的，使用`scipy.stats`中的 ttest_rel 函数进行配对 t 检验。这个函数的第一个参数是第一个月份的数据，第二个参数是第二个月份的数据。alternative='two-sided' 参数表示进行双侧检验（即检验是否存在显著差异的可能性在两个方向上），这是默认设置。函数会返回计算得到的 t 分数和对应的 p 值。
+
+```python
+# Perform a paired t-test with 2 tails
+t_score, p_value = st.ttest_rel(df_paired['Month 1'],
+                                df_paired['Month 2'],
+                                alternative='two-sided')
+
+print(f"T-score: {t_score}")
+print(f"p-value: {p_value}")
+p_value_reader(p_value, alpha)
+```
+---
+**两个样本T检验**
+
+两个样本t检验（Independent Samples t-test）和韦尔奇（Welch）测试都是用于比较两个样本均值之间是否存在显著差异的统计方法。它们都适用于当两个样本之间是独立的情况，即一个样本的观测值与另一个样本的观测值没有关联。
+
+1，两个样本t检验（Independent Samples t-test）：
+
+这种方法假设两个样本的方差相等，并且两个样本都来自于服从正态分布的总体。如果这些假设成立，两个样本t检验可以通过比较两个样本的均值和它们的方差来判断它们之间是否存在显著差异。
+
+**步骤：**
+1. 提出假设：原假设（H0）通常是两个样本的均值相等，备择假设（H1）是两个样本的均值不相等。
+2. 选择显著性水平（α）。
+3. 计算t值：根据两个样本的均值、方差和样本大小，计算出一个t值。
+4. 确定自由度：根据两个样本的大小计算自由度。
+5. 判断拒绝域：根据显著性水平和自由度确定t分布的临界值。
+6. 做出决策：比较计算得到的t值与临界值，如果t值落在拒绝域内，则拒绝原假设，否则接受原假设。
+
+2，韦尔奇（Welch）测试：
+
+韦尔奇测试是一种用于两个样本均值差异的统计检验方法，它不假设两个样本的方差相等，因此更加灵活。它的假设是两个样本都来自于正态分布的总体。
+
+**步骤：**
+1. 提出假设：与两个样本t检验相同。
+2. 选择显著性水平（α）。
+3. 计算t值：韦尔奇测试计算的t值与两个样本的均值、标准差和样本大小有关。
+4. 确定自由度：韦尔奇测试使用自由度的近似公式。
+5. 判断拒绝域：与两个样本t检验相同。
+6. 做出决策：与两个样本t检验相同。
+
+韦尔奇测试的优点是它对于样本大小不同或方差不相等的情况也能给出可靠的结果，但是计算过程相对复杂一些。
+
+3，Levene测试：如何判断方差是否相等，就用到了这个测试，在这个测试后，在选择用两个样本t检验还是韦尔奇检验。
+
+Levene测试是一种用于检验两个或多个总体方差是否相等的统计检验方法。它是用来验证方差齐性（homogeneity of variance）的，即各组的总体方差是否相同。Levene测试通常用于方差分析（ANOVA）等统计方法的前提检验，因为这些方法对方差齐性有一定的要求。
+
+Levene测试的原假设是各组的总体方差相等（方差齐性），备择假设是至少有一组的总体方差不相等。Levene测试的统计量基于各组观测值与该组均值之间的差异来计算。如果Levene测试的结果显示p值较大，通常大于选择的显著性水平（如0.05），则我们接受原假设，即各组的总体方差相等；反之，如果p值较小，则我们拒绝原假设，认为各组的总体方差不等。
+
+Levene测试是一种鲁棒性较好的方法，即在数据不满足正态性假设或样本量不同等情况下也能给出相对可靠的结果。这使得它在实际应用中得到了广泛的应用，特别是在ANOVA等分析中。
+
+**使用Python进行两个样本t检验：**
+
+这个函数通过levene测试先判断方差是否相等，然后使用相对应的t检验进行计算。
+
+```python
+# Build a function that performs 2 sample Test
+# based on the outcome of Levene's test
+
+def test_2sample(sample1, sample2, alpha, alternative='two-sided'):
+    #levene's test
+    stat, p_value = st.levene(sample1, sample2)
+    #interpret the test
+    if p_value < alpha:
+        equal_var = False
+        print("Reject the Null Hypothesis. Variances are unequal. Perform Welch's Test")
+    else:
+        equal_var = True
+        print("Fail to reject the Null Hypothesis. Variances are equal. Perform 2-sample T-test")
+    # 2 sample test
+    t_statist, p_value = st.ttest_ind(
+        sample1,
+        sample2,
+        equal_var = equal_var,
+        alternative = alternative)
+    print(f"The p-value is {p_value}")
+    p_value_reader(p_value, alpha)
+
+test_2sample(sample1, sample2, 0.05, 'two-sided')
+```
+---
+**单尾测试**
+
+到上面为止关注的都是双尾测试（Two-tailed test）：
+
+在双尾测试中，假设检验关注的是统计指标在两个方向上的差异。原假设（H0）和备择假设（H1）涉及到统计分布的两个尾部。这意味着在统计分布的两个尾部都定义了拒绝原假设的临界值。双尾测试通常用于我们对效应的方向没有先验假设的情况下。
+
+例如，假设我们要检验一种新的教学方法是否会改善学生的成绩。我们可能关心的是学生的成绩是否在任一方向上发生了变化，无论是提高还是降低。在这种情况下，我们会使用双尾测试。
+
+单尾测试（One-tailed test）和双尾测试（Two-tailed test）都是统计学中常用的假设检验方法，它们用于检验某个统计指标是否在给定假设下具有显著性差异。
+
+在单尾测试中，假设检验关注的是一个方向上的差异。也就是说，原假设（H0）和备择假设（H1）只针对分布中的一个尾部。这意味着在统计分布的一个尾部定义了拒绝原假设的临界值。单尾测试通常用于预先有方向性假设的情况，或者当我们只关心一个方向上的效应。
+
+例如，假设我们要检验一种新药是否比已有的药物更有效，我们可能只关心新药的效果是否更好，而不关心是否更差。在这种情况下，我们会使用单尾测试。
+
+单为测试的代码其实和上面的双尾是一样的，只是将tails变成1。使用上面构造的function进行。最后的参数1就是tails尾数。
+
+```python
+ztest(mean_pop, mean_sample, sample_size, sd_pop, alpha, 1)
+```
+
+在未知总体方差的情况下使用scipy的包进行计算：
+
+```python
+# How to do the 1-tailed test with unknown pop variance
+t_score, p_value = st.ttest_1samp(a = df_main['Defects Found'],
+                                  popmean = target_mean,
+                                  alternative = 'greater')
+print(f"T-score: {t_score}")
+print(f"p-value: {p_value}")
+p_value_reader(p_value, alpha)
+```
+
+配对T检验：
+
+```python
+# Perform a paired t-test with 1 tail
+t_score, p_value = st.ttest_rel(df_paired['Month 1'],
+                                df_paired['Month 2'],
+                                alternative='greater')
+
+print(f"T-score: {t_score}")
+print(f"p-value: {p_value}")
+p_value_reader(p_value, alpha)
+```
+
+使用提前准备好的函数进行两个样本T检验。
+
+```python
+test_2sample(sample2, sample1, 0.05, 'less')
+```
+
+**卡方检验**：
+
+卡方检验（Chi-Square Test）是一种统计学中常用的假设检验方法，用于确定两个或多个分类变量之间是否存在关联性。它的名称来自于它所使用的统计量，即卡方统计量。
+
+卡方检验通常应用于分析两个分类变量之间的关系，例如，性别与吸烟习惯之间是否存在关联。但它也可以扩展到更多的分类变量，进行更复杂的关联性分析。
+
+卡方检验的基本思想是比较观察到的频数与期望的频数之间的差异，如果这种差异超出了随机误差的范围，则可以得出结论，两个变量之间存在显著的关联性。
+
+卡方检验的步骤包括：
+1. 制定原假设（H0）和备择假设（H1）。
+2. 构建一个列联表，将观察到的频数与期望的频数进行比较。
+3. 计算卡方统计量，衡量观察到的频数与期望的频数之间的差异。
+4. 根据卡方统计量和自由度，计算出一个P值。
+5. 判断P值是否小于预先设定的显著性水平（通常为0.05或0.01），以决定是否拒绝原假设。
+
+如果P值小于显著性水平，则拒绝原假设，认为两个变量之间存在显著的关联性；如果P值大于显著性水平，则不能拒绝原假设，认为两个变量之间不存在显著的关联性。
+
+卡方检验在各种领域中广泛应用，包括医学、社会科学、生物统计学等。
+
+```python
+# Actual frequency
+contingency_table = pd.crosstab(index = df_chisquare['Factory'],
+                                columns = df_chisquare['Category'],
+                                values= df_chisquare['Count'],
+                                aggfunc = np.sum)
+
+# Chi Square Test
+stat, p_value, dof, expected_freq = st.chi2_contingency(observed = contingency_table)
+
+# Print and interpret the p_value
+print(f"The p-value is {p_value}")
+p_value_reader(p_value, 0.05)
+```
+
+### 回归分析: 线性回归
+
+从统计学的角度（因为还有ml角度）来解释线性回归，它是一种用于建立变量之间关系的统计模型，通常用于以下几个方面：
+
+1. **描述性分析**：线性回归可用于描述自变量与因变量之间的线性关系。通过线性回归模型，可以评估自变量对因变量的影响程度（impact），并确定它们之间的相关性。
+
+2. **预测**：线性回归可以用于预测因变量的值。通过已知的自变量值，可以利用线性回归模型来估计因变量的值。这对于预测未来事件或趋势具有重要意义。这就是机器学习视角了。
+
+3. **假设检验**：线性回归模型的拟合可以用于检验各个自变量对因变量的影响是否显著。通过对回归系数进行假设检验，可以确定自变量是否对因变量有显著影响。
+
+4. **模型评估**：统计学角度还包括对线性回归模型的评估。这涉及检查模型的拟合优度、残差的分布是否符合假设、模型是否满足统计假设等方面。
+
+总的来说，线性回归通过建立自变量和因变量之间的线性关系，提供了一种解释和预测数据的方法。在统计学中，线性回归是一种常用的工具，可以帮助研究人员从数据中提取信息，做出推断，并进行科学分析。
+
+相关的Python库：
+
+```python
+# Libraries
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import statsmodels.api as sm
+```
+
+一般使用散点图表达回归模型：
+
+```python
+# Scatter plot
+plt.scatter(X, y)
+#Customizing the graph
+plt.xlabel("Carat")
+plt.ylabel("Price")
+plt.title("The relationship of Carats and Price")
+plt.show()
+```
+
+向数据中添加一个常数列（新增一个列，比如这个列全是1），通常被称为截距项或偏置项。这是因为在线性回归模型中，除了自变量之外，通常还会有一个常数项，用于拟合数据中可能存在的偏移量或基准值。
+
+```python
+# Adding a constant
+X = sm.add_constant(X)
+X.head(2)
+```
+
+执行线性回归模型分析，`sm.OLS(endog = y, exog = X)`：这一行创建了一个最小二乘线性回归模型对象。`endog`参数是因变量（即被解释变量）`y`，`exog`参数是自变量（即解释变量）`X`。OLS代表“最小二乘”，是一种用于拟合线性回归模型的常见方法。
+
+通过打印模型摘要，会看到关于回归系数、标准误、t统计量、p值等统计指标的信息，这些指标有助于评估模型的拟合程度以及自变量对因变量的影响是否显著。通常，摘要还包括了拟合优度指标（如R-squared）、残差分析和其他诊断信息，帮助你理解模型的适用性和准确性。
+
+```python
+# Equation : y = a + b*X + e
+model1 = sm.OLS(endog = y, exog = X).fit()
+print(model1.summary())
+```
+
+可视化模型。这段代码主要用于绘制数据点和线性回归拟合曲线的图形。
+
+`b, a = np.polyfit(X, y, 1)`：这一行代码利用 NumPy 库的 `polyfit` 函数拟合了一条直线（即一次多项式）到数据上。它返回了拟合直线的斜率 `b` 和截距 `a`。这里的 `1` 表示拟合的多项式阶数为 1，即线性拟合。
+
+`plt.plot(X, b * X + a)`：这一行代码绘制了通过线性拟合得到的直线。其中 `b * X + a` 表示利用斜率 `b` 和截距 `a` 构建的线性方程，即回归方程。通过将自变量 `X` 代入回归方程，得到了相应的预测值，从而得到了拟合曲线。
+
+这段代码的作用是在同一张图上绘制数据点的散点图以及利用线性回归模型拟合的直线。这样的可视化可以帮助我们直观地理解数据的分布情况，并且可以评估线性回归模型对数据的拟合效果。
+
+```python
+# Plotting the regression curve
+X = df.carat
+
+# Plotting the Curve and dots
+plt.plot(X, y, 'o')
+b, a = np.polyfit(X, y, 1)
+plt.plot(X, b * X + a)
+
+#Customizing the graph
+plt.xlabel("Carat")
+plt.ylabel("Price")
+plt.title("The relationship of Carats and Price")
+
+plt.show()
+```
+注释：以上的数据列表使用的是钻石克拉对钻石价格的回归分析。
+
+**二元自变量的二元回归**：
+
+如果自变量是二元的（即只有两种可能的取值，通常为0和1），这种情况下的回归分析称为二元回归或者双重（双值）回归。这种情况下的回归模型通常被称为二元逻辑回归（Binary Logistic Regression）。
+
+二元逻辑回归是一种用于解决分类问题的统计模型，其中因变量是二元的（通常是二分类问题，如“是”或“否”、“成功”或“失败”等），而自变量可以是连续的、分类的或二元的。这种回归分析的目的是确定自变量与因变量之间的关系，并用于预测因变量的类别。
+
+以下代码示例：(其实这个可视化的图挺怪的)
+
+```python
+# Create a dummy variable with carat
+X_binary = np.where(df.carat > 0.6, 1, 0)
+X_binary # output will be 0 or 1
+
+# Add a constant
+X_binary_const = sm.add_constant(X_binary)
+
+# Build the second regression model
+model2 = sm.OLS(y, X_binary_const).fit()
+print(model2.summary())
+
+# Plotting the Curve and dots
+plt.plot(X_binary, y, 'o')
+b, a = np.polyfit(X_binary, y, 1)
+plt.plot(X_binary, b * X_binary + a)
+
+#Customizing the graph
+plt.xlabel("Carat - dummy variable")
+plt.ylabel("Price")
+plt.title("The relationship of Carats and Price")
+
+plt.show()
+```

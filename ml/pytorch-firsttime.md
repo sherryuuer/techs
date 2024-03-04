@@ -139,3 +139,9 @@ vgg16 = models.vgg16()
 2，数据shape不匹配。layer之间传播的时候发生，或者是维度不够或者冗余。
 
 3，数据所在设备device错误，训练一般是在gpu，但是推理是在cpu进行。
+
+### 关于Pytorch的小知识点
+
+- `torch.manual_seed()`之对一个block的random代码起作用。
+
+- gpu的tensor不能转换为numpy数据格式，需要返回cpu：`tensor.cpu().numpy()`。把tensor放进gpu是将device设置为cuda后，`tensor.to(device)`。

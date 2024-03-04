@@ -51,6 +51,44 @@ def minimumSpanningTree(edges, n):
     return res if len(visit) == n else -1
 ```
 
+求最小生成树的所有的边的解题：初始化不同的结果上面是res这里是最小生成树mst列表。while循环的条件也不同。
+
+```python
+import heapq
+
+# Given a list of edges of a connected undirected graph,
+# with nodes numbered from 1 to n,
+# return a list edges making up the minimum spanning tree.
+def minimumSpanningTree(edges, n):
+    adj = {}
+    for i in range(1, n + 1):
+        adj[i] = []
+    for n1, n2, weight in edges:
+        adj[n1].append([n2, weight])
+        adj[n2].append([n1, weight])
+
+    # Initialize the heap by choosing a single node
+    # (in this case 1) and pushing all its neighbors.
+    minHeap = []
+    for neighbor, weight in adj[1]:
+        heapq.heappush(minHeap, [weight, 1, neighbor])
+
+    mst = []
+    visit = set()
+    visit.add(1)
+    while len(visit) < n:
+        weight, n1, n2 = heapq.heappop(minHeap)
+        if n2 in visit:
+            continue
+
+        mst.append([n1, n2])
+        visit.add(n2)
+        for neighbor, weight in adj[n2]:
+            if neighbor not in visit:
+                heapq.heappush(minHeap, [weight, n2, neighbor])
+    return mst
+```
+
 Kruskal算法是一种用于解决最小生成树（Minimum Spanning Tree，MST）问题的贪婪算法。最小生成树是连接图中所有节点，并且总权重最小的树。
 
 以下是Kruskal算法的基本步骤：
@@ -133,9 +171,96 @@ def minimumSpanningTree(edges, n):
     return mst
 ```
 
+### 二者区别
+
+Prim算法（普里姆算法）和Kruskal算法（克鲁斯卡尔算法）都是用于解决最小生成树（Minimum Spanning Tree，MST）问题的经典算法，它们之间的主要区别在于其工作方式和实现细节。
+
+1. **基本原理**：
+   - Prim算法基于节点来构建最小生成树。它从一个初始节点开始，然后逐步添加与当前最小生成树相连的最小权重边所连接的节点，直到覆盖所有的节点。
+   - Kruskal算法基于边来构建最小生成树。它将图中的所有边按照权重从小到大进行排序，然后依次考虑这些边，如果加入某条边不会形成环路，则将其加入最小生成树中，直到最小生成树中包含了所有的节点。
+
+2. **工作方式**：
+   - Prim算法通常以节点为中心展开搜索，通过维护一个优先队列或者最小堆来选择下一个要加入的节点，并找到连接当前最小生成树与新节点的最小权重边。
+   - Kruskal算法则是在整个边集合上迭代，通过并查集等数据结构来判断是否会形成环路，并将合适的边加入最小生成树中。
+
+3. **时间复杂度**：
+   - 在密集图中，Prim算法的时间复杂度通常为O(V^2)，其中V是节点的数量。这是因为在优先队列或最小堆的维护上需要花费较多时间。
+   - Kruskal算法的时间复杂度通常为O(E log E)，其中E是边的数量，因为需要对边集合进行排序。
+
+4. **适用情况**：
+   - 当图是稀疏图（边的数量相对较少）时，Kruskal算法通常更为高效，因为它的时间复杂度与边的数量相关。
+   - 当图是稠密图（边的数量相对较多）时，Prim算法通常更为高效，因为它的时间复杂度与节点的数量相关。
+
+总的来说，Prim算法更适用于稠密图，而Kruskal算法更适用于稀疏图。在实际应用中，可以根据具体情况选择合适的算法来解决最小生成树问题。
+
+PS：什么是稠密图和稀疏图。
+
+在图论中，稠密图和稀疏图是两种不同的图的类型，它们主要通过边的数量来区分。
+
+1. **稠密图**：
+   - 稠密图是指边的数量接近于节点的数量的图。换句话说，稠密图中的节点之间有较多的边相连。
+   - 在稠密图中，边的数量通常接近于节点数量的平方级别。
+   - 稠密图的特点是边之间连接比较紧密，图中大部分节点都直接或者间接地相连。
+
+2. **稀疏图**：
+   - 稀疏图是指边的数量远小于节点的数量的图。换句话说，稀疏图中的节点之间较少有边相连。
+   - 在稀疏图中，边的数量通常接近于节点数量的线性级别或者更低。
+   - 稀疏图的特点是节点之间连接相对较少，图中只有少量节点直接或者间接相连。
+
+稠密图和稀疏图的区别主要体现在边的数量上。在实际应用中，对于不同类型的问题，可能会更倾向于使用适合该类型图的算法来解决，以达到更高的效率。
+
+
 ### leetcode逐行解析
 
 - 连接所有点的最小成本[leetcode1584 题目描述](https://leetcode.com/problems/min-cost-to-connect-all-points/description/)
+
+也是一个最小生成树的问题。给一个2d平面的点points的列表。输出最小的权重满足点之间的曼哈顿距离最短。
+
+输入输出如下：
+
+```
+Input: points = [[0,0],[2,2],[3,10],[5,2],[7,0]]
+Output: 20
+```
+
+题解：该问题和典型解法一样，只有在构造邻接表的时候，需要自己算出距离弄清关系。
+
+```python
+class Solution(object):
+    def minCostConnectPoints(self, points):
+        """
+        :type points: List[List[int]]
+        :rtype: int
+        """
+        import heapq
+        n = len(points)
+        adj = {i:[] for i in range(n)}  # i:[cost, node-j]
+        for i in range(n):
+            x1, y1 = points[i]
+            for j in range(i + 1, n):
+                x2, y2 = points[j]
+                dist = abs(x1 - x2) + abs(y1 - y2)
+                adj[i].append([dist, j])
+                adj[j].append([dist, i])
+            
+        visit = set()
+        res = 0
+        minheap = [[0, 0]]  # cost, point
+        
+        while minheap and len(visit) < n:
+            weight, v = heapq.heappop(minheap)
+            if v in visit:
+                continue
+
+            visit.add(v)
+            res += weight
+            for weight, neighbor in adj[v]:
+                if neighbor not in visit:
+                    heapq.heappush(minheap, [weight, neighbor])
+        return res
+```
+
+感想：在图中的算法，一定要多注意点和边等要素，总是容易搞混。
 
 - 在最小生成树中查找关键边和伪关键边[leetcode1489 题目链接](https://leetcode.com/problems/find-critical-and-pseudo-critical-edges-in-minimum-spanning-tree/description/)
 

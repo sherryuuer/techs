@@ -63,7 +63,7 @@
 
 - [Scikit-learn建模学习](ml/scikit-learn-data-modeling.md)
 
-## Pythonic
+## Python and Math
 
 - [用Python进行统计分析](python/statistics-with-python.md)
 - [Python代码单元测试](python/codetest.md)
