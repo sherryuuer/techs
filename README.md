@@ -82,11 +82,15 @@
 - [程序员原则](principals/whats-not-change.md)
 - [计算机思维](principals/computeritize.md)
 
+## Clouds
+- [AWS机器学习系统的构架和服务](clouds/aws-with-ml.md)
+
+
 ## System Design and more fun
 
 - [系统设计概念System-Design-concepts](morefun/system-design.md)
 - [full-stack构架一个油管网站](morefun/youtube-clone.md)
-- [AWS机器学习系统的构架和服务](morefun/aws-with-ml.md)
+
 
 ---
 
