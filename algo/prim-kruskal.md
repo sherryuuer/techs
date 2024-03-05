@@ -265,3 +265,95 @@ class Solution(object):
 - 在最小生成树中查找关键边和伪关键边[leetcode1489 题目链接](https://leetcode.com/problems/find-critical-and-pseudo-critical-edges-in-minimum-spanning-tree/description/)
 
 Kruskal算法的应用。是一道hard难度的题。
+
+输入输出如下：
+
+```
+Input: n = 5, edges = [[0,1,1],[1,2,1],[2,3,2],[0,3,2],[0,4,3],[3,4,3],[1,4,6]]
+Output: [[0,1],[2,3,4,5]]
+```
+
+首先需要并查集数据结构。然后对题解进行处理。处理过程中将edges列表加入原始序列index以便追踪，在遍历循环中，查找生成的树的最小权重，通过最小权重判断。
+
+什么是关键边？就是少了这个边就无法生成最小树或者权重大于原本的最小权重。什么是伪关键边？是除了关键边之外，如果生成的最小树依然有同样的最小权重，那么就是伪关键边。
+
+代码如下：
+
+```python
+# 并查集数据结构implement
+class UnionFind:
+    def __init__(self, n):
+        self.par = [i for i in range(n)]
+        self.rank = [1] * n
+
+    def find(self, v1):
+        while v1 != self.par[v1]:
+            self.par[v1] = self.par[self.par[v1]]
+            v1 = self.par[v1]
+        return v1
+
+    def union(self, v1, v2):
+        p1, p2 = self.find(v1), self.find(v2)
+        if p1 == p2:
+            return False
+        if self.rank[p1] > self.rank[p2]:
+            self.par[p2] = p1
+            self.rank[p1] += self.rank[p2]
+        else:
+            self.par[p1] = p2
+            self.rank[p2] += self.rank[p1]
+        return True
+
+class Solution:
+    def findCriticalAndPseudoCriticalEdges(self, n: int, edges: List[List[int]]) -> List[List[int]]:
+        # Time: O(E^2) - UF operations are assumed to be approx O(1)
+        for i, e in enumerate(edges):
+            # 将原始index加入列表，以便追踪
+            e.append(i) # [v1, v2, weight, original_index]
+
+        # 相当于一个最小堆，以便从最小权重开始添加进树
+        edges.sort(key=lambda e: e[2])
+
+        # 初始化最小生成树的权重为0，并初始化一个并查集uf
+        mst_weight = 0
+        uf = UnionFind(n)
+        # 通过遍历找到最小权重，用于之后的判断
+        for v1, v2, w, i in edges:
+            if uf.union(v1, v2):
+                mst_weight += w
+        # 初始化关键边和伪关键边列表
+        critical, pseudo = [], []
+
+        # 开始遍历判断，可以说是一种暴力循环
+        for n1, n2, e_weight, i in edges:
+            # 判断不带当前边的情况
+            weight = 0
+            uf = UnionFind(n)
+            for v1, v2, w, j in edges:
+                # 这里通过条件ij不想等，排出当前的边
+                if i != j and uf.union(v1, v2):
+                    weight += w
+            # 如果根本生成不了一个树或者权重大于最小权重了那么说明该边是关键边
+            if max(uf.rank) != n or weight > mst_weight:
+                critical.append(i)
+                # 跳过当前循环，判断下一个边
+                continue
+            
+            # 判断带当前边的情况
+            # 使用当前的边初始化并查集和权重
+            uf = UnionFind(n)
+            uf.union(n1, n2)
+            weight = e_weight
+            # 开始计算权重和合并树
+            for v1, v2, w, j in edges:
+                if uf.union(v1, v2):
+                    weight += w
+            # 如果得到的权重和最小权重一致那么就是伪关键边，不会和关键边重合，因为是先判断的关键边，在上面已经continue了
+            if weight == mst_weight:
+                pseudo.append(i)
+        # 返回结果即可
+        return [critical, pseudo]
+```
+之后就可以尝试将代码去掉自己来写。
+
+注意：这只是所有解法中的一种，以理解为主，可以找到更多的练习和情况进行加深理解，和自身的能力泛化。
