@@ -37,7 +37,6 @@
 ## Machine learning
 
 - [AI时代提问准则](ml/ai-4-prompt.md)：需要复习
-
 - [数据预处理：ML中最重要的步骤](ml/feature-engineering.md)
 - [防止过拟合的技术：正规化&Dropout&EarlyStopping](ml/overfit.md)
 - [容易混淆的几个概念：缩放，标准化，归一化，正则化](ml/some-confusion-words.md)
@@ -45,7 +44,6 @@
 - [评估方法：混淆矩阵family](ml/confusion-matrix.md)
 - [PCA：降维算法原理学习](ml/pca.md)
 - [Kaggle王者算法：XGBoost](ml/xgboost.md)
-
 - [Tensorflow解决数据分类问题](ml/tensorflow-classification.md)
 - [Tensorflow计算机视觉问题](ml/tensorflow-cv.md)：还在整理中，课程中的代码还未整理完
 - [Tensorflow自然语言处理和文本分类：使用kaggle的入门级项目进行文本分类的学习](ml/tensorflow-nlp.md)：正在整理中，课程中的代码整理到一半
@@ -60,7 +58,6 @@
 - [CNN：ResNet和ImageNet超大数据集](ml/resnet.md)：初步整理结束
 - [RNN：循环神经网络](ml/rnn.md)
 - [生成式AI：Transformer模型](ml/generativeai.md)
-
 - [Scikit-learn建模学习](ml/scikit-learn-data-modeling.md)
 
 ## Python and Math
@@ -84,6 +81,7 @@
 
 ## Clouds
 - [AWS机器学习系统的构架和服务](clouds/aws-with-ml.md)
+- [AWS安全专家认证考试相关内容](clouds/aws-with-security.md)
 
 
 ## System Design and more fun

@@ -136,4 +136,105 @@ def dp(profit, weight, capacity):
 
 - 子数组和相等[leetcode416 题目描述](https://leetcode.com/problems/partition-equal-subset-sum/description/)
 
+给定一个数组，判断如果将数组分为两个子数组，这两个子数组的sum是否能相等。返回布尔值。
 
+输入输出示例：
+
+```
+Input: nums = [1,5,11,5]
+Output: true
+Explanation: The array can be partitioned as [1, 5, 5] and [11].
+```
+
+关键的部分是将所有可能的目标和（也就是nums和的一半）全都存储在一个hashset数据结构中。
+
+```python
+class Solution(object):
+    def canPartition(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: bool
+        """
+        if sum(nums) % 2:
+            return False
+        # 目标就是找到这个和的一半
+        target = sum(nums) // 2
+        # 初始化一个hashset数据结构，添加一种情况（什么数字都不选的情况和为0）作为初始
+        dp = set()
+        dp.add(0)
+        # 循环不断找到所有可能的和，并进行判断
+        for i in range(len(nums)):
+            nextdp = set()
+            for t in dp:
+                if t == target:
+                    return True
+                nextdp.add(t)
+                nextdp.add(t + nums[i])
+            dp = nextdp
+        return False
+```
+
+还有另一种动态规划网格的写法不是很懂所以手动推演一下：
+
+```python
+class Solution(object):
+    def canPartition(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: bool
+        """
+        if sum(nums) % 2:
+            return False
+        target = sum(nums) // 2
+        dp = [False] * (target + 1)
+        dp[0] = True
+
+        for num in nums:
+            for j in range(target, num - 1, -1):
+                dp[j] = dp[j] or dp[j - num]
+
+        return dp[target]
+```
+
+假设输入是[1, 2, 5, 2]，target就是5。dp数组就是[True, False, False, False, False, False]。一共有5个False。
+
+第一次遍历从num是1，j从5到1倒着遍历。
+
+```
+dp[5] = dp[5] or dp[4] = False
+dp[4] = dp[4] or dp[3] = False
+dp[3] = dp[3] or dp[2] = False
+dp[2] = dp[2] or dp[1] = False
+dp[1] = dp[1] or dp[0] = True
+
+dp = [True, True, False, False, False, False]
+```
+
+可以看到dp到index1更新为了True，说明可以构成sum为1的子数组。这是肯定的因为遍历num为1，这个时候只要取一个num也就是1就够了。
+
+下面遍历num为2的情况。j从5到2倒着遍历。
+
+```
+dp[5] = dp[5] or dp[3] = False
+dp[4] = dp[4] or dp[2] = False
+dp[3] = dp[3] or dp[1] = True
+dp[2] = dp[2] or dp[0] = True
+
+dp = [True, True, True, True, False, False]
+```
+
+下面的情况也是以此类推。遍历num为5的情况。j从5到5倒着遍历。
+
+```
+dp[5] = dp[5] or dp[0] = True
+
+dp = [True, True, True, False, False, True]
+```
+
+这里已经可以得到dp[target]也就是True的结果了。通过遍历数组中的每个元素 num，以及从 target 到 num 的每个可能的和 j（这样我们可以避免重复计算），更新 dp[j] 的值。具体地说，dp[j] 表示我们是否可以找到一些元素的子集，它们的和等于 j。我们尝试用当前元素 num 来更新 dp[j]，如果我们可以找到一些之前的元素构成和为 j - num 的子集，那么我们也可以将当前元素添加到这个子集中，得到和为 j 的子集。因此，dp[j] 的更新规则是 dp[j] = dp[j] or dp[j-num]。
+
+这就是一种拆小为大的思想，整个dp数组实际上计算了所有可能的target内的数字的布尔结果。
+
+总的来说第一种方法更好理解一些和更省资源。
+
+**反思和总结**：总的来说这道题很棒，让我在过程中感受到了务必要用一种解决子问题的观点看动态规划问题，而不仅仅是网格。网格只是表象，将大问题拆分成小问题，才是主要的思想核心。

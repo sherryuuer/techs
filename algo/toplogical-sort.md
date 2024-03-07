@@ -45,10 +45,33 @@ DAG 也常用于表示计算机网络中的依赖关系，比如任务调度中�
 拓扑排序的时间复杂度通常为 O(V + E)，其中 V 是节点数，E 是边数。这是因为每个节点和每条边都要被访问一次。
 
 ```python
+# Given a directed acyclical graph, return a valid
+# topological ordering of the graph. 
+def topologicalSort(edges, n):
+    adj = {}
+    for i in range(1, n + 1):
+        adj[i] = []
+    for src, dst in edges:
+        adj[src].append(dst)
 
+    topSort = []
+    visit = set()
+    for i in range(1, n + 1):
+        dfs(i, adj, visit, topSort)
+    topSort.reverse()
+    return topSort
+
+def dfs(src, adj, visit, topSort):
+    if src in visit:
+        return True
+    visit.add(src)
+
+    for neighbor in adj[src]:
+        dfs(neighbor, adj, visit, topSort)
+    topSort.append(src)
 ```
 
-### leetcode 逐行解析
+### leetcodes
 
 - 课程安排[leetcode207 题目描述](https://leetcode.com/problems/course-schedule/description/)
 
