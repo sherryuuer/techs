@@ -8,7 +8,7 @@
 
 ### 双指针的相关概念
 
-双指针需要数组是排列好的。
+使用双指针的情况：**数组是可以遍历的情况，同时经过两个指针的移动可以将问题化为子问题缩小范围**。
 
 双指针关注左右两端的计算结果和目标的比较，通过条件，判断是否移动指针。
 
@@ -45,6 +45,119 @@ def targetSum(nums, target):
             return [L, R]
 ```
 
+问题三：单链表，移除倒数第n个node，返回head的问题
+
+很经典：步骤如下
+- 初始化左右指针为head
+- 将右指针移动n步，如果这时候right是null了说明倒数n就是第一个head节点，这时候只要返回head的next就可以了，结束进程
+- 将两个指针同时移动直到右指针触底
+- 这时候左指针的下一个就是要移除的节点
+- 重新relink左指针node的next为它的next的next
+- 返回head
+
+```python
+from linked_list import LinkedList
+from print_list import print_list_with_forward_arrow
+
+def remove_nth_last_node(head, n):
+    right = head
+    left = head
+
+    for i in range(n):
+        right = right.next
+    
+    if not right:
+        return head.next
+    
+    while right.next:
+        right = right.next
+        left = left.next
+
+    left.next = left.next.next
+
+    return head
+
+# Driver code
+def main():
+    lists = [[23, 89, 10, 5, 67, 39, 70, 28], [34, 53, 6, 95, 38, 28, 17, 63, 16, 76], [288, 224, 275, 390, 4, 383, 330, 60, 193],
+    [1, 2, 3, 4, 5, 6, 7, 8, 9], [69, 8, 49, 106, 116, 112, 104, 129, 39, 14, 27, 12]]
+    n = [4, 1, 6, 9, 11]
+
+    for i in range(len(n)):
+        input_linked_list = LinkedList()
+        input_linked_list.create_linked_list(lists[i])
+        print(i+1, ". Linked List:\t", end='')
+        print_list_with_forward_arrow(input_linked_list.head)
+        print()
+        print("n = ", n[i])
+        result = remove_nth_last_node(input_linked_list.head, n[i])
+        print("Updated Linked List:\t", end='')
+        print_list_with_forward_arrow(result)
+        print()
+        print("-"*100)
+
+if __name__ == '__main__':
+    main()
+```
+
+附录：LinkedList.py
+```python
+class LinkedListNode:
+    # __init__ will be used to make a LinkedListNode type object.
+    def __init__(self, data, next=None):
+        self.data = data
+        self.next = next
+
+# Template for the linked list
+class LinkedList:
+    # __init__ will be used to make a LinkedList type object.
+    def __init__(self):
+        self.head = None
+
+    # insert_node_at_head method will insert a LinkedListNode at head
+    # of a linked list.
+    def insert_node_at_head(self, node):
+        if self.head:
+            node.next = self.head
+            self.head = node
+        else:
+            self.head = node
+
+    # create_linked_list method will create the linked list using the
+    # given integer array with the help of InsertAthead method.
+    def create_linked_list(self, lst):
+        for x in reversed(lst):
+            new_node = LinkedListNode(x)
+            self.insert_node_at_head(new_node)
+    
+    # __str__(self) method will display the elements of linked list.
+    def __str__(self):
+        result = ""
+        temp = self.head
+        while temp:
+            result += str(temp.data)
+            temp = temp.next
+            if temp:
+                result += ", "
+        result += ""
+        return result
+```
+
+附录：print_list_with_forward_arrow.py
+```python
+# Template for printing the linked list with forward arrows
+def print_list_with_forward_arrow(linked_list_node):
+    temp = linked_list_node
+    while temp:
+        print(temp.data, end=" ")  # print node value
+        
+        temp = temp.next
+        if temp:
+            print("→", end=" ")
+        else:
+            # if this is the last node, print null at the end
+            print("→ null", end=" ")
+```
 
 ### leetcode 逐行解析
 

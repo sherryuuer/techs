@@ -1,15 +1,18 @@
 ## Algorithms & data structure
 
 - [数组结构：静态动态数组和堆栈](algo/arrays.md)
+- [数组结构：栈数据结构stack](algo/stack.md)
 - [数组算法：Kadane算法](algo/kadane.md)
 - [数组算法：滑动窗口](algo/sliding-window.md)
 - [数组算法：双指针](algo/two-pointers.md)
 - [数组算法：前缀和](algo/prefix-sums.md)
 - [数组算法：二分查找](algo/binarysearch.md)
 - [链表结构：单链双链和队列](algo/linkedlist.md)
+- [链表结构：反转单链表及其变体问题](algo/reverse-linkedlist.md)
 - [链表算法：快慢指针](algo/fast-slow-pointers.md)
 - [排序算法：排序全家桶](algo/sort.md)
 - [递归算法：宇宙的开始和终结](algo/recursion.md)
+- [数据结构：矩阵MATRIX](algo/matrix.md)
 - [树结构：树和二分树BST](algo/binarytree.md)
 - [树结构：树映射TreeMap](algo/treemap.md)
 - [树算法：前缀树](algo/trie.md)
@@ -88,6 +91,7 @@
 
 - [系统设计概念System-Design-concepts](morefun/system-design.md)
 - [full-stack构架一个油管网站](morefun/youtube-clone.md)
+- [G检定深度学习考试相关日语词汇和概念解释](morefun/gtest.md)
 
 
 ---

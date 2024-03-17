@@ -6,11 +6,29 @@
 
 动态规划的回文问题有好几种比如：求一个字符串的最长子回文或者回文子串的数量，或一个字符串的回文子序列（可以不连续）的数量，或两个字符串的公共回文子串，或者两个字符串的公共回文子序列。
 
-（每一个都实现一下）
+这里求一个字符串s中有多少种子回文。暴力破解的时间复杂度是O(n^3)，使用中心扩展法的时间复杂度是O(2*n^2)。
 
-### 算法实现
+```python
+def longest(s):
+    lenght = 0
+    for i in range(len(s)):
+        # odd length
+        L, R = i, i
+        while L > 0 and R < len(s) and s[L] == s[R]:
+            length = max(length, R - L + 1)
+            L += 1
+            R -= 1
 
-### leetcode解析
+        # even length
+        L, R = i, i + 1
+        while L > 0 and  R < len(s) and s[L] == s[R]:
+            length = max(length, R - L + 1)
+            L += 1
+            R -= 1
+    return length
+```
+
+### leetcodes
 
 - 5题最长子回文（[题目链接](https://leetcode.com/problems/longest-palindromic-substring/description/)）
 

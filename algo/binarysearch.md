@@ -66,6 +66,128 @@ def isCorrect(n):
         return 0
 ```
 
+如果用递归如何实现：
+
+```python
+def binary_search(nums, low, high, target):
+
+    if (low > high):
+        return -1
+
+    # Finding the mid using integer division
+    mid = low + (high - low) // 2
+
+    # Target value is present at the middle of the array
+    if nums[mid] == target:
+        return mid
+
+    # If the target value is greater than the middle, ignore the first half
+    elif nums[mid] < target:
+        return binary_search(nums, mid + 1, high, target)
+
+    # If the target value is less than the middle, ignore the second half
+    return binary_search(nums, low, mid - 1, target)
+```
+
+### 二分查找的变体问题1 First Bad Version
+
+在一个有序数组（1到n个版本号组成的数组）中存在第一个bad version，同时有一个检测器返回版本号v是否是bad，问题要求通过二分查找的方法，找到第一个bad version的编号，和操作次数（这里当然就是logn次的计算）
+
+```python
+import main as api_call
+def is_bad_version(v):
+    return api_call.is_bad(v)
+```
+
+其实二分查找已经很熟悉了，这里因为计算mid的时候方法不一样，所以标记出来。
+
+```python
+def first_bad_version(n):
+    first, last = 1, n
+    counter = 0
+    while first < last:
+        # 注意这里的计算方法
+        mid = first + (last - first) // 2
+        if is_bad_version(mid):
+            last = mid
+        else:
+            first = mid + 1
+        counter += 1
+    return first, counter
+```
+
+在这个代码中，mid如此计算是为了避免整数溢出问题，并且确保在二分搜索过程中得到正确的中间索引值。
+
+当使用 `(first + last) // 2` 计算 mid 时，如果 `first` 和 `last` 都是非常大的整数，它们的和可能会导致整数溢出。为了避免这种情况，使用 `(last - first) // 2` 来计算 mid。这样做的好处是保证了mid在合理的范围内，避免了整数溢出的问题。
+
+使用 `(last - first) // 2` 计算 mid，仍然可以确保 mid 是居中的索引值，因为 `(last - first) // 2` 表示了 first 和 last 之间的距离的一半，再加上 first 就得到了 mid。这样可以保证在每次迭代中，搜索区间被正确地减半，确保算法的正确性。
+
+### 二分查找变体问题2 Search in Rotated Sorted Array
+
+数组不完全是顺序排列的，可能有一部分被移动了。比如数组：[1, 3, 4, 5, 6, 9]被调整为：[5, 6, 9, 1, 3, 4]。对于这样的数组，同样要找到目标数字的下标的问题。
+
+```python
+def binary_search_rotated(nums, target):
+    low, high = 0, len(nums) - 1
+
+    while low <= high:
+        # mid = (low + high) // 2
+        mid = low + (high - low) // 2
+        if nums[mid] == target:
+            return mid
+        
+        # 这里的要包括等于的情况，下面也是，在这里犯错了
+        if nums[low] <= nums[mid]:
+            if nums[low] <= target < nums[mid]:
+                high = mid - 1
+            else:
+                low = mid + 1
+        elif nums[mid] <= nums[high]:
+            if nums[mid] < target <= nums[high]:
+                low = mid + 1
+            else:
+                high = mid - 1
+    return -1
+```
+
+整个流程分解为以下步骤：
+
+- 将数组一分为二。
+- 检查左半边是否有序，如果是的：
+  - 检查target是否在这半边，是的话缩小范围到左半边进行二分搜索即可。
+  - 如果不是，则排除这半边。缩小范围。
+- 上面的情况为否，则检查右半边是否有序，如果是的：
+  - 检查target是否在这半边，是的话缩小范围到右半边进行二分搜索即可。
+  - 如果不是，则排除这半边，缩小范围。
+- 没找到值返回-1。
+
+对我来说以上步骤都很明晰，但是处理边界问题的时候出现了问题，我的思考是：**要注意将所有可能的情况都包括进去**
+
+还有一种是递归方法的代码：大同小异，步骤一样的：
+
+```python
+def binary_search_rotated(nums, target):
+    return binary_search(nums, 0, len(nums) - 1, target)
+
+def binary_search(nums, low, high, target):
+
+    if low > high:
+        return -1
+    
+    mid = low + (high - low) // 2
+    if nums[mid] == target:
+        return mid
+        
+    if nums[low] <= nums[mid]:
+        if nums[low] <= target < nums[mid]:
+            return binary_search(nums, low, mid - 1, target)
+        return binary_search(nums, mid + 1, high, target)
+    elif nums[mid] <= nums[high]:
+        if nums[mid] < target <= nums[high]:
+            return binary_search(nums, mid + 1, high, target)
+        return binary_search(nums, low, mid - 1, target)
+```
+
 ### 问了一下大模型二分查找的应用场景
 
 二分查找广泛应用于各种领域，尤其是在需要高效查找有序数据集的情况下。以下是一些二分查找的应用场景：

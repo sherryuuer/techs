@@ -38,7 +38,7 @@ def bubbleSort(arr):  # O(n^2)
 
 ### 选择排序（Selection sort）
 
-也是一种简单的排序算法，其基本思想是通过不断选择未排序部分的最小（或最大）元素，将其放到已排序部分的末尾。
+也是一种简单的排序算法，其基本思想是通过不断选择未排序部分的最小（或最大）元素，将其放到已排序部分的末尾。总之就是：**选择和swap**
 
 选择排序的时间复杂度是 O(n^2)，其中 n 是数组的长度。在每一轮选择过程中，需要进行 n 次比较，找到最小元素。总共需要进行 n-1 轮选择操作。
 
@@ -47,6 +47,8 @@ def bubbleSort(arr):  # O(n^2)
 选择排序对于小型数据集可能是一种适用的选择，但在大型数据集上其性能相对较差。
 
 总体而言，选择排序是一种简单但不是最优的排序算法，它的主要优点在于实现简单，但在大规模数据集上通常不如其他高效的排序算法。
+
+一种解决方案：
 
 ```python
 def findSmallest(array):
@@ -58,6 +60,7 @@ def findSmallest(array):
             smallest_index = i 
     return smallest_index
 
+# 这个方法是重新填充一个新的数组
 def selectionSort(array):
     newarr = []
     for i in range(len(array)):
@@ -66,12 +69,39 @@ def selectionSort(array):
     return newarr
 ```
 
+另一种(from educative)更加选择排序一些：大O是n的平方级别
+
+```python
+def swap(array, firstIndex, secondIndex):
+  temp = array[firstIndex]
+  array[firstIndex] = array[secondIndex]
+  array[secondIndex] = temp
+
+  
+def indexOfMinimum(array, startIndex):
+  minValue = array[startIndex]
+  minIndex = startIndex
+
+  for i in xrange(minIndex + 1,len(array)):
+    if array[i] < minValue:
+      minIndex = i
+      minValue = array[i]
+  return minIndex
+
+
+def selectionSort(array):
+  for i in range(len(array)):
+    min_index = indexOfMinimum(array, i)
+    swap(array, i, min_index)
+  return array
+```
+
 
 ### 插入排序（Insertion sort）
 
 通过遍历数组，每次都对子数组的最后一个元素进行（和他之前的每个元素）比较操作，然后插入正确位置，最终得到结果。
 
-是一个稳定的排序算法（当出现相同元素的时候，排序后他们的相对位置不发生改变），时间复杂度是O(n)。
+是一个稳定的排序算法（当出现相同元素的时候，排序后他们的相对位置不发生改变），时间复杂度是O(n)。但是注意n的时间复杂度不是最坏的情况，最坏可能会是n方复杂度。
 
 ```python
 def insertionSort(arr):
@@ -81,6 +111,25 @@ def insertionSort(arr):
             arr[j + 1], arr[j] = arr[j], arr[j + 1]
             j -= 1
     return arr
+```
+
+将一部分代码分开的写法如下，看起来似乎比较好理解一点。
+
+```python
+def insert(array, rightIndex, value):
+  j = rightIndex
+  while j >= 0 and array[j] > value:
+    array[j + 1] = array[j]
+    j = j - 1
+  array[j + 1] = value
+
+def insertionSort(array):
+  for i in range(1, len(array)):
+    rightIndex = i - 1
+    value = array[i]
+    insert(array, rightIndex, value)
+  
+  return array
 ```
 
 ### 合并算法（Merge sort）

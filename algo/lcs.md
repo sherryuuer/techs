@@ -25,9 +25,86 @@ LCS算法的应用非常广泛，其中一些例子包括：
 
 **小感想**：
 
-动态规划这种题，一开始你解了几个泛用情况，你以为你会啦，不其实你还不会，今天感觉其实很多题你开始觉得会啦，然后改变了条件你又不会了，那你还是没会，哪里没会？？核心思想。比如动态规划你要去找子问题
+动态规划这种题，一开始你解了几个泛用情况，你以为你会了，不其实你还不会，今天感觉其实很多题你开始觉得会啦，然后改变了条件你又不会了，那你还是没会，哪里没会？？核心思想。比如动态规划你要去找子问题
 
-### 算法实现
+Python的算法实现：
+
+DFS：除了冗余的计算，这种方法如此清晰。因为通过dfsHelper的递归的部分，清晰地定义了小问题。
+
+```python
+# Time: O(2^(m + n), Space: O(m + n))
+def dfs(s1, s2):
+    return dfsHelper(s1, s2, 0, 0)
+
+def dfsHelper(s1, s2, i1, i2):
+    if i1 == len(s1) or i2 == len(s2):
+        return 0
+
+    if s1[i1] == s2[i2]:
+        return 1 + dfsHelper(s1, s2, i1 + 1, i2 + 1)
+    else:
+        return max(dfsHelper(s1, s2, i1 + 1, i2),
+                   dfsHelper(s1, s2, i1, i2 + 1))
+```
+
+一般来说这种问题有两个变量，改成Memoization问题也是两个变量，如果出现了三个变量的情况会使得情况变得非常复杂，并且是更难的问题，很少出现。将这两个变量放进一个cache中就是memoization的解法：
+
+```python
+# Time: O(n * m), Space: O(n + m)
+def memoization(s1, s2):
+    N, M = len(s1), len(s2)
+    cache = [[-1] * M for _ in range(N)]
+    return memoHelper(s1, s2, 0, 0, cache)
+
+def memoHelper(s1, s2, i1, i2, cache):
+    if i1 == len(s1) or i2 == len(s2):
+        return 0
+    if cache[i1][i2] != -1:
+        return cache[i1][i2]
+
+    if s1[i1] == s2[i2]:
+        cache[i1][i2] = 1 + memoHelper(s1, s2, i1 + 1, i2 + 1, cache)
+    else:
+        cache[i1][i2] = max(memoHelper(s1, s2, i1 + 1, i2, cache),
+                            memoHelper(s1, s2, i1, i2 + 1, cache))
+    return cache[i1][i2]
+```
+
+接着就是进化到动态规划的解法：
+
+```python
+# Time: O(n * m), Space: O(n + m)
+def dp(s1, s2):
+    N, M = len(s1), len(s2)
+    dp = [[0] * (M + 1) for _ in range(N + 1)]
+
+    for i in range(N):
+        for j in range(M):
+            if dp[i] == dp[j]:
+                dp[i + 1][j + 1] = 1 + dp[i][j]
+            else:
+                dp[i + 1][j + 1] = max(dp[i + 1][j], dp[i][j + 1])
+    return dp[N][M]       
+```
+
+优化的动态规划算法，将计算空间压缩为两行。
+
+```python
+# Time: O(n * m), Space: O(m)
+def optimizedDp(s1, s2):
+    N, M = len(s1), len(s2)
+    dp = [0] * (M + 1)
+
+    for i in range(N):
+        curRow = [0] * (M + 1)
+        for j in range(M):
+            if s1[i] == s2[j]:
+                curRow[j + 1] = 1 + dp[j]
+            else:
+                curRow[j + 1] = max(dp[j + 1], curRow[j])
+        dp = curRow
+    return dp[M]       
+```
 
 ### leetcode解析
 

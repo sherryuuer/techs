@@ -493,7 +493,7 @@ print(calculate_confidence_intervals(df, confidence = 0.9))
 
 因此，在假设检验中，我们的目标通常是通过样本数据来判断是否拒绝零假设，从而支持备择假设。如果样本数据提供足够的证据表明零假设不成立，我们就有理由拒绝零假设，接受备择假设。
 
-假设检验的基本步骤如下：
+**假设检验的基本步骤如下：**
 
 1. 提出假设：明确零假设和备择假设。
 2. 选择显著水平：通常用符号α表示，代表拒绝零假设的概率阈值。
@@ -1245,3 +1245,212 @@ print(f"RMSE: {mean_squared_error(y_test, predictions, squared = False):.0f}")
 这里的option使平方为false，可以求得开根的MSE也就是RMSE。
 
 其他概念包括数据分割，以及过拟合等不再赘述。
+
+### 回归分析：逻辑回归
+
+分类算法，比如垃圾邮件分类等。并且联想到神经网络的激活函数。
+
+逻辑回归（Logistic Regression）是一种统计学模型，用于预测事件发生的概率。它是一种广义的线性回归分析模型，但因变量是二分或多分类的离散变量。逻辑回归的基本思想是将事件发生的概率表示为一个自变量的线性函数。这个线性函数被称为逻辑函数（Logistic Function），其形状呈 S 形曲线。
+
+逻辑函数的表达式：
+```
+P(y = 1 | x) = 1 / (1 + exp(-(b0 + b1 * x)))
+```
+
+其中：
+
+* P(y = 1 | x) 表示事件发生的概率
+* x 表示自变量
+* b0 和 b1 表示参数
+
+b0 是截距，b1 是斜率。
+
+逻辑回归的模型可以表示为：
+```
+logit(P(y = 1 | x)) = b0 + b1 * x
+```
+
+其中：
+
+* logit(P(y = 1 | x)) 表示事件的对数几率（Log Odds）
+
+对数几率是事件发生的概率与不发生的概率之比的对数。逻辑回归的参数可以通过最大似然估计（MLE）方法进行估计。
+
+逻辑回归具有以下优点：
+
+* 易于理解和解释
+* 可以处理多分类问题
+* 可以用于预测
+
+逻辑回归在许多领域都有广泛的应用，例如：
+
+* 医学：预测疾病的发生风险
+* 金融：预测股票价格的走势
+* 市场营销：预测客户的购买行为
+
+以下是一些逻辑回归的应用示例：
+
+* 预测患者是否会患上某种疾病
+* 预测客户是否会购买某种产品
+* 预测学生是否会通过考试
+
+相关代码：
+
+```python
+# Logistic Regression
+model = sm.Logit(y_train, X_train).fit()
+print(model.summary())
+```
+对于分类问题的模型评估，一般使用混淆矩阵和classification报告。
+
+```python
+# Confusion Matrix
+from sklearn.metrics import confusion_matrix
+print(confusion_matrix(y_test, predictions))
+
+# Classification report
+from sklearn.metrics import classification_report
+print(classification_report(y_test, predictions))
+```
+垃圾分类问题的项目在project-drafts里有收录。
+
+**灵敏度（sensitivity）和特异性（specificity）**：
+
+灵敏度和特异度是两个重要的统计指标，常用于评估诊断测试的性能，例如医学检查、机器学习模型等。
+
+* 灵敏度，也称为召回率 (Recall)，指的是 **实际阳性** 被正确识别为阳性的比例。
+* 公式：灵敏度 = 真阳性 / (真阳性 + 假阴性)
+* 灵敏度越高，表示测试越能识别出所有患病者，**漏诊率越低**。
+* 特异度指的是 **实际阴性** 被正确识别为阴性的比例。
+* 公式：特异度 = 真阴性 / (真阴性 + 假阳性)
+* 特异度越高，表示测试越不会将健康人误判为患病，**误诊率越低**。
+
+示例：假设一个疾病的诊断测试有以下结果：
+
+* 真阳性：100 人
+* 假阳性：10 人
+* 假阴性：5 人
+* 真阴性：985 人
+
+那么，该测试的灵敏度和特异度分别为：
+
+* 灵敏度 = 100 / (100 + 5) = 95.24%
+* 特异度 = 985 / (985 + 10) = 98.99%
+
+灵敏度和特异度通常是相互制约的。提高灵敏度往往会降低特异度，反之亦然。
+
+* 在某些情况下，例如癌症筛查，灵敏度更为重要，因为漏诊可能会导致严重后果。
+* 在其他情况下，例如疾病确诊，特异度更为重要，因为误诊可能会导致不必要的治疗和焦虑。
+
+灵敏度和特异度是评估诊断测试性能的重要指标。选择合适的指标需要根据具体的应用场景和需求进行权衡。
+
+PS：使用逻辑回归模型进行了泰坦尼克号生存分析项目。
+
+### Cox比例风险回归（Cox Proportional Hazards Regression）
+
+是一种用于生存分析的统计方法，常用于研究时间相关的事件，如患病、死亡或失败等。这种方法允许我们探索不同因素对事件发生的影响，并评估它们的相对风险或风险比例。
+
+在Cox比例风险回归中，我们关注的是事件发生的概率（或者称为风险）随时间的变化。它假设了危险函数（Hazard Function）是一个未知的函数，但不同个体之间的危险函数之间的比例关系是固定的。这意味着即使时间的变化，不同个体之间的风险比例保持不变。
+
+**生存曲线**：
+
+生存曲线（Survival Curve）是生存分析中常用的一种图形表示方法，用于描述在给定时间范围内，个体生存下来的概率随时间的变化情况。它显示了在不同时间点上个体存活的比例或概率。
+
+通常情况下，生存曲线是一个递减的曲线，因为随着时间的推移，个体发生事件（如死亡、失败等）的风险逐渐增加。曲线的横轴表示时间，纵轴表示生存概率。生存曲线的形状可以提供关于事件发生和生存时间之间的信息。
+
+在绘制生存曲线时，通常采用Kaplan-Meier方法或Cox比例风险模型等生存分析方法进行估计。这些方法可以考虑到观测到的事件时间以及事件之间的间隔，并生成对事件发生概率的估计。生存曲线的特点可以帮助研究人员理解不同因素对生存时间的影响，以及不同个体之间的生存差异。
+
+使用python进行生存分析的库：lifelines，用于建模和分析生存数据。 它提供了许多用于生存分析的工具，包括Kaplan-Meier 生存曲线、Cox 比例风险模型、Aalen 加法风险模型等。
+
+这段代码使用了 lifelines 库进行生存分析：
+
+```python
+from lifelines.statistics import logrank_test
+from lifelines import KaplanMeierFitter, CoxPHFitter
+from lifelines.utils import concordance_index
+```
+这部分代码导入了 lifelines 库中的一些功能，包括 logrank_test 用于执行对数秩检验、KaplanMeierFitter 和 CoxPHFitter 用于拟合 Kaplan-Meier 和 Cox 比例风险模型，以及 concordance_index 用于计算 C-index。
+
+```python
+# KME
+model = KaplanMeierFitter()
+model.fit(durations=df.time, event_observed=df.status)
+model.event_table.head()
+
+# Calculate the survival probability at specific times
+specific_times = [30, 90, 180, 360, 720, 1080]
+model.predict(specific_times)
+```
+这部分代码拟合了 Kaplan-Meier 生存曲线模型，并在特定时间点计算了生存概率。首先，创建了一个 KaplanMeierFitter 的对象 model，并使用 fit 方法拟合了模型，传入了时间数据 df.time 和事件观察数据 df.status。然后，使用 predict 方法在指定的特定时间点 specific_times 计算了生存概率。
+
+```python
+# Visualization - Survival curve
+model.plot()
+plt.title("Kaplan Meier Survival Curve")
+plt.xlabel("Days")
+plt.ylabel("Survival probability")
+plt.show()
+
+# Visualization - Survival curve
+model.plot_cumulative_density()
+plt.title("Kaplan Meier Cumulative Survival Curve")
+plt.xlabel("Days")
+plt.ylabel("Cumulative survival probability")
+plt.show()
+```
+这部分代码绘制了 Kaplan-Meier 生存曲线的可视化图形。首先，使用 plot 方法绘制了生存曲线图，设置了图形的标题、横轴标签和纵轴标签。然后，使用 plot_cumulative_density 方法绘制了累积生存曲线图，同样设置了图形的标题、横轴标签和纵轴标签。
+
+```python
+# Log Rank Test
+results = logrank_test(durations_A=male.time,
+                       durations_B=female.time,
+                       event_observed_A=male.status,
+                       event_observed_B=female.status)
+
+p_value_reader(results.p_value, 0.05)
+```
+这部分代码执行了对数秩检验（Log Rank Test），用于比较两组个体的生存曲线是否存在显著差异。其中，durations_A 和 durations_B 分别是两组个体的时间数据，event_observed_A 和 event_observed_B 分别是两组个体的事件观察数据。通过观察P值，判断是否拒绝零假设，如果拒绝，则说明有显著差异。反之则不能。
+
+```python
+# CPH model
+model = CoxPHFitter()
+model.fit(train_df, duration_col="time", event_col='status')
+model.print_summary()
+
+# Visualizing the coefficients
+model.plot()
+plt.title("CPH coefficients")
+plt.show()
+```
+这部分代码拟合了 Cox 比例风险模型（Cox Proportional Hazards Model）。首先，创建了一个 CoxPHFitter 的对象 model，并使用 fit 方法拟合了模型，传入了训练数据 train_df，其中包括时间列名为 "time" 和事件列名为 "status"。然后，使用 print_summary 方法打印了模型的摘要信息。最后，使用 plot 方法可视化了模型的系数。
+
+这段代码利用了 lifelines 库中的 `concordance_index` 函数来计算C-index（一致性指数），用于评估生存模型的预测性能：
+
+```python
+concordance_index_value = concordance_index(val_time, -predicted_hazard, val_status)
+```
+
+在这行代码中，我们调用了 `concordance_index` 函数来计算C-index。函数的参数包括：
+- `val_time`：验证集中观察到的事件发生时间。
+- `-predicted_hazard`：负的预测风险值，通常是模型预测的事件发生概率或风险分数。注意，这里取负值是因为 lifelines 中的 `concordance_index` 函数假设越大的值对应着更高的风险，而一般情况下，生存模型的预测值越小代表着更高的风险，因此需要取负值来满足该假设。
+- `val_status`：验证集中观察到的事件状态，通常是一个二进制变量，表示事件是否发生。例如，1表示事件发生，0表示事件未发生。
+
+```python
+print(f"The C-index is {concordance_index_value}")
+```
+
+最后，这行代码打印了计算得到的C-index值。C-index是一个介于0和1之间的值，越接近1表示模型预测的风险排序与实际观察到的风险排序越一致，模型的预测性能越好。
+
+**使用场景**：
+
+考克斯风险回归分析（Cox Proportional Hazards Regression Analysis）适用于研究时间相关的事件发生与时间、个体特征和其他协变量之间的关系。具体来说，它适用于以下类型的问题：
+
+1. **生存分析问题：** 考克斯风险回归分析最常用于生存分析问题，如医学、流行病学和生物统计学中的生存数据分析。例如，研究疾病患者的存活时间与治疗方案、生活习惯和基因型之间的关系。
+
+2. **事件时间预测问题：** 当我们希望预测时间相关事件的发生时间，并探索其与其他因素之间的关系时，考克斯风险回归分析也是一个合适的工具。例如，预测产品或设备的故障时间，并研究与故障相关的因素。
+
+3. **风险因素分析：** 考克斯风险回归分析可以用于确定影响事件发生的风险因素，并评估它们之间的相对影响。这在流行病学研究中特别有用，例如确定疾病的危险因素或死亡的危险因素。
+
+4. **治疗效果评估：** 考克斯风险回归分析可以用于评估治疗或干预措施对事件发生的影响。例如，评估新药物对患者生存时间的影响，或评估手术治疗对患者术后并发症发生率的影响。
+
+总的来说，考克斯风险回归分析适用于研究时间相关事件的发生与时间、个体特征和其他协变量之间的关系，并且可以应用于生存分析、事件时间预测、风险因素分析和治疗效果评估等不同类型的问题。

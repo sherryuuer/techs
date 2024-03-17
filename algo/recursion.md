@@ -12,7 +12,7 @@
 
 ### 什么是递归思想
 
-当我们说 "递归算法" 时，通常指的是一个函数在解决问题的过程中调用自身的一种技巧。递归算法涉及到将一个大问题拆分为更小的相似子问题，通过解决这些子问题最终得到整个问题的解。
+当我们说 "递归算法" 时，通常指的是一个函数在解决问题的过程中调用自身的一种技巧。递归算法涉及到将一个大问题拆分为更小的相似**子问题**，通过解决这些子问题最终得到整个问题的解。解决的是子问题也就是更小的问题这件事，比较重要，也就是每次都要更靠近base case一些，不然如果整个过程不断增大，是永远不可能得到最终结果的。
 
 递归函数通常有两部分：
 
@@ -36,6 +36,17 @@ def factorial(n):
 
 ```
 
+不使用递归的方法：
+
+```python
+def factorial(n):
+    result = 1
+    if n >= 1:
+        for i in range(1, n + 1):
+            result *= i
+    return result
+```
+
 ### 斐波那契递归
 
 ```python
@@ -48,4 +59,52 @@ def fibonacci(n):
     # Recursive case: fib(n) = fib(n - 1) + fib(n - 2)
     return fibonacci(n - 1) + fibonacci(n - 2)
 
+```
+
+### 使用递归解决回文判断问题
+
+一样可以将大问题分为小问题。
+
+基本情况是如果只有一个字母或者没有字母，为真。如果收尾不相等，为假。然后不断剥离首尾，判断子字符是否是回文即可。经典！
+
+```python
+def isPalindrome(str):
+  # base case #1
+  if len(str) == 0 or len(str) == 1:
+    return True
+
+  # base case #2
+  if str[0] != str[len(str) - 1]:
+    return False
+    
+  # recursive case
+  return isPalindrome(str[1: len(str) - 1])
+```
+
+### 使用递归解决power指数运算问题
+
+四个情况的解释：很棒
+
+- 如果n为0，则结果一定为1
+- 如果n为负数，则结果为1/x^(-n)
+- 如果n为偶数，则结果为x^(n/2)*x^(n/2)
+- 如果n为奇数，则结果为x*x^(n-1)
+
+```python
+def power(x, n):
+  # base case
+  if n == 0:
+    return 1
+  
+  # recursive case: n is negative
+  if n < 0:
+    return 1 / power(x, -1 * n)
+
+  # recursive case: n is odd
+  if n % 2 == 0:
+    return power(x, n / 2) * power(x, n / 2)
+
+  # recursive case: n is even
+  if n % 2 != 0 :
+    return power(x, n - 1) * x
 ```
