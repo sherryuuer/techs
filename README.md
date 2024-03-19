@@ -26,6 +26,7 @@
 - [回溯算法：排列](algo/combinations.md)
 - [回溯算法：组合](algo/permutations.md)
 - [树图算法：深度优先和广度优先算法](algo/dfsbfs.md)
+- [树图算法：深度优先搜索](algo/dfs.md)
 - [哈希结构：Python代码实现](algo/hash.md)
 - [图结构：矩阵和邻接表的DFS和BFS](algo/graphs.md)
 - [图算法：最短路径Dijkstra](algo/dijkstra.md)
