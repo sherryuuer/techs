@@ -62,7 +62,7 @@
 - [CNN：ResNet和ImageNet超大数据集](ml/resnet.md)：初步整理结束
 - [RNN：循环神经网络](ml/rnn.md)
 - [生成式AI：Transformer模型](ml/generativeai.md)
-- [Scikit-learn建模学习](ml/scikit-learn-data-modeling.md)
+- [Scikit-learn建模学习:回归，分类，调参，聚类](ml/scikit-learn-data-modeling.md)
 
 ## Python and Math
 

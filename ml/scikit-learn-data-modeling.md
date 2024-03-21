@@ -1,4 +1,4 @@
-## 使用Scikit-learn进行建模学习（Educative）
+## 使用Scikit-learn进行建模学习：回归，分类，调参，聚类
 
 ---
 
@@ -544,4 +544,33 @@ print(f'{repr(dbscan.labels_)}\n')
 print(f'{repr(dbscan.core_sample_indices_)}\n')
 num_core_samples = len(dbscan.core_sample_indices_)
 print(f'Num core samples: {num_core_samples}\n')
+```
+
+### 十四，聚类算法评估指标：ARI和AMI
+
+这两个指标用法很相似，ARI是调整后的兰德指数（adjusted Rand index），AMI是调整后的互信息（adjusted mutual information）。
+
+他们用来衡量两个聚类结果的相似度，标准在 -1 到 1 之间。0 代表具有随机性，-1 代表完全不相似，1 代表完美分类。并且它具有对称性，就是说作为参数的时候，真实标签和预测标签的顺序没所谓，得到的结果是一样的。
+
+另外即使改变了标签的名称，也不会影响结果，比如[0, 0, 0, 1, 1, 1]和[1, 1, 1, 3, 3, 3]这两个就是完美分类，结果应该是1。
+
+在sklearn中有相对应的metric可用。
+
+```python
+from sklearn.metrics import adjusted_rand_score
+from sklearn.metrics import adjusted_mutual_info_score
+true_labels = np.array([0, 0, 0, 1, 1, 1])
+pred_labels = np.array([0, 0, 1, 1, 2, 2])
+ari = adjusted_rand_score(true_labels, pred_labels)
+ami = adjusted_mutual_info_score(true_labels, pred_labels)
+```
+
+### 十五，特征聚类：feature clustering
+
+聚类算法还可以进行将维。使用特征聚类，可以将相似的特征归为一类达到降维的目的。属于数据处理的一部分了。
+
+```python
+from sklearn.cluster import FeatureAgglomeration
+agg = FeatureAgglomeration(n_clusters=2)
+new_data = agg.fit_transform(data)
 ```

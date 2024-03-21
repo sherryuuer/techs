@@ -127,6 +127,48 @@ Document 自动执行功能是我觉得亮眼的功能。
 
 **Cloud Watch**
 
+可以使用**Cloud Watch Log insights**进行日志分析。注意这只是一个query引擎而不是一个即时流，如果想要将log流处理需要用**CloudWatch Log Subscriptions**的filter功能将日志不断传入其他服务进行处理，分析，存储。它还可以整合不同区域的日志，将他们聚合起来。那么既然它是一个订阅服务，就需要有起点和目的地账户，并且需要在账户之间设置policy，以供分发和接收。尤其是接收端的权限放行。
+
+可以通过设置metric的阈值（可以进行条件的组合比如AND，OR等，很灵活）发出alarm，可执行的动作，包括对EC2的启动关闭等操作，对Auto Scaling对扩张收缩，以及使用SNS发出通知等。
+
+**Amazon EventBridge**（以前叫做CloudWatch Events）
+
+**Amazon Athena**
+
+**AWS CloudTrail**
+
+包括管理事件，数据事件等，以及CloudTrail Insights，log保留90天，那之后需要存入S3。
+
+QuickSight访问S3的时候如果缺少权限，可能是对KMS进行解码的权限。
+
+可以集成EventBridge在遇到非法API操作的时候，发送SNS通知。和CloudWatch的metric filter一起使用可以更好地过滤日志，联动SNS通知。
+
+可以进行组织organization层面的Trail收集。
+
+**AWS Macie**
+
+通过机器学习查找到S3中的敏感信息主要是个人识别信息PII，然后通过EventBridge进行通知等。
+
+可以自定义正则化表达式进行匹配。还可以设置allow list允许某些信息。适用于组织。
+
+**S3 Notifications**
+
+有两种方式可以实现S3的通知，一种是Event Notifications，可以设置Object动作，以及后续的SNS，SQS，或者Lambda。另一种是Amazon EventBridge，将所有的通知发送到EB以供后续的动作。
+
+**VPC Flow Logs**
+
+**VPC Traffic Mirroring**
+
+可以实时将一个或者多个EC2的网络流量日志，同时进行过滤，和发送到其他的服务比如NLB，以方便分析。
+
+**VPC Network Access Analyzer**
+
+分析网络进出是否合规。可以自定义规则access scope。
+
+**Route53 Resolver Query Logging**
+
+**OpenSearch**
+
 ### 3 - Infrastructure Security
 
 **Bastion Hosts**
