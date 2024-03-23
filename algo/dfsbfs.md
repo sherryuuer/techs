@@ -129,6 +129,18 @@ class Graph:
 
         dfs_recursive(start)
 
+    def dfs(self, start):
+        visited = set()
+        stack = [start]
+
+        while stack:
+            node = stack.pop()
+            if node not in visited:
+                print(node, end=' ')
+                visited.add(node)
+                # 将邻居节点逆序压入栈中，保持深度优先搜索的顺序
+                stack.extend(reversed(self.graph.get(node, [])))
+
     def bfs(self, start):
         visited = set()
         queue = deque([start])

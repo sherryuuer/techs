@@ -28,6 +28,7 @@
 - [树图算法：深度优先和广度优先算法](algo/dfsbfs.md)
 - [树图算法：深度优先搜索](algo/dfs.md)
 - [哈希结构：Python代码实现](algo/hash.md)
+- [哈希结构：hashmap的相关问题](algo/hashmap.md)
 - [图结构：矩阵和邻接表的DFS和BFS](algo/graphs.md)
 - [图算法：最短路径Dijkstra](algo/dijkstra.md)
 - [图算法：最小生成树Prim&Kruskal](algo/prim-kruskal.md)
@@ -48,9 +49,10 @@
 - [评估方法：混淆矩阵family](ml/confusion-matrix.md)
 - [PCA：降维算法原理学习](ml/pca.md)
 - [Kaggle王者算法：XGBoost](ml/xgboost.md)
+- [神经网络：从维度的角度重新解构](ml/nn-the-dim.md)
 - [Tensorflow解决数据分类问题](ml/tensorflow-classification.md)
 - [Tensorflow计算机视觉问题](ml/tensorflow-cv.md)：还在整理中，课程中的代码还未整理完
-- [Tensorflow自然语言处理和文本分类：使用kaggle的入门级项目进行文本分类的学习](ml/tensorflow-nlp.md)：正在整理中，课程中的代码整理到一半
+- [Tensorflow自然语言处理和文本分类：使用kaggle的入门级项目进行文本分类的学习](ml/tensorflow-nlp.md)：正在整理中
 - [NLP：词嵌入WordEmbeddings](ml/wordembeddings.md)：需要再次学习
 - [NLP：LSTM语言模型构架](ml/lstm-llm.md)：需要再次进行学习和删减
 - [NLP：文本分类的原理和实现](ml/text-classification.md)：需要再次进行学习和删减

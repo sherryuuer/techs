@@ -57,7 +57,7 @@
 
 ---
 
-在 AWS 中，你可以使用以下服务和功能来应对各种安全威胁：
+在 AWS 中，可以使用以下服务和功能来应对各种安全威胁：
 
 1. **数据泄露**：
    - 使用 AWS IAM 和 AWS KMS 管理和控制对存储在云中的数据的访问权限。
@@ -98,7 +98,7 @@
 以上列出的 AWS 服务和功能只是一部分可以用来应对各种安全威胁的示例。实际上，AWS 提供了更多的安全工具和功能，组合使用可以帮助用户建立高度安全的云环境，并保护其数据和应用程序不受安全威胁的影响。
 
 ---
-一共包括六个板块：
+安全服务一共包括六个板块：
 
 ### 1 - Treat detection and Incident response
 
@@ -212,8 +212,56 @@ web application firewall.layer 7.用于第七层的漏洞滤网。
 
 **Shield**
 
-防止DDoS攻击的。
+防止DDoS攻击的。星际攻击防卫战。
 
 **WAF & Shield & Firewall manager**
 
 将各种防火墙服务在一处管理，可以一次性统一部署在许多账户。
+
+**API Gateway**
+
+包括一个API应有的所有功能。
+
+构架上来说：
+
+- 比如后面可以坐落一个LambdaFunction来被invoke，作为API的后端。
+- 可以有一个http端点，这个端点可以是一个本地的服务器，也可以是一个ALB，所有可以成为http端点的东西。
+- 或者后面可以坐落很多的AWS服务。比如后面可以有一个kinesis服务，让客户端进行更新推送。所以理论上可以通过API网关暴露你的所有服务。
+
+安全认证方法：
+
+- 内部用户可以使用IAM认证。
+- 外部用户可以使用Conito服务。
+- 还可以使用custom logic authorizer创建自己的认证方法。
+
+HTTPS安全Custom domain name使用ACM（aws certification manager）：全球边缘优化管理，认证需要使用美国东部的region，如果是region endpoint，需要和api网关同一个区域设置。另外还需要在Route53中设置cname和A-alias。
+
+学习笔记：
+
+通过一个hands-on让我再次重新理解了API网关。它就像是在服务外面套了一层膜，让我们通过一个link的呼出，就能得到那个膜背后的信息。仅此而已。在发布API的时候设置的一个stage可以是开发产品环境的名字，也可以是version的名字，这就是我们经常说的版本号码。
+
+API的安全问题：可以在resource policy中设置access condition来限制公共访问。而私有API必须通过特定的VPC源（VPC interface endpoint）进行访问，这是一个设置的条件。而在**两个VPC环境**中进行私有访问，不需要进行vpc peering，而同样是在一个中设置vpc interface endpoint在另一个中设置policy条件即可。
+
+一些启发：学习云的好处就是可以通过这些服务的学习，作为一些接口，然后理解整个IT的底层原理，只要有心的话，可以通过不断挖掘，深挖知识点，加深对整个系统的理解，这个系统包括计算机系统，网络构架系统等。
+
+**AWS Artifact**
+
+下载安全合规文档和报告等地方。可以说不算是一个服务。
+
+**Route53**dns服务
+
+DNS中毒：是一种IP攻击手段，因为我们使用udp协议从服务器取得网址，udp在安全上比较薄弱，使得黑客可以替换正确的ip导致我们点击错误的网站。
+
+DNSSEC是针对这一问题的安全手段。他是DNS安全扩展，是一种协议。
+
+**AWS Network Firewall**
+
+防火墙是一种对VPC全方位的保护，想象它就在VPC的周围环绕。控制任何的网络进出，包括peering vpc和本地vpn连接。可以进行流量过滤和检查。
+
+一种构架：对防火墙的rule group进行审查可以使用GuardDuty，将finding的结果发送到Security Hub，当发现异常，可以通过Eventbridge启动StepFunction进行后续的操作（对防火墙增加规则，屏蔽IP，SNS通知等）。
+
+防火墙还支持，通过ACM进行的流量加密。
+
+**Amazon SES**
+
+### 4 - Identity and Access Manager
