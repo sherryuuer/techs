@@ -265,3 +265,7 @@ DNSSEC是针对这一问题的安全手段。他是DNS安全扩展，是一种�
 **Amazon SES**
 
 ### 4 - Identity and Access Manager
+
+**IAM Policy**
+
+用json格式定义的各种规则。

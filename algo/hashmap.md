@@ -154,3 +154,52 @@ class RequestLogger:
 ```
 
 学习笔记：在计算中因为使用了hashmap，所以时间复杂度只有O(1)，空间复杂度，因为将所有的n个消息存储在表中，所以为O(n)。
+
+### 问题3:Next Greater Element
+
+是一道经典的算法问题。题中给出两个数组，nums1，和nums2，第一个数组是第二个数组的子集。要求返回一个ans结果，它和nums1的长度一致，每一个元素是对应的nums1中的元素，在nums2中的同一个元素的右侧的第一个最大值。
+
+举个例子：
+
+```
+nums1 = [5, 4, 7]
+nums2 = [4, 5, 7, 3]
+```
+那么对应的输出结果就是：[7, 5, -1]
+
+第一个元素 5 对应的在第二个数组中右侧第一个最大的是 7，第二个元素 4 对应的在第二个数组中右侧第一个最大的是 5，第三个元素 7 由于在第二个数组中右侧没有比自己大的，所以返回 -1。
+
+解题思路：
+
+- 创建一个空的 stack 和一个空的 hashmap。
+- 遍历第二个数组，对于每一个元素都和栈顶的元素进行比较（这里是一个while循环，因为遍历的当前元素可以是 stack 中多个元素的右侧最大值）。如果该元素大于栈顶的元素，弹出栈顶元素作为 key，当前元素作为 value，推进 hashmap。
+- 将当前元素加入栈顶。
+- 重复上述步骤结束遍历后，检查 stack 中剩余的元素，将他们的作为 key，value 为 -1 加入hashmap。
+- 遍历第一个数组，从hashmap中取出结果即可。
+
+代码尝试：
+
+```python
+def next_greater_element(nums1, nums2):
+    stack = []
+    hashmap = {}
+    ans = []
+    
+    for num in nums2:
+        while stack and num > stack[-1]:
+            hashmap[stack.pop()] = num
+        stack.append(num)
+    
+    while stack:
+        hashmap[stack.pop()] = -1
+
+    for num in nums1:
+        ans.append(hashmap[num])
+
+    return ans
+```
+通过测试。
+
+学习笔记：参考答案和自己写的基本没差异，就不贴了。时间复杂度上来说，经历了三次遍历，所以加起来是O(n)线性时间复杂度。空间复杂度上因为使用了两个容器，长度不会超过 n 所以空间复杂度也为O(n)。
+
+另外这道题是用了两个数组，原题其实可以是一个数组，找到每个元素右侧的最大元素。这道题还可以用反向遍历的方法，省掉一个 hashmap 的空间，直接在结果列表上进行操作。但是使用 hashmap 的好处就在于容易明白，所以暂且抛去不谈。
