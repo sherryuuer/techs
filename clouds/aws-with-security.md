@@ -269,3 +269,130 @@ DNSSEC是针对这一问题的安全手段。他是DNS安全扩展，是一种�
 **IAM Policy**
 
 用json格式定义的各种规则。
+
+判定逻辑：首先所有的action是被隐式拒绝的。
+```
+没有显式deny(no explicit deny) 
+--> 组织SCP为allow: allow on organization scps level 
+--> 基于资源的许可allow: allow on resource based policy
+--> 基于认证的许可allow: allow on identity based policy
+--> 边界许可allow: allow on IAM permission boundaries
+--> session策略是否许可: allow on session policy
+--> 许可: finally allow
+```
+IAM role：即使是跨账户也可以轻松使用的好功能。是给用户或者应用的临时权限，会随着时间的推移而过期。当要授予一个服务角色的时候，需要先给一个user这种权限，iam:Passrole权限，然后才可以由特定的user进行角色授予。
+
+ABAC：Attribute based access control：基于tag的控制，比如都打有同样标签的user对同样标签的资源进行访问。这可以轻松地扩展资源。基于角色的权限-RBAC（role based access control）在增加资源的时候可能需要手动更新权限。
+
+**STS**:security token service
+
+安全令牌服务，一种临时权限。用户向STS（还有一个服务cognit）发送一个AssumeRoleAPI请求一个临时认证（认证会去IAMpolicy确认可不可以授权）后才可以得到临时的role进行访问。
+
+使用AWSRevokeOlderSessionPolicy可以让老的session在一定时间后失效，这可以让token权限定时过期。
+
+**SCP的相关Policy示例**
+
+限制EC2type的权限：
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "RequireMicroInstanceType",
+      "Effect": "Deny",
+      "Action": "ec2:RunInstances",
+      "Resource": [
+        "arn:aws:ec2:*:*:instance/*"
+      ],
+      "Condition": {
+        "StringNotEquals": {
+          "ec2:InstanceType": "t2.micro"
+        }
+      }
+    }
+  ]
+}
+```
+
+为全球服务豁免。因为全球服务只在 us-east-1 区域提供，所以当要限制某个区域的服务时，在 NotAction 中列出这些全球服务，就可以正常使用了。
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "DenyAllOutsideEU",
+            "Effect": "Deny",
+            "NotAction": [
+                "a4b:*",
+                "acm:*",
+                "aws-marketplace-management:*",
+                "aws-marketplace:*",
+                "aws-portal:*",
+                "budgets:*",
+                "ce:*",
+                "chime:*",
+                "cloudfront:*",
+                "config:*",
+                "cur:*",
+                "directconnect:*",
+                "ec2:DescribeRegions",
+                "ec2:DescribeTransitGateways",
+                "ec2:DescribeVpnGateways",
+                "fms:*",
+                "globalaccelerator:*",
+                "health:*",
+                "iam:*",
+                "importexport:*",
+                "kms:*",
+                "mobileanalytics:*",
+                "networkmanager:*",
+                "organizations:*",
+                "pricing:*",
+                "route53:*",
+                "route53domains:*",
+                "s3:GetAccountPublic*",
+                "s3:ListAllMyBuckets",
+                "s3:PutAccountPublic*",
+                "shield:*",
+                "sts:*",
+                "support:*",
+                "trustedadvisor:*",
+                "waf-regional:*",
+                "waf:*",
+                "wafv2:*",
+                "wellarchitected:*"
+            ],
+            "Resource": "*",
+            "Condition": {
+                "StringNotEquals": {
+                    "aws:RequestedRegion": [
+                        "eu-central-1",
+                        "eu-west-1"
+                    ]
+                },
+                "ArnNotLike": {
+                    "aws:PrincipalARN": [
+                        "arn:aws:iam::*:role/Role1AllowedToBypassThisSCP",
+                        "arn:aws:iam::*:role/Role2AllowedToBypassThisSCP"
+                    ]
+                }
+            }
+        }
+    ]
+}
+```
+
+**IMDS**
+
+EC2 instance metadata service。提供服务器的元数据。（hostname, instance type, networking settings...）
+
+http://169.254.169.254/latest/meta-data 是每个服务器的endpoint。以键值对的方式，方便进行自动化的设置。这个取得方法是第一个版本，它不使用Token，在 CW 中也可以监控到这个的使用 ：MetadataNoToken 指标。
+
+但是不推介第一个版本，第二个版本更安全，分为两步：
+
+- 首先使用 Header 和 PUT 取得 Session Token。`token = 'cur xxx'; cur xxx -H`
+- 然后使用 Session Token call IMDSv2，并且使用 Header。
+
+
