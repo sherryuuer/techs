@@ -56,7 +56,7 @@ def is_isomorphic(string1, string2):
     return True
 ```
 
-题解给出的答案我很喜欢感觉很清晰：先进性两个判断，然后再添加，这样思路很清晰。
+题解给出的答案我很喜欢感觉很清晰：先进行两个判断，然后再添加，这样思路很清晰。
 
 ```python
 def is_isomorphic(string1, string2):

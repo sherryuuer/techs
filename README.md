@@ -1,12 +1,7 @@
 ## Algorithms & data structure
 
-- [数组结构：静态动态数组和堆栈](algo/arrays.md)
-- [数组结构：栈数据结构stack](algo/stack.md)
-- [数组算法：Kadane算法](algo/kadane.md)
-- [数组算法：滑动窗口](algo/sliding-window.md)
-- [数组算法：双指针](algo/two-pointers.md)
-- [数组算法：前缀和](algo/prefix-sums.md)
-- [数组算法：二分查找](algo/binarysearch.md)
+- 数组结构：[静态动态数组和堆栈](algo/arrays.md) | [栈数据结构stack](algo/stack.md)
+- 数组算法：[Kadane算法](algo/kadane.md) | [滑动窗口](algo/sliding-window.md) | [双指针](algo/two-pointers.md) | [前缀和](algo/prefix-sums.md) | [二分查找](algo/binarysearch.md)
 - [链表结构：单链双链和队列](algo/linkedlist.md)
 - [链表结构：反转单链表及其变体问题](algo/reverse-linkedlist.md)
 - [链表算法：快慢指针](algo/fast-slow-pointers.md)
@@ -27,8 +22,7 @@
 - [回溯算法：组合](algo/permutations.md)
 - [树图算法：深度优先和广度优先算法](algo/dfsbfs.md)
 - [树图算法：深度优先搜索](algo/dfs.md)
-- [哈希结构：Python代码实现](algo/hash.md)
-- [哈希结构：hashmap的相关问题](algo/hashmap.md)
+- 哈希结构：[Python代码实现](algo/hash.md) | [hashmap的相关问题](algo/hashmap.md) | [hashmap_tracking的相关问题](algo/hashmap_tracking.md)
 - [图结构：矩阵和邻接表的DFS和BFS](algo/graphs.md)
 - [图算法：最短路径Dijkstra](algo/dijkstra.md)
 - [图算法：最小生成树Prim&Kruskal](algo/prim-kruskal.md)
@@ -49,7 +43,7 @@
 - [评估方法：混淆矩阵family](ml/confusion-matrix.md)
 - [PCA：降维算法原理学习](ml/pca.md)
 - [Kaggle王者算法：XGBoost](ml/xgboost.md)
-- [神经网络：从维度的角度重新解构](ml/nn-the-dim.md)
+- 神经网络：[从维度的角度重新解构](ml/nn-the-dim.md) | [优化算法](ml/nn-optimizer.md) | [激活函数](ml/nn-activation.md)
 - [Tensorflow解决数据分类问题](ml/tensorflow-classification.md)
 - [Tensorflow计算机视觉问题](ml/tensorflow-cv.md)：还在整理中，课程中的代码还未整理完
 - [Tensorflow自然语言处理和文本分类：使用kaggle的入门级项目进行文本分类的学习](ml/tensorflow-nlp.md)：正在整理中
@@ -59,6 +53,7 @@
 - [Pytorch初见就有点爱](ml/pytorch-firsttime.md)：继续学习和扩充内容，尤其是代码模板部分
 - [Pytorch框架模板](ml/pytorch-template.md)：初步整理了一种模板
 - [迁移学习：站在巨魔的肩膀上](ml/transfer-learning.md)：继续学习和扩充内容
+- [CNN：Pytorch图像预处理ImageFolder解析](ml/pytorch-imagefolder.md)
 - [CNN：卷积神经网络](ml/cnn.md)：还在不断学习，不断补充
 - [CNN：SqueezeNet和CIFAR10数据集](ml/squeezenet.md)：还需要再次学习
 - [CNN：ResNet和ImageNet超大数据集](ml/resnet.md)：初步整理结束
