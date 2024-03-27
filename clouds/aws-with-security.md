@@ -395,4 +395,14 @@ http://169.254.169.254/latest/meta-data 是每个服务器的endpoint。以键�
 - 首先使用 Header 和 PUT 取得 Session Token。`token = 'cur xxx'; cur xxx -H`
 - 然后使用 Session Token call IMDSv2，并且使用 Header。
 
+**S3和对象的跨账户访问权限**
 
+判断一个用户是否可以access一个S3bucket里的object的时候，首先判断user是否有IAM权限，然后是BucketPolicy是否显式拒绝访问，最后是要访问的object是否对用户开放访问（ACL：access control lists，这个现在已经被弃用，但是可以设置开启，但是也可以手动开启：Onwer Enforced setting = Disabled）。
+
+BucketPolicy的访问权限一般是对S3桶资源。Object对访问权限，一般是在arn对url后面有一个*符号表示是bucket内的资源。
+
+跨账户的S3资源访问的方法：一个是使用IAM的user权限和对象账户的BucketPolicy的许可权，另一个是IAM Role访问。
+
+总之S3的访问权涉及一个用户本身的认证和一个Bucket的Policy。原本还有一个ACL是针对桶里的对象的，但是它会让事情变得复杂，比如A自己的桶别人放的文件反而桶的所有者不能访问，需要很复杂的设定，所以ACL被弃用了。
+
+S3的access point：针对桶中的不同文件夹，可以根据文件夹的名字prefix设置不同的访问策略，更灵活地控制访问权。
