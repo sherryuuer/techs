@@ -43,7 +43,7 @@
 - [评估方法：混淆矩阵family](ml/confusion-matrix.md)
 - [PCA：降维算法原理学习](ml/pca.md)
 - [Kaggle王者算法：XGBoost](ml/xgboost.md)
-- 神经网络：[从维度的角度重新解构](ml/nn-the-dim.md)，[优化算法](ml/nn-optimizer.md)，[激活函数](ml/nn-activation.md)
+- 神经网络：[从维度的角度重新解构](ml/nn-the-dim.md)，[优化算法的进化](ml/nn-optimizer.md)，[激活函数](ml/nn-activation.md)
 - [Tensorflow解决数据分类问题](ml/tensorflow-classification.md)
 - [Tensorflow计算机视觉问题](ml/tensorflow-cv.md)：还在整理中，课程中的代码还未整理完
 - [Tensorflow自然语言处理和文本分类：使用kaggle的入门级项目进行文本分类的学习](ml/tensorflow-nlp.md)：正在整理中
@@ -53,8 +53,8 @@
 - [Pytorch初见就有点爱](ml/pytorch-firsttime.md)：继续学习和扩充内容，尤其是代码模板部分
 - [Pytorch框架模板](ml/pytorch-template.md)：初步整理了一种模板
 - [迁移学习：站在巨魔的肩膀上](ml/transfer-learning.md)：继续学习和扩充内容
+- CNN：[卷积神经网络](ml/cnn.md)，[深入构架，空间正规化，防过拟合](ml/cnn-arch.md)
 - [CNN：Pytorch图像预处理ImageFolder解析](ml/pytorch-imagefolder.md)
-- [CNN：卷积神经网络](ml/cnn.md)：还在不断学习，不断补充
 - [CNN：SqueezeNet和CIFAR10数据集](ml/squeezenet.md)：还需要再次学习
 - [CNN：ResNet和ImageNet超大数据集](ml/resnet.md)：初步整理结束
 - [RNN：循环神经网络](ml/rnn.md)
