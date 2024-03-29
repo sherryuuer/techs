@@ -177,6 +177,7 @@ test_transforms = transforms.Compose([
     transforms.Resize((64, 64)),
     transforms.ToTensor()
 ])
+
 # try to use the custom class
 train_data_custom = ImageFolderCustom(targ_dir=train_dir,
                                       transform=train_transforms)
