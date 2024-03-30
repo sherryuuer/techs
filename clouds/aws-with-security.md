@@ -406,3 +406,17 @@ BucketPolicy的访问权限一般是对S3桶资源。Object对访问权限，一
 总之S3的访问权涉及一个用户本身的认证和一个Bucket的Policy。原本还有一个ACL是针对桶里的对象的，但是它会让事情变得复杂，比如A自己的桶别人放的文件反而桶的所有者不能访问，需要很复杂的设定，所以ACL被弃用了。
 
 S3的access point：针对桶中的不同文件夹，可以根据文件夹的名字prefix设置不同的访问策略，更灵活地控制访问权。
+
+**Cognito**
+
+**IAM Identity Center**
+
+### 5 - Data Protection
+
+**CloudHSM**
+
+**KMS**
+
+**Secerts Manager**
+
+**S3数据加密**
