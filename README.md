@@ -14,8 +14,7 @@
 - [树算法：并查集](algo/union-find.md)
 - [树算法：段树](algo/segmenttree.md)
 - [树算法：迭代深度优先搜索](algo/iterativedfs.md)
-- [堆结构：堆和优先队列的实现](algo/heap.md)
-- [堆算法：两个堆](algo/two-heaps.md)
+- 堆算法：[堆和优先队列的实现](algo/heap.md)，[两个堆](algo/two-heaps.md)，[TopK-Elements](algo/topk-elements.md)
 - [回溯算法：树迷宫路径问题](algo/treemaze.md)
 - [回溯算法：子集](algo/subsets.md)
 - [回溯算法：排列](algo/combinations.md)
@@ -53,11 +52,10 @@
 - [Pytorch初见就有点爱](ml/pytorch-firsttime.md)：继续学习和扩充内容，尤其是代码模板部分
 - [Pytorch框架模板](ml/pytorch-template.md)：初步整理了一种模板
 - [迁移学习：站在巨魔的肩膀上](ml/transfer-learning.md)：继续学习和扩充内容
-- CNN：[卷积神经网络](ml/cnn.md)，[深入构架，空间正规化，防过拟合](ml/cnn-arch.md)
-- [CNN：Pytorch图像预处理ImageFolder解析](ml/pytorch-imagefolder.md)
+- CNN：[卷积神经网络Tensorflow](ml/cnn.md)，[深入构架&空间正规化&防过拟合&跳跃连接](ml/cnn-arch.md)，[AlexNet-VGG-GoogleNet构架](ml/cnn-3net.md)，[Pytorch图像预处理ImageFolder解析](ml/pytorch-imagefolder.md)
 - [CNN：SqueezeNet和CIFAR10数据集](ml/squeezenet.md)：还需要再次学习
 - [CNN：ResNet和ImageNet超大数据集](ml/resnet.md)：初步整理结束
-- [RNN：循环神经网络](ml/rnn.md)
+- RNN：[循环神经网络RNN&LSTM代码实现](ml/rnn.md)
 - [生成式AI：Transformer模型](ml/generativeai.md)
 - [Scikit-learn建模学习:回归，分类，调参，聚类](ml/scikit-learn-data-modeling.md)
 - [Databricks-ML-spark](ml/databricks-ml-spark.md)
