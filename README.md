@@ -59,7 +59,7 @@
 - [CNN：ResNet和ImageNet超大数据集](ml/resnet.md)
 <!-- - RNN：[循环神经网络RNN&LSTM代码实现](ml/rnn.md) -->
 - [生成式AI](ml/generativeai.md)：
-<!-- [模型原理和自动编码器](ml/autoencoders.md) -->
+<!-- [模型原理，自动编码器和变分自编码器](ml/autoencoders.md) -->
 - [Scikit-learn建模学习:回归，分类，调参，聚类](ml/scikit-learn-data-modeling.md)
 - [Databricks-ML-spark](ml/databricks-ml-spark.md)
 
