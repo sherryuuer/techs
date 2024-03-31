@@ -51,12 +51,13 @@
 - [NLP：文本分类的原理和实现](ml/text-classification.md)
 - [Pytorch初见就有点爱](ml/pytorch-firsttime.md)
 - [Pytorch框架模板](ml/pytorch-template.md)：
-- [迁移学习：站在巨魔的肩膀上](ml/transfer-learning.md)：
+- [迁移学习：站在巨魔的肩膀上](ml/transfer-learning.md)
 - CNN：[卷积神经网络Tensorflow](ml/cnn.md)，[深入构架&空间正规化&防过拟合&跳跃连接](ml/cnn-arch.md)，[AlexNet-VGG-GoogleNet构架](ml/cnn-3net.md)，[Pytorch图像预处理ImageFolder解析](ml/pytorch-imagefolder.md)
 - [CNN：SqueezeNet和CIFAR10数据集](ml/squeezenet.md)
 - [CNN：ResNet和ImageNet超大数据集](ml/resnet.md)
 - RNN：[循环神经网络RNN&LSTM代码实现](ml/rnn.md)
-- [生成式AI：Transformer模型](ml/generativeai.md)
+- [生成式AI](ml/generativeai.md)：
+<!-- [自动编码器](ml/autoencoders.md) -->
 - [Scikit-learn建模学习:回归，分类，调参，聚类](ml/scikit-learn-data-modeling.md)
 - [Databricks-ML-spark](ml/databricks-ml-spark.md)
 
