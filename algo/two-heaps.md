@@ -12,7 +12,7 @@
 
 使用两个堆可以实现什么问题？通过做leetcode502的IPO问题，看出，当想要最大化一个数组，同时最小化一个数组的量，取得权衡的时候，两个堆可以很好的发挥作用。同时，利用python的heapq库，可以很好的解决数据结构的问题，他是一个最小堆，但是-1出奇迹啊。
 
-### 基本结构的代码实现（找中位）
+### 基本结构的代码实现（找中位为例）
 
 ```python
 import heapq
@@ -44,9 +44,22 @@ class Median:
         return ((-1 * self.small[0]) + self.large[0]) / 2
 ```
 
-### 问题1:Find median from data stream
+### 问题1: 
+- [leetcode480 题目描述](https://leetcode.com/problems/sliding-window-median/description/)
+
+
+### 问题2:Find median from data stream
 
 从数据流中查找中值，是[leetcode295](https://leetcode.com/problems/find-median-from-data-stream/description/)题。这道题完全就是两个堆数据结构堆实现算法。理解原理，记住就好。注意最后的结果需要是小数，所以最后的除数需要也是小数。
+
+解题步骤：
+
+- 将数据分为两个堆数据结构，一个是前半部分的最大堆，一个是后半部分的最小堆。
+- 插入数据，有后半部分的最小堆，并且该数据大于它的最小值，插入。反之插入前半部分的最大堆。
+- 插入后，调整两个堆堆长度，相差不超过一。
+- 取值，哪个堆长度长则取它的最大或者最小值。
+- 取值，如果两个堆长度相同，则各取一个，取均值。
+- 整个过程的最大堆注意用 -1 调整值的正负。
 
 ```python
 import heapq
@@ -87,8 +100,9 @@ class MedianFinder(object):
         return (-1 * self.small[0] + self.large[0]) / 2.0
 ```
 
-### 问题2: 
-- [leetcode480 题目描述](https://leetcode.com/problems/sliding-window-median/description/)
+学习笔记：以上是我力扣的题解，但这这次我做这道题，它将数据结构拆分成了另有最大堆和最小堆的重构，所以写的很长，贴在最后的附录部分。（然后它题解部分给的是三个class的框架，解答给的是和我上面一样的直接使用 heapq），其实我自己觉的，不需要额外构架大小堆，因为两个很多重复的地方。上面的方法就足够了。
+
+时间复杂度上插入操作为O(logn)，虽然如果将每次插入都加起来的话，在对数部分，会有一个n的阶乘，但是使用斯特林估计，总体来说是logn。在查找上为常数时间O(1)因为可以直接在堆顶取得最大或者最小值。空间复杂度为O(1)，因为是将原有的数组进行了重构不需要其他的空间，在调整的过程中也只是使用了需要操作的单个数据，所以需要的是常数的数据空间。
 
 ### 问题3: Maximize Capital
 
@@ -215,3 +229,86 @@ class Solution(object):
 ```
 
 学习笔记：将资金推入最小堆的时间复杂度是O(nlogn)，这里的n是所有的项目数量。从最大堆中选取最大资金的时间复杂度是O(klogn)，这里的k是投资轮次。所以总的来说，时间复杂度就是二者相加，由于n加上k依然是一个线性时间，考虑最坏的情况就都是n，也就是2n，省略常数，结果为O(nlogn)。空间复杂度我们使用了两个额外的堆，用于存储数据，一个是n长度一个是k长度，最坏的情况k的数量达到n，也就是2n，去掉常数，空间复杂度就是O(n)。
+
+### 附录
+
+问题2，找中位的三个类版本的写法代码。
+
+```python
+from heapq import *
+class min_heap:
+    def __init__(self):
+        self.min_heap_list = []
+        
+    def insert(self, x):
+        heappush(self.min_heap_list, x)
+
+    def pop(self):
+        return heappop(self.min_heap_list)
+
+    def get_len(self):
+        return len(self.min_heap_list)
+
+    def get_min(self):
+        return self.min_heap_list[0]
+
+    def __str__(self):
+        out = "["
+        for i in self.min_heap_list:
+            out+=str(i) + ", "
+        out = out[:-2] + "]"
+        return out
+
+
+class max_heap:
+    def __init__(self):
+        self.max_heap_list = []
+
+    def insert(self, x):
+        heappush(self.max_heap_list, -x)
+
+    def pop(self):
+        return heappop(self.max_heap_list)
+
+    def get_len(self):
+        return len(self.max_heap_list)
+
+    def get_max(self):
+        return -self.max_heap_list[0]
+
+    def __str__(self):
+        out = "["
+        for i in self.max_heap_list:
+            out+=str(i) + ", "
+        out = out[:-2] + "]"
+        return out
+
+
+class MedianOfStream:
+    def __init__(self):
+        self.small = max_heap()
+        self.large = min_heap()
+
+    # This function should take a number and store it
+    def insert_num(self, num):
+        if self.large.get_len() > 0 and num > self.large.get_min():
+            self.large.insert(num)
+        else:
+            self.small.insert(num)
+
+        # balance the length
+        if self.small.get_len() > self.large.get_len() + 1:
+            val = -1 * self.small.pop()
+            self.large.insert(val)
+        if self.large.get_len() > self.small.get_len() + 1:
+            val = self.large.pop()
+            self.small.insert(val)
+
+    # This function should return the median of the stored numbers
+    def find_median(self):
+        if self.small.get_len() > self.large.get_len():
+            return self.small.get_max()
+        elif self.small.get_len() < self.large.get_len():
+            return self.large.get_min()
+        return (self.small.get_max() + self.large.get_min()) / 2.0
+```
