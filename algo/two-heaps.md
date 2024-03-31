@@ -12,7 +12,7 @@
 
 使用两个堆可以实现什么问题？通过做leetcode502的IPO问题，看出，当想要最大化一个数组，同时最小化一个数组的量，取得权衡的时候，两个堆可以很好的发挥作用。同时，利用python的heapq库，可以很好的解决数据结构的问题，他是一个最小堆，但是-1出奇迹啊。
 
-### 代码实现
+### 基本结构的代码实现（找中位）
 
 ```python
 import heapq
@@ -44,11 +44,9 @@ class Median:
         return ((-1 * self.small[0]) + self.large[0]) / 2
 ```
 
-### leetcode 逐行解析
+### 问题1:Find median from data stream
 
-- 从数据流中查找中值[leetcode295 题目描述](https://leetcode.com/problems/find-median-from-data-stream/description/)
-
-完全就是两个堆数据结构堆实现算法。理解原理，记住就好。注意最后的结果需要是小数，所以最后的除数需要也是小数。
+从数据流中查找中值，是[leetcode295](https://leetcode.com/problems/find-median-from-data-stream/description/)题。这道题完全就是两个堆数据结构堆实现算法。理解原理，记住就好。注意最后的结果需要是小数，所以最后的除数需要也是小数。
 
 ```python
 import heapq
@@ -89,12 +87,104 @@ class MedianFinder(object):
         return (-1 * self.small[0] + self.large[0]) / 2.0
 ```
 
+### 问题2: 
 - [leetcode480 题目描述](https://leetcode.com/problems/sliding-window-median/description/)
 
-- leetcode想要IPO[leetcode502 题目描述](https://leetcode.com/problems/ipo/description/)
+### 问题3: Maximize Capital
 
-通过最小堆最大堆实现，每次都能找到最小资金可以实现的项目。
+这是一道leetcode题，原名叫IPO[leetcode502](https://leetcode.com/problems/ipo/description/)目的是最大化投资的利润。
 
+首先理解题意。两个数组，一个是利润数组profits，一个是资金数组captical，这两个数组是一一对应关系。两个变量，一个k是投资轮次，一个w是初始资金。就是投资人，拿着初始资金w进行投资，投资后得到的利润会直接加进现在的w中进行下一轮投资，通过k轮投资，想办法让最终手中的w最大化。可以通过最小堆最大堆实现，让（资金，利润）加进最小堆，这样就可以确保每次投入资金最小，让利润在每次投资的时候放入最大堆，这样就可以让得到的利润最大。最终在k轮中，如果手中资金小于需要的投资资金，那就要提前停止投资了。
+
+题解步骤：
+
+- 创建一个最小堆来存储资金。
+- 确定现有资金范围内可以投资的项目。
+- 选择利润最高的项目。
+- 将赚取的利润添加进当前资本中。
+- 重复此操作，直至选择了k项目。
+
+题解练习。
+
+```python
+from heapq import *
+
+def maximum_capital(c, k, capitals, profits):
+    maxProfit = []
+    minCapital = [(cap, pro) for cap, pro in zip(capitals, profits)]
+    heapify(minCapital)
+
+    for i in range(k):
+
+        while minCapital and minCapital[0][0] <= c:
+            cap, pro = heappop(minCapital)
+            heappush(maxProfit, -1 * pro)
+
+        if not maxProfit:
+            break
+
+        c += -1 * heappop(maxProfit)
+
+    return c
+```
+
+因为在lc做过所以没什么问题。
+
+附上题解：我觉得这个题解还是写的有点麻烦的，它使用了capitals数组中的index同时作为profits数组的索引，来取得对应的profit，只能说也是一种方法OKK。
+```python
+from heapq import heappush, heappop
+
+
+def maximum_capital(c, k, capitals, profits):
+    current_capital = c
+    capitals_min_heap = []
+    profits_max_heap = []
+
+    for x in range(0, len(capitals)):
+        heappush(capitals_min_heap, (capitals[x], x))
+
+    for _ in range(k):
+
+        while capitals_min_heap and capitals_min_heap[0][0] <= current_capital:
+            c, i = heappop(capitals_min_heap)
+            heappush(profits_max_heap, (-profits[i]))
+        
+        if not profits_max_heap:
+            break
+
+        j = -heappop(profits_max_heap)
+        current_capital = current_capital + j
+
+    return current_capital
+
+
+def main():
+    input = (
+              (0, 1, [1, 1, 2], [1 ,2, 3]),
+              (1, 2, [1, 2, 2, 3], [2, 4, 6, 8]),
+              (2, 3, [1, 3, 4, 5, 6], [1, 2, 3, 4, 5]),
+              (1, 3, [1, 2, 3, 4], [1, 3, 5, 7]),
+              (7, 2, [6, 7, 8, 10], [4, 8, 12, 14]),
+              (2, 4, [2, 3, 5, 6, 8, 12], [1, 2, 5, 6, 8, 9])
+            )
+    num = 1
+    for i in input:
+        print(f"{num}.\tProject capital requirements:  {i[2]}")
+        print(f"\tProject expected profits:      {i[3]}")
+        print(f"\tNumber of projects:            {i[1]}")
+        print(f"\tStart-up capital:              {i[0]}")
+        print("\n\tMaximum capital earned: ",
+              maximum_capital(i[0], i[1], i[2], i[3]))
+        print("-" * 100, "\n")
+        num += 1
+
+
+if __name__ == "__main__":
+    main()
+          
+```
+
+另外附上在leetcode中我的题解：
 ```python
 class Solution(object):
     def findMaximizedCapital(self, k, w, profits, capital):
@@ -123,3 +213,5 @@ class Solution(object):
             w += -1 * heapq.heappop(maxProfit)
         return w
 ```
+
+学习笔记：将资金推入最小堆的时间复杂度是O(nlogn)，这里的n是所有的项目数量。从最大堆中选取最大资金的时间复杂度是O(klogn)，这里的k是投资轮次。所以总的来说，时间复杂度就是二者相加，由于n加上k依然是一个线性时间，考虑最坏的情况就都是n，也就是2n，省略常数，结果为O(nlogn)。空间复杂度我们使用了两个额外的堆，用于存储数据，一个是n长度一个是k长度，最坏的情况k的数量达到n，也就是2n，去掉常数，空间复杂度就是O(n)。
