@@ -69,9 +69,9 @@ Discriminative 模型和 Generative 模型是机器学习中两种不同的建�
 ```
       Generation p(x|z)
  -----------------------------
-↑                                     ↓
-p(z)                            p(x)
-↑                                     ↓
+↑                               ↓
+p(z)                          p(x)
+↑                               ↓
  -----------------------------
       Inference p(z|x)
 ```
@@ -176,3 +176,219 @@ class Autoencoder(nn.Module):
 2. **马尔科夫网络（Markov Networks）**：也称为无向图模型，它使用无向图来表示变量之间的相关性，其中节点表示随机变量，边表示变量之间的相关性。与贝叶斯网络不同，马尔科夫网络中的边没有方向，表示的是变量之间的相关性而不是因果关系。马尔科夫网络通常用于表示变量之间的相关性较为复杂的场景，例如图像分割、社交网络分析等。
 
 概率图模型具有直观的图形化表示，能够有效地表示和推断复杂的概率关系，因此在机器学习、人工智能和统计学等领域得到了广泛的应用。它们被用于模式识别、决策分析、数据挖掘、自然语言处理等任务，并且在大数据分析和概率推断等领域发挥着重要作用。
+
+### 5 - 损失函数解构 ELBO
+
+ELBO 是 Evidence Lower Bound（证据下界）的缩写。在概率模型的变分推断（Variational Inference）中，ELBO 是一种用来近似求解后验分布的方法。在变分推断中，我们通常会遇到一个难以处理的后验分布，ELBO 的出现就是为了解决这个问题。因为训练是为了变分后验分布，无限接近真正的后验分布。数学公式很复杂，暂且不在这里弄的很复杂，但是用代码表达就会比较好懂。
+
+```python
+def elbo(reconstructed, input, mu, logvar):
+    """
+        Args:
+            `reconstructed`: The reconstructed input of size [B, C, W, H],
+            `input`: The orignal input of size [B, C, W, H],
+            `mu`: The mean of the Gaussian of size [N], where N is the latent dimension
+            `logvar`: The log of the variance of the Gaussian of size [N], where N is the latent dimension
+
+        Returns:
+            a scalar
+    """
+    # 参数中，reconstructed是重构图像，input是原始输入图像，mu和logvar是潜在空间的均值和方差
+    # 定义了一个二进制交叉熵损失函数
+    bce_loss = nn.BCELoss(reduction='sum')
+    # 计算重建损失，两个参数分别是模型重建的图像和原始输入图像
+    BCE = bce_loss(reconstructed, input)
+    # 计算KL散度
+    KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
+
+    return BCE + KLD
+```
+
+这段代码实现了一个计算 ELBO（Evidence Lower Bound）的函数。KL 散度是用来度量两个概率分布之间的差异的指标。具体来说是衡量后验分布q(z∣x)和先验分布p(z)之间的差异的指标。可以描述为，通过观察x后，对z潜在变量的不确定性减少的程度。同时也可以说，是衡量了我们用后验分布近似先验分布的过程中损失了多少信息，如果完全相同，那么KL就是0，反之KL就是正数，表示了两个分布之间的差异，或者也可以说是距离。上面的代码中的KLD的计算就是它的算法。
+
+在这里，我们希望模型学习一个潜在空间的分布，使其接近于一个给定的标准正态分布。最后返回了 ELBO 的值，即重建损失和 KL 散度的和。ELBO 是用来近似求解后验分布的一个下界，在变分推断中，我们试图最大化 ELBO 来使得变分分布接近真实后验分布。
+
+### 6 - 重参数化技巧 Reparameterization Trick
+
+它是一种用于训练基于梯度的概率生成模型。是变分自编码器的常用技巧。竟然可以将随机采样操作，转化为可微分的操作，从而可以进行反向传播。
+
+我们知道，在变分自编码器中，为了生成和原图像相似的图像，需要在潜在空间的分布中进行采样。但是直接进行采样是不可导的，没法训练。而重参数化技巧通过以下步骤实现了可导。
+
+首先从一个固定的分布（例如标准正态分布）中采样一个固定的随机向量（通常称为噪声或者随机参数）。然后将这个随机向量通过一个确定的变换，例如乘以一个标准差并加上一个均值，来生成我们想要的潜在向量。这样，采样过程就可以被表示为一个可微分的操作，因为我们可以对均值和标准差求导。这使得我们可以使用反向传播算法来优化模型参数，而不需要考虑采样过程的不可导性。
+
+在变分自编码器中，重参数化技巧通常应用于编码器网络，用来生成潜在变量的均值和方差，使得我们可以通过均值和方差来生成潜在向量，并且可以通过梯度下降来优化编码器网络。
+
+以下的代码实现了该过程。
+
+```python
+import torch
+
+seed = 172
+torch.manual_seed(seed)
+
+def reparameterize(mu, log_var):
+    """
+        Args:
+            `mu`: mean from the encoder's latent space
+            `log_var`: log variance from the encoder's latent space
+
+        Returns:
+            the reparameterized latent vector z
+    """
+    var = torch.exp(log_var)  # standard deviation
+    eps = torch.randn_like(var)  # `randn_like` as we need the same size
+    sample = mu + (eps * var)  # sampling as if coming from the input space
+    return sample
+```
+
+### 7 - 变分自编码器的示例代码
+
+使用了最基本的线性模型，可以修改成其他。尚且在研究，实际训练项目后准备再次学习一遍。
+
+```python
+import torch
+from torch import nn
+import torch.nn.functional as F
+
+
+class VAE(nn.Module):
+    def __init__(self):
+        super(VAE, self).__init__()
+        self.features = 16
+        # encoder
+        self.encoder1 = nn.Linear(in_features=3072, out_features=128)
+        self.encoder2 = nn.Linear(in_features=128, out_features=self.features * 2)
+
+        # decoder
+        self.decoder1 = nn.Linear(in_features=self.features, out_features=128)
+        self.decoder2 = nn.Linear(in_features=128, out_features=3072)
+
+    def forward(self, x):
+        # encoding
+        x = F.relu(self.encoder1(x))
+        x = self.encoder2(x).view(-1, 2, self.features)  # 输出形状为(batch_size, 2, self.features)
+
+        # get mu and log_var
+        mu = x[:, 0, :]  # the first feature value is mean
+        log_var = x[:, 1, :]  # the second feature value is variance
+
+        # get the latent vector through reparameterization
+        z = self.reparameterize(mu, log_var)
+
+        # decoding
+        x = F.relu(self.decoder1(z))
+        reconstruction = torch.sigmoid(self.decoder2(x))
+        return reconstruction, mu, log_var
+    
+    def reparameterize(self, mu, log_var):
+        # mu is the mean from the latent space, log_var is the log variance from the latent space
+        std = torch.exp(0.5 * log_var)
+        eps = torch.randn_like(std)
+        sample = mu + (eps * std)
+        return sample
+```
+**关于编码和解码器的输入输出维度**
+
+编码器和解码器的输入输出维度上，编码器最后乘以2，解码器输入不需要乘以2，是因为，编码器和解码器的结构是对称的，但并不是输入和输出维度一定要相同的。重点在于保持编码器和解码器之间的匹配。
+
+在编码器部分，最后一层 `self.encoder2` 的输出维度是 `self.features * 2`。这里的 `* 2` 是因为变分自编码器中常用的技巧是将潜在空间的均值和方差分别预测出来。因此，输出的维度被设计为 `self.features * 2`，其中前一半部分代表均值，后一半部分代表方差。
+
+在解码器部分，`self.decoder1` 的输入维度是 `self.features`。这是因为在解码器中，我们只需要用到潜在向量的表示，而不需要用到其方差信息。所以，解码器的输入维度只需要是潜在向量的维度 `self.features` 即可，而不需要考虑方差信息。因此，解码器部分的输入不需要乘以2，因为解码器只需要潜在空间的均值信息，而不需要方差信息。
+
+**关于view**
+
+`view` 方法的作用是将原始张量重塑为一个具有指定形状的新张量。括号中是一个元组，表示新张量的形状。新张量的元素数量必须与原始张量相同，否则会抛出错误。
+
+在上述代码中，`x` 是经过编码器部分处理后的张量，`self.encoder2(x)` 输出的张量形状为 `(batch_size, features * 2)`，即每个样本有 `features * 2` 个特征。然后，通过 `view(-1, 2, self.features)` 方法，将这个张量重新调整为一个形状为 `(batch_size, 2, self.features)` 的张量。这里的 `-1` 表示该维度的大小会根据其他维度和原始张量的总元素数量自动推断出来，而 `2` 和 `self.features` 分别表示第二个维度和第三个维度的大小。
+
+这样，通过 `view` 方法的调整，我们将原始的一维特征向量重新组织为一个二维的形状，这在某些情况下可以更方便地进行后续的处理。
+
+损失函数如下。这里计算了之前所说的KL散度。
+
+```python
+def final_loss(bce_loss, mu, logvar):
+    '''
+    BCE: reconstruction loss
+    KL-divergence: 0.5 * sum(1 + log(sigma^2) - mu^2 - sigma^2)
+    params:
+    bce_loss: reconstruction loss
+    mu: the mean from latent vector
+    logvar: log variance from latent vector
+    '''
+    BCE = bce_loss
+    KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
+    return BCE + KLD
+```
+
+训练代码如下。
+
+```python
+import torch.optim as optim
+import torch
+from torch import nn
+
+def train(model, training_data):
+
+    optimizer = optim.Adam(model.parameters(), lr= 0.001)
+    criterion = nn.BCELoss(reduction='sum')
+
+    running_loss = 0.0
+
+    for epoch in range(1):  # loop over dataset n times
+
+        for i, data in enumerate(training_data, 0):
+            inputs, _ = data
+            inputs = inputs.view(inputs.size(0), -1)  # flatten all the other dimensions except batch size
+
+            optimizer.zero_grad()
+            reconstruction, mu, logvar = model(inputs)
+            bce_loss = criterion(reconstruction, inputs)
+            loss = final_loss(bce_loss, mu, logvar)
+
+            running_loss += loss.item()
+            loss.backward()
+            optimizer.step()
+
+            # print statistics
+            if i % 2000 == 1999:  # print every 2000 mini batchs
+                print('[{epoch + 1}, {i + 1}] loss : {running_loss / 2000 :.3f}')
+            running_loss = 0.0
+
+    PATH = './cifar_net.pth'
+    torch.save(model.state_dict(), PATH)
+
+    print('Finished Training')
+```
+
+最后是数据准备和训练。
+
+```python
+import os
+import sys
+import torchvision
+from torchvision import transforms
+cwd = os.getcwd()
+# add CIFAR10 data in the environment
+sys.path.append(cwd + '/../cifar10') 
+from Cifar10Dataloader import CIFAR10
+batch_size = 32
+def load_data():
+    
+    # convert the images to tensor and normalized them
+    transform = transforms.Compose([
+         transforms.ToTensor(),
+         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+        ])
+
+    trainset = CIFAR10(root='../cifar10',  transform=transform)
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
+                                              shuffle=False, num_workers=1)
+    return trainloader
+```
+
+最后是两行训练代码。
+
+```python
+model = VAE()
+train(model, load_data())
+```

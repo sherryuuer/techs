@@ -44,9 +44,131 @@ class Median:
         return ((-1 * self.small[0]) + self.large[0]) / 2
 ```
 
-### 问题1: 
-- [leetcode480 题目描述](https://leetcode.com/problems/sliding-window-median/description/)
+### 问题1: Sliding Window Median
 
+滑动窗口找中值的问题，原题来自[leetcode480](https://leetcode.com/problems/sliding-window-median/description/)题，是一道hard难度的题。利用的是两个最小堆的数据结构。
+
+求中值就是奇数个数字的中间一个数字，或者偶数个数字的中间两个数字的平均。如下例子，跟着滑动的窗口，每次取出这个长度为3的窗口的中值，放入结果。
+
+```
+Input: nums = [1,3,-1,-3,5,3,6,7], k = 3
+Output: [1.00000,-1.00000,-1.00000,3.00000,5.00000,6.00000]
+Explanation: 
+Window position                Median
+---------------                -----
+[1  3  -1] -3  5  3  6  7        1
+ 1 [3  -1  -3] 5  3  6  7       -1
+ 1  3 [-1  -3  5] 3  6  7       -1
+ 1  3  -1 [-3  5  3] 6  7        3
+ 1  3  -1  -3 [5  3  6] 7        5
+ 1  3  -1  -3  5 [3  6  7]       6
+ ```
+
+题解步骤：
+
+- 声明一个最大堆和一个最小堆以及一个存储res结果的列表，。
+- 将 k 个元素推入最大堆，再将 k // 2 元素推入最小堆。
+- 计算对应的窗口中值，k 为奇数推出较长的那个堆顶，k 为偶数则求出两个堆顶的值的平均。将值推入res。
+- 移动窗口，如果income的数字比最大堆的堆顶小，则推入最大堆，反之推入最小堆，去掉outcome的元素，平衡堆。
+- 重复以上两个步骤直到结束。
+
+代码尝试：中间有几个情况需要注意，一个是k为1的话直接就返回列表本身。如果k为2那就遍历每次取两个数字的中值就可以了，如果k和nums的长度一样，那么要注意insert方法也需要调整两个堆的平衡。
+
+```python
+import heapq
+
+
+class Median:
+    def __init__(self):
+        self.small, self.large = [], []
+
+    def insert(self, num):
+        # push to the max heap and switch if needed
+        if not self.small or num <= -1 * self.small[0]:
+            heapq.heappush(self.small, -1 * num)
+        else:
+            heapq.heappush(self.large, num)
+
+        # handle uneven size
+        if len(self.small) > len(self.large) + 1:
+            val = -1 * heapq.heappop(self.small)
+            heapq.heappush(self.large, val)
+        if len(self.large) > len(self.small) + 1:
+            val = -1 * heapq.heappop(self.large)
+            heapq.heappush(self.small, val)
+
+    def remove(self, num):
+        if num <= -1 * self.small[0]:
+            self.small.remove(-1 * num)
+            heapq.heapify(self.small)
+        else:
+            self.large.remove(num)
+            heapq.heapify(self.large)
+
+        # handle uneven size
+        if len(self.small) > len(self.large) + 1:
+            val = -1 * heapq.heappop(self.small)
+            heapq.heappush(self.large, val)
+        if len(self.large) > len(self.small) + 1:
+            val = -1 * heapq.heappop(self.large)
+            heapq.heappush(self.small, val)
+
+    def getMedian(self):
+        if len(self.small) > len(self.large):
+            return -1 * self.small[0]
+        elif len(self.small) < len(self.large):
+            return self.large[0]
+        return ((-1 * self.small[0]) + self.large[0]) / 2.0
+
+    def print_heaps(self):
+        print("Small Heap:", self.small)
+        print("Large Heap:", self.large)
+
+
+def median_sliding_window(nums, k):
+    if k == 1:
+        return nums
+    if k == 2:
+        return [(nums[i - 1] + nums[i]) / 2.0 for i in range(1, len(nums))]
+
+    res = []
+    win = Median()
+
+    for i in range(k):
+        win.insert(nums[i])
+
+    res.append(win.getMedian())
+
+    for i in range(k, len(nums)):
+        win.print_heaps()
+        win.insert(nums[i])
+        win.remove(nums[i - k])
+        res.append(win.getMedian())
+
+    return res
+
+
+res = median_sliding_window([3, 4, 5, 1, 8, -3, 5, -4], 4)
+print(res)
+```
+
+学习笔记：时间复杂度上，整个过程设计了线性的遍历和对堆的操作，综合来说是O(nlogn)，空间复杂度上使用的是堆的长度O(n)。当然这道题也可以使用移动，排序，找出中值的方法，但是窗口较大时，复杂度可能会下降。如下：
+
+```python
+def median_sliding_window(nums, k):
+    window = []
+    medians = []
+
+    for i in range(len(nums) - k + 1):
+        window = sorted(nums[i:i+k])
+        if k % 2 == 0:
+            median = (window[k//2] + window[k//2 - 1]) / 2
+        else:
+            median = window[k//2]
+        medians.append(median)
+
+    return medians
+```
 
 ### 问题2:Find median from data stream
 

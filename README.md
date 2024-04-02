@@ -14,8 +14,7 @@
 - [树算法：并查集](algo/union-find.md)
 - [树算法：段树](algo/segmenttree.md)
 - [树算法：迭代深度优先搜索](algo/iterativedfs.md)
-- 堆算法：[堆和优先队列的实现](algo/heap.md)，[TopK-Elements](algo/topk-elements.md)
-<!-- [两个堆](algo/two-heaps.md) -->
+- 堆算法：[堆和优先队列的实现](algo/heap.md)，[TopK-Elements](algo/topk-elements.md)，[两个堆](algo/two-heaps.md)
 - [回溯算法：树迷宫路径问题](algo/treemaze.md)
 - [回溯算法：子集](algo/subsets.md)
 - [回溯算法：排列](algo/combinations.md)
@@ -53,13 +52,14 @@
 - [Pytorch初见就有点爱](ml/pytorch-firsttime.md)
 - [Pytorch框架模板](ml/pytorch-template.md)：
 - [迁移学习：站在巨魔的肩膀上](ml/transfer-learning.md)
-- CNN：[卷积神经网络Tensorflow](ml/cnn.md)，[深入构架&空间正规化&防过拟合&跳跃连接](ml/cnn-arch.md)，[Pytorch图像预处理ImageFolder解析](ml/pytorch-imagefolder.md)
-<!-- [AlexNet-VGG-GoogleNet构架](ml/cnn-3net.md) -->
+- CNN：[卷积神经网络Tensorflow](ml/cnn.md)，[深入构架&空间正规化&防过拟合&跳跃连接](ml/cnn-arch.md)，[Pytorch图像预处理ImageFolder解析](ml/pytorch-imagefolder.md)，[AlexNet-VGG-GoogleNet构架](ml/cnn-3net.md)
 - [CNN：SqueezeNet和CIFAR10数据集](ml/squeezenet.md)
 - [CNN：ResNet和ImageNet超大数据集](ml/resnet.md)
 <!-- - RNN：[循环神经网络RNN&LSTM代码实现](ml/rnn.md) -->
 - [生成式AI](ml/generativeai.md)：
 <!-- [模型原理，自动编码器和变分自编码器](ml/autoencoders.md) -->
+<!-- [生成对抗网络GAN解析](ml/gan.md) -->
+<!-- [项目实践：数据增强之基于GANs实现](ml/pj-augmentation-gans.md) -->
 - [Scikit-learn建模学习:回归，分类，调参，聚类](ml/scikit-learn-data-modeling.md)
 - [Databricks-ML-spark](ml/databricks-ml-spark.md)
 
