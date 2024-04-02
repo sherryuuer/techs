@@ -59,7 +59,6 @@
 <!-- [生成对抗网络GAN解析](ml/gan.md) -->
 <!-- [项目实践：简单的数据增强之基于GANs实现](ml/pj-augmentation-gans.md) -->
 - [Scikit-learn建模学习:回归，分类，调参，聚类](ml/scikit-learn-data-modeling.md)
-- [Databricks-ML-spark](ml/databricks-ml-spark.md)
 
 ## Python and Math
 - [用Python进行统计分析](python/statistics-with-python.md)
@@ -78,6 +77,7 @@
 - [计算机思维](principals/computeritize.md)
 
 ## Clouds
+- [Databricks-ML-spark](clouds/databricks-ml-spark.md)
 - [AWS机器学习系统的构架和服务](clouds/aws-with-ml.md)
 - [AWS安全专家认证考试相关内容](clouds/aws-with-security.md)
 
