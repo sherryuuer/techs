@@ -125,5 +125,7 @@ def cross_entropy(true_labels, predicted_probs):
 
 再次被这个公式震撼。
 
+### 4 - 使用CIFAR10数据集训练网络
+
 
 
