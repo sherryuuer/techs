@@ -127,5 +127,104 @@ def cross_entropy(true_labels, predicted_probs):
 
 ### 4 - 使用CIFAR10数据集训练网络
 
+我使用cifar数据集进行了两个比较简单的网络的训练，网络基本是由线形layer组成的，可能性能不是很好，但是可以看到整个训练的过程，并且我将loss结果储存在两个列表中，用于最后的可视化。
 
+关注下面的训练部分的代码，可以注意到：对判别器和生成器的训练其实就是反向传播真值，和假值，分别和1之间的差距，然后将它们相加。
 
+```python
+def train_discriminator(discriminator, optimizer, real_data, fake_data, loss):
+    N = real_data.size(0)
+    # Reset gradients
+    optimizer.zero_grad()
+
+    # Train on Real Data
+    prediction_real = discriminator(real_data)
+    # Calculate error and backpropagate
+    error_real = loss(prediction_real, Variable(torch.ones(N, 1)))
+    error_real.backward()
+
+    # Train on Fake Data
+    prediction_fake = discriminator(fake_data)
+    # Calculate error and backpropagate
+    error_fake = loss(prediction_fake, Variable(torch.zeros(N, 1)))
+    error_fake.backward()
+
+    # Update weights with gradients
+    optimizer.step()
+
+    # Return error and predictions for real and fake inputs
+    return error_real + error_fake, prediction_real, prediction_fake
+
+def train_generator(discriminator, optimizer, fake_data, loss):
+    # Reset gradients
+    N = fake_data.size(0)  
+    
+    # Sample noise and generate fake data
+    optimizer.zero_grad()  
+    
+    # Calculate error and backpropagate
+    prediction = discriminator(fake_data)  
+    error = loss(prediction, Variable(torch.ones(N, 1)))
+    
+    # Update weights with gradients
+    error.backward()  
+    optimizer.step()  
+    
+    # Return error
+    return error
+```
+
+关注下面的主训练代码的一部分：
+
+- 损失函数使用二元交叉熵函数。
+- 优化器使用最常用的Adam。
+- 在训练判别器的时候，每一轮都由生成器生成fake图像，然后调用函数对判别器进行训练，反向传播。
+- 在训练生成器的时候，每一轮也是由生成器生成图像，然后调用函数对生成器进行训练，反向传播。这时候判别器什么也不做。
+
+```python
+def train():
+
+    # Models, optimizers and losses
+    discriminator = DiscriminatorNet()
+    generator = GeneratorNet()
+    loss_d = nn.BCELoss()
+    loss_g = nn.BCELoss()
+    d_optimizer = optim.Adam(discriminator.parameters(), 0.0002)
+    g_optimizer = optim.Adam(generator.parameters(), 0.0002)
+
+    data_loader = load_data()
+    
+    num_epochs = 1
+    num_batches = len(data_loader)
+    
+    num_test_samples = 48
+    test_noise = noise(num_test_samples)
+
+    d_errors, g_errors = [], []
+    d_pred_real_means, d_pred_fake_means = [], []
+    for epoch in range(num_epochs):
+        for n_batch, data in enumerate(data_loader):
+
+            (real_batch, labels) = data
+            N = real_batch.size(0)
+
+            # 1. Train Discriminator
+            real_data = real_batch.view(real_batch.size(0), -1)
+
+            # Generate fake data and detach so gradients are not calculated for generator)
+            latent_space_data = noise(N)
+            fake_data = generator(latent_space_data).detach()
+
+            d_error, d_pred_real, d_pred_fake = train_discriminator(discriminator, d_optimizer, real_data,
+                                                                          fake_data,
+                                                                          loss_d)
+            # 2. Train Generator
+
+            # Generate fake data TO train Generator
+            latent_space_data = noise(N)
+            fake_data = generator(latent_space_data)
+            # Train G
+            g_error = train_generator(discriminator, g_optimizer, fake_data, loss_g)  # Log batch error
+```
+
+完整的[notebook](https://github.com/sherryuuer/projects-drafts/tree/main/gans-cifar10)和训练结果可以在我的GH中看到。
