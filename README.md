@@ -80,6 +80,7 @@
 - [Databricks-ML-spark](clouds/databricks-ml-spark.md)
 - [AWS机器学习系统的构架和服务](clouds/aws-with-ml.md)
 - [AWS安全专家认证考试相关内容](clouds/aws-with-security.md)
+- [AWS-Bedrock项目实践1](cloud/bedrock-pj1.md)
 
 ## System Design and more fun
 - [系统设计概念System-Design-concepts](morefun/system-design.md)
