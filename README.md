@@ -55,8 +55,7 @@
 - [CNN：SqueezeNet和CIFAR10数据集](ml/squeezenet.md)
 - [CNN：ResNet和ImageNet超大数据集](ml/resnet.md)
 <!-- - RNN：[循环神经网络RNN&LSTM代码实现](ml/rnn.md) -->
-- [生成式AI](ml/generativeai.md)：[模型原理，自动编码器和变分自编码器](ml/autoencoders.md)
-<!-- [生成对抗网络GAN解析](ml/gan.md) -->
+- [生成式AI](ml/generativeai.md)：[模型原理，自动编码器和变分自编码器](ml/autoencoders.md)，[生成对抗网络GAN解析](ml/gan.md)
 <!-- [项目实践：简单的数据增强之基于GANs实现](ml/pj-augmentation-gans.md) -->
 - [Scikit-learn建模学习:回归，分类，调参，聚类](ml/scikit-learn-data-modeling.md)
 
@@ -80,7 +79,7 @@
 - [Databricks-ML-spark](clouds/databricks-ml-spark.md)
 - [AWS机器学习系统的构架和服务](clouds/aws-with-ml.md)
 - [AWS安全专家认证考试相关内容](clouds/aws-with-security.md)
-- [AWS-Bedrock项目实践1](cloud/bedrock-pj1.md)
+<!-- - [AWS-Bedrock项目实践1](cloud/bedrock-pj1.md) -->
 
 ## System Design and more fun
 - [系统设计概念System-Design-concepts](morefun/system-design.md)

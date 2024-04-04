@@ -197,3 +197,83 @@ def least_time(tasks, n):
 
 学习笔记：时间复杂度来说一次遍历算频率是O(n)，经过了排序但是因为26个字母有上限，所以为常数，总体来说是O(n)。空间复杂度来说用了一个有限的字典，所以是O(1)。
 
+### 问题2:Insert Interval
+
+给定一个按升序排列的区间列表，以及一个新的区间，将新的区间插入到区间列表中，并确保最终的区间列表也是按升序排列的。是[leetcode57](https://leetcode.com/problems/insert-interval/description/)题，一道中等难度的题。
+
+例如，假设现有区间列表为 [1, 3], [6, 9]，要插入的新区间为 [2, 5]，那么插入后的区间列表为 [1, 5], [6, 9]。结果的返回值是插入新区间后的区间列表。
+
+这个问题通常涉及对区间的合并和插入操作，需要考虑各种情况，如新区间与已有区间的交集情况等。解决方法可以通过遍历区间列表，逐一判断新区间与已有区间的关系，并根据不同情况进行合并或插入操作。
+
+解题步骤：
+
+- 遍历现有区间，将出现在新区间前的区间都append到output列表中。
+- 检查刚刚加入output中的最后一个区间是否和新区间有重合。
+- 如果重合就将这个区间的end端点更新为 max（该区间end，新区间end）。
+- 否则，将新区间加入output区间。
+- 继续遍历剩余的区间，如果和output最后一个元素有任何重合，就进行融合操作（更新output中最后一个区间的end为要加入区间的end）。
+- 返回output列表。
+
+代码尝试：这道题只debug了一次，就是代码中注释的地方。**深感只要按照清晰的思路去做，总能写出正确的结果，重要的永远是思路和步骤，以及条件的完备。**
+
+```python
+def insert_interval(existing_intervals, new_interval):
+    output = []
+    index = 0
+    for ei in existing_intervals:
+
+        if ei[1] <= new_interval[0]:
+            output.append(ei)
+            index += 1
+        else:
+            break
+
+    # 这里要防止上面的操作没有加进任何元素而报错的情况
+    if output and output[-1][1] >= new_interval[0]:
+        output[-1][1] = max(output[-1][1], new_interval[1])
+    else:
+        output.append(new_interval)
+
+    for i in range(index, len(existing_intervals)):
+        ei = existing_intervals[i]
+
+        if ei[0] <= output[-1][1]:
+            output[-1][1] = max(output[-1][1], ei[1])
+        else:
+            output.append(ei)
+
+    return output
+
+
+print(insert_interval([[1, 4], [5, 6], [7, 8], [9, 10]], [1, 5]))
+```
+
+给出的答案只和我稍有不同，它使用的是while进行loop，然后在条件判断上和我的条件顺序相反，其他的基本没什么不同。思路一致。
+
+答案解答如下：
+
+```python
+def insert_interval(existing_intervals, new_interval):
+    new_start, new_end = new_interval[0], new_interval[1]
+    i = 0
+    n = len(existing_intervals)
+    output = []
+    while i < n and existing_intervals[i][0] < new_start:
+        output.append(existing_intervals[i])
+        i = i + 1
+    if not output or output[-1][1] < new_start:
+        output.append(new_interval)
+    else:
+        output[-1][1] = max(output[-1][1], new_end)
+    while i < n:
+        ei = existing_intervals[i]
+        start, end = ei[0], ei[1]
+        if output[-1][1] < start:
+            output.append(ei)
+        else:
+            output[-1][1] = max(output[-1][1], end)
+        i += 1
+    return output
+```
+
+学习笔记：时间复杂度上，一共对列表进行了一轮遍历，所以是O(n)，空间复杂度上，没有使用额外的空间进行操作，所以为O(1)。
