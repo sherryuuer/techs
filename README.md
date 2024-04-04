@@ -41,6 +41,7 @@
 - [评估方法：混淆矩阵family](ml/confusion-matrix.md)
 - [PCA：降维算法原理学习](ml/pca.md)
 - [Kaggle王者算法：XGBoost](ml/xgboost.md)
+- [Scikit-learn建模学习:回归，分类，调参，聚类](ml/scikit-learn-data-modeling.md)
 - [神经网络：从维度的角度重新解构](ml/nn-the-dim.md)，[优化算法的进化](ml/nn-optimizer.md)，[激活函数](ml/nn-activation.md)
 - [Tensorflow解决数据分类问题](ml/tensorflow-classification.md)
 - [Tensorflow计算机视觉问题](ml/tensorflow-cv.md)：
@@ -57,7 +58,7 @@
 <!-- - RNN：[循环神经网络RNN&LSTM代码实现](ml/rnn.md) -->
 - [生成式AI](ml/generativeai.md)：[模型原理，自动编码器和变分自编码器](ml/autoencoders.md)，[生成对抗网络GAN解析](ml/gan.md)
 <!-- [项目实践：简单的数据增强之基于GANs实现](ml/pj-augmentation-gans.md) -->
-- [Scikit-learn建模学习:回归，分类，调参，聚类](ml/scikit-learn-data-modeling.md)
+<!-- - [Transformers：注意力，自注意力和多头注意力](ml/attention.md) -->
 
 ## Python and Math
 - [用Python进行统计分析](python/statistics-with-python.md)
@@ -79,7 +80,7 @@
 - [Databricks-ML-spark](clouds/databricks-ml-spark.md)
 - [AWS机器学习系统的构架和服务](clouds/aws-with-ml.md)
 - [AWS安全专家认证考试相关内容](clouds/aws-with-security.md)
-<!-- - [AWS-Bedrock项目实践1](cloud/bedrock-pj1.md) -->
+<!-- - [AWS-Bedrock项目实践1：Code Generation (APIGateway,S3,bedrock)](cloud/bedrock-pj1.md) -->
 
 ## System Design and more fun
 - [系统设计概念System-Design-concepts](morefun/system-design.md)
