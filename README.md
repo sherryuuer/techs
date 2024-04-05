@@ -58,7 +58,7 @@
 - [生成式AI](ml/generativeai.md)：[模型原理，自动编码器和变分自编码器](ml/autoencoders.md)，[生成对抗网络GAN解析](ml/gan.md)
 <!-- [项目实践：简单的数据增强之基于GANs实现](ml/pj-augmentation-gans.md) -->
 <!-- - [Transformers：注意力，自注意力和多头注意力](ml/attention.md) -->
-<!-- [Transformers关键组件](ml/transformers-parts.md) -->
+<!-- [Transformers关键组件：以及和认知科学关联的思考](ml/transformers-parts.md) -->
 
 ## Python and Math
 - [用Python进行统计分析](python/statistics-with-python.md)
@@ -75,12 +75,14 @@
 ## Principal
 - [程序员原则](principals/whats-not-change.md)
 - [计算机思维](principals/computeritize.md)
+- [工程师新的](principals/engineer.md)
 
 ## Clouds
 - [Databricks-ML-spark](clouds/databricks-ml-spark.md)
 - [AWS机器学习系统的构架和服务](clouds/aws-with-ml.md)
 - [AWS安全专家认证考试相关内容](clouds/aws-with-security.md)
 <!-- - [AWS-Bedrock项目实践1：Code Generation (APIGateway,S3,bedrock)](cloud/bedrock-pj1.md) -->
+<!-- - [AWS-Bedrock项目实践2-3：Notes Summarisation & Image Generation & 模型评估 & RAG](cloud/bedrock-pj2-3.md) -->
 
 ## System Design and more fun
 - [系统设计概念System-Design-concepts](morefun/system-design.md)
