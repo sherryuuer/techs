@@ -24,8 +24,7 @@
 - [图结构：矩阵和邻接表的DFS和BFS](algo/graphs.md)
 - [图算法：最短路径Dijkstra](algo/dijkstra.md)
 - [图算法：最小生成树Prim&Kruskal](algo/prim-kruskal.md)
-- [图算法：拓扑排序](algo/toplogical-sort.md)
-<!-- [区间合并问题merge-intervals，任务调度问题印象深刻](algo/merge-intervals.md) -->
+- [图算法：拓扑排序](algo/toplogical-sort.md)，[区间合并问题merge-intervals，任务调度问题印象深刻](algo/merge-intervals.md)
 - [动态规划：1D&2D基础问题](algo/dp.md)
 - [动态规划：0-1背包问题](algo/01knapsack.md)
 - [动态规划：无限背包问题](algo/unboundedknapsack.md)
@@ -59,6 +58,7 @@
 - [生成式AI](ml/generativeai.md)：[模型原理，自动编码器和变分自编码器](ml/autoencoders.md)，[生成对抗网络GAN解析](ml/gan.md)
 <!-- [项目实践：简单的数据增强之基于GANs实现](ml/pj-augmentation-gans.md) -->
 <!-- - [Transformers：注意力，自注意力和多头注意力](ml/attention.md) -->
+<!-- [Transformers关键组件](ml/transformers-parts.md) -->
 
 ## Python and Math
 - [用Python进行统计分析](python/statistics-with-python.md)
