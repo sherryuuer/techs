@@ -277,3 +277,150 @@ def insert_interval(existing_intervals, new_interval):
 ```
 
 学习笔记：时间复杂度上，一共对列表进行了一轮遍历，所以是O(n)，空间复杂度上，没有使用额外的空间进行操作，所以为O(1)。
+
+### 问题3:Employee Free Time
+
+问题描述不难，面对的情景是一个公司内部的多个员工有各自的工作时间安排，而且可能会有一些时间段是他们都有空闲时间的。我们需要找到这些空闲时间段，并列出所有员工都有空闲的时间段。
+
+给定每位员工的工作时间安排比如[[[1, 2], [5, 6]], [[1, 3]],[[4, 10]]]，以形如 [start, end] 的区间表示，表示员工在 start 到 end 时间段内工作。返回的列表可能是很多起始时间段。
+
+解题思路：
+
+- 初始化一个堆，将每个员工的第一个时间区间推入最小堆。这样堆顶元素就是最早开始工作的员工时间。
+- 初始化一个变量 previous 等于第一个区间的 start 作为前一个空闲可能时间的结尾（当然前面没有工作所以是一个dummy的空闲结尾，并不用放入res列表）。
+- 不断从堆中弹出最小元素进行比较：
+  - 如果当然区间的 start 比 previous 大，则添加[previous, start]到res里表。
+  - 更新 previous 为 max(previous, current end)。
+  - 将当前员工的其他区间也推入堆（如果存在的话）。
+- 直到堆为空，返回res列表。
+
+
+代码尝试：通过本地用例。
+
+```python
+import heapq
+
+
+def employee_free_time(schedule):
+    res = []
+    minHeap = []
+    for s in schedule:
+        heapq.heappush(minHeap, s.pop(0))
+
+    previous = minHeap[0][0]
+
+    for s in schedule:
+        if s:
+            for _ in s:
+                heapq.heappush(minHeap, _)
+    print(minHeap, previous)
+    while minHeap:
+        start, end = heapq.heappop(minHeap)
+        if start > previous:
+            res.append([previous, start])
+
+        previous = max(previous, end)
+
+    return res
+
+
+res = employee_free_time([[[1, 2], [5, 6]], [[1, 3]], [[4, 10]]])
+print(res)
+```
+通过用例可以得到正确结果，但是原题给定了一个class，输入的工作安排列表也是这个class的类，所以需要重写。
+
+```python
+import heapq
+
+
+class Interval:
+    def __init__(self, start, end):
+        self.start = start
+        self.end = end
+        self.closed = True  # by default, the interval is closed
+    # set the flag for closed/open
+
+    def set_closed(self, closed):
+        self.closed = closed
+
+    def __str__(self):
+        return "[" + str(self.start) + ", " + str(self.end) + "]" \
+            if self.closed else \
+            "(" + str(self.start) + ", " + str(self.end) + ")"
+
+
+def employee_free_time(schedule):
+    res = []
+    minHeap = []
+    for intervals in schedule:
+        interval = intervals.pop(0)
+        heapq.heappush(minHeap, [interval.start, interval.end])
+
+    previous = minHeap[0][0]
+
+    for intervals in schedule:
+        if intervals:
+            for interval in intervals:
+                heapq.heappush(minHeap, [interval.start, interval.end])
+
+    while minHeap:
+        start, end = heapq.heappop(minHeap)
+        if start > previous:
+            res.append(Interval(previous, start))
+
+        previous = max(previous, end)
+
+    return res
+
+
+# Example usage:
+schedule = [[Interval(1, 3), Interval(6, 7)], [Interval(2, 4)], [
+    Interval(2, 5), Interval(9, 12)]]
+print(employee_free_time(schedule))
+```
+
+题解答案：省略了class的部分。见上面的代码。它的解法没有像我一样进行pop拆解，而是直接在原有的输入上操作，提取了index和副index进行后续的操作。但是在理解上我自己感觉不是很清晰，也许是因为我对自己的解答先入为主了。但是学习了一种新的方法很不错。
+
+```python
+from interval import Interval
+import heapq
+
+def employee_free_time(schedule):
+    heap = []
+    
+    for i in range(len(schedule)):
+        heap.append((schedule[i][0].start, i, 0))
+    
+    heapq.heapify(heap)
+
+    result = []
+    previous = schedule[heap[0][1]][heap[0][2]].start
+
+    while heap:
+        _, i, j = heapq.heappop(heap)
+        interval = schedule[i][j]
+ 
+        if interval.start > previous:
+            result.append(Interval(previous, interval.start))
+        
+        previous = max(previous, interval.end)
+
+        if j + 1 < len(schedule[i]):
+            heapq.heappush(heap, (schedule[i][j+1].start, i, j+1))
+    
+    return result
+```
+
+学习笔记：在class上还是不很熟悉，面向对象编程永远是一个课题，以后也要加入训练。这道题中要注意最后的 result 中 append 的也是 Interval 对象。
+
+这道题的时间复杂度取决于堆的操作和结果列表的构建。
+
+1. 将每个员工的第一个工作时间段添加到堆中的操作需要O(N*logK)的时间，其中N是员工数量，K是工作时间段的数量。
+2. 从堆中取出每个时间段并构建结果列表的操作需要O(K*logK)的时间，其中K是所有工作时间段的总数量。
+3. 因此，总的时间复杂度为O(NlogK + KlogK)，其中K是工作时间段的总数量。
+
+对于空间复杂度：
+1. 使用了一个最小堆来存储工作时间段，堆的空间复杂度为O(K)，其中K是工作时间段的总数量。
+2. 还使用了一个结果列表来存储自由时间段，结果列表的空间复杂度取决于最终生成的自由时间段数量，通常情况下，结果列表的空间复杂度可以忽略不计。
+
+因此，总的空间复杂度为O(K)。
