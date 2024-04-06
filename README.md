@@ -5,6 +5,7 @@
 - [链表结构：反转单链表及其变体问题](algo/reverse-linkedlist.md)
 - [链表算法：快慢指针](algo/fast-slow-pointers.md)
 - [排序算法：排序全家桶](algo/sort.md)
+<!-- [K-way Merge排序融合：（heap，two-pointer）](algo/kway-merge.md) -->
 - [递归算法：宇宙的开始和终结](algo/recursion.md)
 - [数据结构：矩阵MATRIX](algo/matrix.md)
 - [树结构：树和二分树BST](algo/binarytree.md)
@@ -54,11 +55,12 @@
 - [CNN：卷积神经网络Tensorflow](ml/cnn.md)，[深入构架&空间正规化&防过拟合&跳跃连接](ml/cnn-arch.md)，[Pytorch图像预处理ImageFolder解析](ml/pytorch-imagefolder.md)，[AlexNet-VGG-GoogleNet构架](ml/cnn-3net.md)
 - [CNN：SqueezeNet和CIFAR10数据集](ml/squeezenet.md)
 - [CNN：ResNet和ImageNet超大数据集](ml/resnet.md)
-<!-- - RNN：[循环神经网络RNN&LSTM代码实现](ml/rnn.md) -->
+- [RNN：循环神经网络RNN&LSTM代码实现](ml/rnn.md)
 - [生成式AI](ml/generativeai.md)：[模型原理，自动编码器和变分自编码器](ml/autoencoders.md)，[生成对抗网络GAN解析](ml/gan.md)
 <!-- [项目实践：简单的数据增强之基于GANs实现](ml/pj-augmentation-gans.md) -->
 <!-- - [Transformers：注意力，自注意力和多头注意力](ml/attention.md) -->
 <!-- [Transformers关键组件：以及和认知科学关联的思考](ml/transformers-parts.md) -->
+<!-- [Transformers编码器构架各个模块的代码实践](ml/transformers-encoder.md) -->
 
 ## Python and Math
 - [用Python进行统计分析](python/statistics-with-python.md)
@@ -75,7 +77,7 @@
 ## Principal
 - [程序员原则](principals/whats-not-change.md)
 - [计算机思维](principals/computeritize.md)
-- [工程师新的](principals/engineer.md)
+- [工程师心得](principals/engineer.md)
 
 ## Clouds
 - [Databricks-ML-spark](clouds/databricks-ml-spark.md)

@@ -71,7 +71,8 @@ for counter, data in enumerate(dataloader):
 
 **长短时记忆（LSTM）：**
 
-- 为了解决梯度消失和梯度爆炸的问题，LSTM引入了长期和短期记忆的机制，适用于自然语言处理、时间序列预测等任务。
+为了解决梯度消失和梯度爆炸的问题，LSTM引入了长期和短期记忆的机制，适用于自然语言处理、时间序列预测等任务。
+
 - LSTM的重要概念和步骤包括：
   - long term memory with cell state：长期记忆的内容没有权重更新影响，也就是没有weight。
   - short term memory with hidden state：短期记忆内容是有权重更新的。
@@ -114,7 +115,7 @@ for counter, data in enumerate(dataloader):
 
 ### 6 - 用PyTorch组装一个LSTM的cell
 
-上面的四个公式就是LSTM的主要流程，使用PyTorch将他们转化为代码。
+上面讲的四个门控公式就是LSTM的主要流程，使用PyTorch将他们转化为代码。
 
 ```python
 import torch
@@ -223,7 +224,7 @@ PS：
 
 总之，这种写法是一种通用的做法，用于确保在**多重继承**等情况下，能够正确地调用父类的构造函数。
 
-多么复杂的构架，底层都很多线性计算，因为一维的线性是高维度的组成单元。第一性原理出发，所有的都要回到原点。
+多复杂的构架，底层都很多线性计算，因为一维的线性是高维度的组成单元。第一性原理出发，所有的都要回到原点。
 
 这个例子中复现了整个LSTM的公式流程。
 
