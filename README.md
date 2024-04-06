@@ -44,7 +44,7 @@
 - [Scikit-learn建模学习:回归，分类，调参，聚类](ml/scikit-learn-data-modeling.md)
 - [神经网络：从维度的角度重新解构](ml/nn-the-dim.md)，[优化算法的进化](ml/nn-optimizer.md)，[激活函数](ml/nn-activation.md)
 - [Tensorflow解决数据分类问题](ml/tensorflow-classification.md)
-- [Tensorflow计算机视觉问题](ml/tensorflow-cv.md)：
+- [Tensorflow计算机视觉问题](ml/tensorflow-cv.md)
 - [Tensorflow自然语言处理和文本分类：使用kaggle的入门级项目进行文本分类的学习](ml/tensorflow-nlp.md)
 - [NLP：词嵌入WordEmbeddings](ml/wordembeddings.md)
 - [NLP：LSTM语言模型构架](ml/lstm-llm.md)
