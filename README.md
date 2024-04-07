@@ -50,7 +50,7 @@
 - [NLP：LSTM语言模型构架](ml/lstm-llm.md)
 - [NLP：文本分类的原理和实现](ml/text-classification.md)
 - [Pytorch初见就有点爱](ml/pytorch-firsttime.md)
-- [Pytorch框架模板](ml/pytorch-template.md)：
+- [Pytorch框架模板](ml/pytorch-template.md)
 - [迁移学习：站在巨魔的肩膀上](ml/transfer-learning.md)
 - [CNN：卷积神经网络Tensorflow](ml/cnn.md)，[深入构架&空间正规化&防过拟合&跳跃连接](ml/cnn-arch.md)，[Pytorch图像预处理ImageFolder解析](ml/pytorch-imagefolder.md)，[AlexNet-VGG-GoogleNet构架](ml/cnn-3net.md)
 - [CNN：SqueezeNet和CIFAR10数据集](ml/squeezenet.md)
@@ -61,6 +61,7 @@
 <!-- - [Transformers：注意力，自注意力和多头注意力](ml/attention.md) -->
 <!-- [Transformers关键组件：以及和认知科学关联的思考](ml/transformers-parts.md) -->
 <!-- [Transformers编码器构架各个模块的代码实践](ml/transformers-encoder.md) -->
+<!-- [GNN：图基础和图神经网络Graph-Neural-Networks](ml/gnn.md) -->
 
 ## Python and Math
 - [用Python进行统计分析](python/statistics-with-python.md)
