@@ -74,11 +74,6 @@
 - [机器学习工具函数helper_functions](tools/ml-helper-functions.md)
 - [数据处理框架Scikit-learnAPI](tools/feature-selection-sklearn.md)
 
-## Principal
-- [程序员原则](principals/whats-not-change.md)
-- [计算机思维](principals/computeritize.md)
-- [工程师心得](principals/engineer.md)
-
 ## Clouds
 - [Databricks-ML-spark](clouds/databricks-ml-spark.md)
 - [AWS机器学习系统的构架和服务](clouds/aws-with-ml.md)
@@ -91,6 +86,13 @@
 - [full-stack构架一个油管网站](morefun/youtube-clone.md)
 - [G检定深度学习考试相关日语词汇和概念解释](morefun/gtest.md)
 
+## Principal
+- [程序员原则](principals/whats-not-change.md)
+- [计算机思维](principals/computeritize.md)
+- [工程师心得](principals/engineer.md)
+
+## logbooks
+- [航海日志：定期思维检修1](principals/checkmind1.md)
 
 ---
 对世界知识和信息的探索，就像是拿着一片树叶，通过纹理想要感受到远古树根长出来前土壤的芳香，甚至贪婪的想找到远古土壤的成分。宛如大海捞针。但是仅仅是这种千丝万缕的关联，就让人兴奋和欣然，毕竟没有什么其他的手段，只是叶子距离根更近更远的区别，但是仅此足矣吧。

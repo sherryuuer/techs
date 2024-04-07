@@ -96,3 +96,78 @@ def merge_sorted(nums1, m, nums2, n):
     return nums1
 ```
 学习笔记：这道题的时间复杂度为O(m+n)因为进行了一次遍历，空间复杂度为O(1)因为没有使用额外的数组等空间，只用了几个指针。
+
+### 问题2:Kth Smallest Number in M Sorted Lists
+
+这道题目要求找到 M 个已排序列表中第 K 小的数字。如果有重复则视为不同的要素，如果input为空则返回零，如果input的总元素不足k，则返回最后一个最大的元素。在leetcode中是一道median难度的题。
+
+一种解决这个问题的方法是使用最小堆（Min Heap）。解题思路：
+
+- 将每个列表的第一个元素（最小的元素）和它所属的列表索引加入堆中。
+- 不断从堆中弹出最小的元素，并将对应列表的下一个元素加入堆中。
+- 直到弹出了第 K 个最小的元素为止。
+- 如果列表用完也不够 K 个元素，则返回最后一个弹出的元素即可。
+
+代码尝试：思路很清晰，简单的通过了所有的示例。在第一次遍历L的时候记得判断是否为空。
+
+```python
+from heapq import *
+
+
+def k_smallest_number(lists, k):
+    minheap = []
+    counter = 0
+    # track list index, element index
+    for li, L in enumerate(lists):
+        if L:
+            heappush(minheap, [L[0], li, 0])
+
+    if not minheap:
+        return 0
+
+    while minheap:
+        num, li, ei = heappop(minheap)
+        counter += 1
+        L = lists[li]
+        if ei < len(L) - 1:
+            heappush(minheap, [L[ei + 1], li, ei + 1])
+
+        if counter == k:
+            return num
+
+    return num
+
+
+res = k_smallest_number([[2, 6, 8], [3, 7, 10], [5, 8, 11]], 5)
+print(res)
+```
+
+附上所给题解：除了写法稍有不同，其他没什么不一样的。思路一样。仅作参考，不做分析。
+
+```python
+def k_smallest_number(lists, k):
+    list_length = len(lists)
+    kth_smallest = []
+
+    for index in range(list_length):
+        if len(lists[index]) == 0:
+            continue
+        else:
+            heappush(kth_smallest, (lists[index][0], index, 0))
+
+    numbers_checked, smallest_number = 0, 0
+    while kth_smallest:
+        smallest_number, list_index, num_index = heappop(kth_smallest)
+        numbers_checked += 1
+
+        if numbers_checked == k:
+            break
+
+        if num_index + 1 < len(lists[list_index]):
+            heappush(
+                kth_smallest, (lists[list_index][num_index + 1], list_index, num_index + 1))
+
+    return smallest_number
+```
+
+学习笔记：时间复杂度来说，第一次遍历将 m 个列表的第一个元素推入堆，是 O(mlogm)，第二次遍历弹出 k 个元素，同时要推入元素，是 O(klogm)，因此总体的时间复杂度是 O((m + k)logm)。空间复杂度，只使用了一个大小为 m 的最小堆，所以为 O(m)。
