@@ -171,3 +171,119 @@ def k_smallest_number(lists, k):
 ```
 
 学习笔记：时间复杂度来说，第一次遍历将 m 个列表的第一个元素推入堆，是 O(mlogm)，第二次遍历弹出 k 个元素，同时要推入元素，是 O(klogm)，因此总体的时间复杂度是 O((m + k)logm)。空间复杂度，只使用了一个大小为 m 的最小堆，所以为 O(m)。
+
+### 问题3:Merge K Sorted Lists
+
+合并 K 个有序链表，是一个经典的算法问题，其描述如下：
+
+给定K个已排序的链表，将它们合并成一个新的排序链表并返回。例如，如果有三个已排序链表如下所示：
+
+```
+List 1: 1 -> 4 -> 5
+List 2: 1 -> 3 -> 4
+List 3: 2 -> 6
+```
+
+则合并后的排序链表为：
+
+```
+1 -> 1 -> 2 -> 3 -> 4 -> 4 -> 5 -> 6
+```
+
+这个问题的挑战在于合并多个有序链表，并且要求在时间复杂度为O(n log k)的情况下完成，其中n是所有链表中元素的总数，k是链表的数量。
+
+英语题目是 Lists 但是其实是针对链表的，我对于链表还是不太熟悉，可能这是我自己的挑战，因为 Python 使用者，本身没有这种数据结构。
+
+解题思路：
+
+- 使用头指针成对遍历输入的链表。
+- 比较每对节点值，将较小的加入dummy链表中。
+- 重复上述步骤，直到添加了这对链表中的所有的值。
+- 将排序好的该链表和新的链表继续比较。
+
+代码尝试：(节点和链表是题中已给的但是我没有完全使用)
+
+```python
+class LinkedListNode:
+    # __init__ will be used to make a LinkedListNode type object.
+    def __init__(self, data, next=None):
+        self.data = data
+        self.next = next
+
+
+class LinkedList:
+    # __init__ will be used to make a LinkedList type object.
+    def __init__(self):
+        self.head = LinkedListNode(None)
+
+
+def merge_2_lists(head1, head2):
+    dummy_node = LinkedListNode(-1)
+    cur = dummy_node
+    cur1, cur2 = head1, head2
+    while cur1 and cur2:
+
+        if cur1.data <= cur2.data:
+            cur.next = cur1
+            cur1 = cur1.next
+        else:
+            cur.next = cur2
+            cur2 = cur2.next
+        cur = cur.next
+    if cur1:
+        cur.next = cur1
+    else:
+        cur.next = cur2
+    return dummy_node.next
+
+
+def merge_k_lists(lists):
+    if not lists:
+        return None
+    if len(lists) == 1:
+        return lists[0].head
+
+    if len(lists) > 2:
+        
+        dummy_node = merge_2_lists(lists[0].head, lists[1].head)
+        for i in range(2, len(lists)):
+            dummy_node = merge_2_lists(dummy_node, lists[i].head)
+        return dummy_node
+```
+
+参考题解：
+
+```python
+def merge_2_lists(head1, head2):  
+    dummy = LinkedListNode(-1)
+    prev = dummy  
+
+    while head1 and head2:
+        if head1.data <= head2.data:
+            prev.next = head1
+            head1 = head1.next
+        else:
+            prev.next = head2
+            head2 = head2.next
+        prev = prev.next
+
+    if head1 is not None:
+        prev.next = head1
+    else:
+        prev.next = head2
+
+    return dummy.next
+
+
+# Main function
+def merge_k_lists(lists):  
+    if len(lists) > 0:
+        step = 1
+        while step < len(lists):
+            for i in range(0, len(lists) - step, step * 2):
+                lists[i].head = merge_2_lists(lists[i].head, lists[i + step].head)
+            step *= 2
+        return lists[0].head
+    return
+```
+学习笔记：链表我总是做的不好，还是因为中间的逻辑没有搞清楚，尤其是节点和链表的区分，头节点，有没有dummy节点等，需要多练习。时间复杂度O(nlogk)，k为列表数量，n为总元素数量。空间复杂度O(1)。

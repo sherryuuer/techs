@@ -1,4 +1,4 @@
-## GNN：图神经网络Graph Neural Networks
+## GNN：图神经网络 Graph Neural Networks 图的基础和数学理论
 
 ---
 ### 图和图神经网络的基础
@@ -266,7 +266,128 @@ nx.draw_shell(G, nlist=[range(5,10), range(5)], **options)  # 绘制图G，nlist
 plt.show()
 ```
 
+### 图拉普拉斯进行光谱图像分割 Spectral image segmentation
 
+在数学和物理学中，谱是一种特征分解的概念，用于描述线性操作符的性质。谱包含了这个操作符的特征值和特征向量，它们提供了关于操作符行为和结构的重要信息。
+
+在线性代数中，一个矩阵的谱是指其特征值的集合。特征值是矩阵乘法的特定操作符的根本特征，它们描述了这个操作符对某些向量进行缩放的程度。特征向量是与特征值相关联的向量，它们描述了在操作符作用下发生的线性变换。
+
+在物理学中，谱也指的是某些物理系统的特征分解。例如，原子的光谱是指原子在不同频率下发射或吸收光子的模式，它提供了关于原子结构和能级的信息。
+
+总之，谱是一种用于描述线性操作符或物理系统特征的工具，它包含了特征值和特征向量，并提供了对系统行为和结构的深入理解。
+
+谱图像分割是一种基于图拉普拉斯算子的图像分割技术，它利用了图的谱特性来将图像分成不同的区域。
+
+这个过程主要包括：
+
+1. **构建相似性图：** 首先，将图像转换为图形表示，其中每个像素作为图的节点，相邻像素之间的相似性作为边的权重。这个相似性通常基于像素之间的颜色、亮度、纹理等特征。
+
+2. **构建拉普拉斯矩阵：** 利用相似性图构建图的拉普拉斯矩阵。拉普拉斯矩阵是描述图结构和连接性的重要工具，它的特征值和特征向量可以提供关于图的拓扑结构和分割的信息。
+
+3. **计算特征向量：** 对图的拉普拉斯矩阵进行特征值分解，得到其特征值和特征向量。通常，取前几个非零特征值对应的特征向量作为特征空间。
+
+4. **谱聚类：** 利用特征向量进行谱聚类，将图像中的像素划分为不同的区域。谱聚类是一种基于图谱特征的聚类方法，它将图像分割问题转化为图上的点聚类问题，通过优化特定的目标函数来实现。
+
+5. **后处理：** 对聚类结果进行后处理，例如合并相似的区域、去除噪声等，以得到最终的分割结果。
+
+以下是一段进行谱图分割的代码：
+
+```python
+import numpy as np
+from scipy import misc
+from skimage.transform import resize
+import matplotlib.pyplot as plt
+from numpy import linalg as LA
+from scipy.sparse import csgraph
+from sklearn.feature_extraction.image import img_to_graph
+from sklearn.cluster import spectral_clustering
+
+re_size = 64  # 重采样的大小
+img = misc.face(gray=True)  # 获取一张灰度图像
+img = resize(img, (re_size, re_size))  # 调整图像大小
+mask = img.astype(bool)  # 创建一个与图像相同大小的布尔掩码
+graph = img_to_graph(img, mask=mask)  # 将图像转换为图形表示
+# 取梯度的减小函数：我们使其依赖于梯度的程度较弱
+# 分割接近于沃罗诺伊
+graph.data = np.exp(-graph.data / graph.data.std())  # 使用图的标准差计算梯度的指数函数
+labels = spectral_clustering(graph, n_clusters=3)  # 使用谱聚类对图像进行分割，将其划分为3个簇
+label_im = -np.ones(mask.shape)  # 创建一个与掩码相同大小的数组，并初始化为-1
+label_im[mask] = labels  # 将聚类标签应用到掩码上
+
+# 显示原始图像
+plt.figure(figsize=(6, 3))
+plt.imshow(img, cmap='gray', interpolation='nearest')
+
+# 显示分割后的图像
+plt.figure(figsize=(6, 3))
+plt.imshow(label_im, cmap=plt.cm.nipy_spectral, interpolation='nearest')
+plt.show()
+```
+
+### 图的类型：Directed vs undirected graphs，Weighted vs unweighted graphs
+
+图是由节点（顶点）和边（连接节点的线）组成的数学结构。根据边的性质和图的结构，图可以分为多种类型，主要包括：
+
+1. **有向图（Directed Graph）和无向图（Undirected Graph）：**
+   - 有向图中的边是有方向的，表示节点之间的单向关系。例如，如果节点 A 与节点 B 之间有一条有向边，则从节点 A 指向节点 B。
+   - 无向图中的边是没有方向的，表示节点之间的双向关系。例如，如果节点 A 与节点 B 之间有一条无向边，则可以从节点 A 到节点 B，也可以从节点 B 到节点 A。
+
+2. **有环图（Cyclic Graph）和无环图（Acyclic Graph）：**
+   - 有环图包含至少一个环，即从一个节点出发经过若干条边最终回到该节点的路径。有向图中的环可以是循环的，无向图中的环则是简单的循环。
+   - 无环图不包含任何环，所有的路径都是非循环的。例如，树（Tree）是一种典型的无环图结构。
+
+3. **带权图（Weighted Graph）和无权图（Unweighted Graph）：**
+   - 带权图中的边具有权重或成本，表示节点之间的关系强度或距离。这些权重可以是实数或其他类型的值。
+   - 无权图中的边没有权重，只表示节点之间的连接关系，通常用于表示简单的关系网络。
+
+4. **稀疏图（Sparse Graph）和稠密图（Dense Graph）：**
+   - 稀疏图是指具有相对较少边的图，而稠密图则是指具有相对较多边的图。稀疏图中的节点之间的连接关系较少，而稠密图中的节点之间的连接关系较多。
+
+5. **完全图（Complete Graph）：**
+   - 完全图是指每对不同的节点之间都有一条边相连的图。在完全图中，任意两个节点之间都存在一条边，没有孤立的节点。
+
+6. **简单图（Simple Graph）和多重图（Multigraph）：**
+   - 简单图是指没有自环（连接到自身的边）和重复边的图，每条边都是唯一的。
+   - 多重图允许存在自环和重复边，同一对节点之间可以有多条相同的边。
+
+7. **连通图（Connected Graph）和非连通图（Disconnected Graph）：**
+   - 连通图是指图中的任意两个节点之间都存在路径相连，即从任意一个节点出发都可以到达图中的其他任意节点。
+   - 非连通图是指图中存在至少一对节点之间没有路径相连的情况，图被分成了多个连通分量。这就是我们刚刚学过的内容。
+
+这些分类类型可以帮助我们更好地理解图的结构和性质，以及在不同场景下选择合适的图模型和算法进行分析和处理。
+
+### 图的坐标列表 COO format
+
+是一种常用的稀疏矩阵的表达方式。Coordinate Format。
+
+举一个代码例子就明白了：
+
+```python
+import numpy as np
+import scipy.sparse as sparse
+
+# 定义行索引数组
+row = np.array([0, 3, 1, 0])
+# 定义列索引数组
+col = np.array([0, 3, 1, 2])
+# 定义数据数组
+data = np.array([4, 5, 7, 9])
+
+# 使用COO格式创建稀疏矩阵
+mtx = sparse.coo_matrix((data, (row, col)), shape=(4, 4))
+
+# 将稀疏矩阵转换为密集矩阵并打印输出
+print(mtx.todense())
+
+
+# output
+matrix([[4, 0, 9, 0],
+        [0, 7, 0, 0],
+        [0, 0, 0, 0],
+        [0, 0, 0, 5]])
+```
+
+COO格式简单易懂。然而，对于执行矩阵操作来说效率不高，特别是对于大型稀疏矩阵而言，因为它需要显式存储非零元素的索引。
 
 
 ### （Option）矩阵逆运算相关内容

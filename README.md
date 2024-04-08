@@ -4,8 +4,7 @@
 - [链表结构：单链双链和队列](algo/linkedlist.md)
 - [链表结构：反转单链表及其变体问题](algo/reverse-linkedlist.md)
 - [链表算法：快慢指针](algo/fast-slow-pointers.md)
-- [排序算法：排序全家桶](algo/sort.md)
-<!-- [K-way Merge排序融合：（heap，two-pointer）](algo/kway-merge.md) -->
+- [排序算法：排序全家桶](algo/sort.md)，[K-way Merge排序融合：（heap，two-pointer）](algo/kway-merge.md)
 - [递归算法：宇宙的开始和终结](algo/recursion.md)
 - [数据结构：矩阵MATRIX](algo/matrix.md)
 - [树结构：树和二分树BST](algo/binarytree.md)
@@ -61,7 +60,7 @@
 <!-- - [Transformers：注意力，自注意力和多头注意力](ml/attention.md) -->
 <!-- [Transformers关键组件：以及和认知科学关联的思考](ml/transformers-parts.md) -->
 <!-- [Transformers编码器构架各个模块的代码实践](ml/transformers-encoder.md) -->
-<!-- [GNN：图基础和图神经网络Graph-Neural-Networks](ml/gnn.md) -->
+- [GNN：图基础和图论的数学-Graph-Neural-Networks](ml/gnn.md)，[GCN图卷积神经网络和它的实现-Graph-Convolutional-Networks，（是比较难的两章，有空通过视频讲解再次学习后再深入研究一下）](ml/gcn.md)
 
 ## Python and Math
 - [用Python进行统计分析](python/statistics-with-python.md)
@@ -96,4 +95,5 @@
 - [航海日志：定期思维检修1](principals/checkmind1.md)
 
 ---
-对世界知识和信息的探索，就像是拿着一片树叶，通过纹理想要感受到远古树根长出来前土壤的芳香，甚至贪婪的想找到远古土壤的成分。宛如大海捞针。但是仅仅是这种千丝万缕的关联，就让人兴奋和欣然，毕竟没有什么其他的手段，只是叶子距离根更近更远的区别，但是仅此足矣吧。
+- 对世界知识和信息的探索，就像是拿着一片树叶，通过纹理想要感受到远古树根长出来前土壤的芳香，甚至贪婪的想找到远古土壤的成分。宛如大海捞针。但是仅仅是这种千丝万缕的关联，就让人兴奋和欣然，毕竟没有什么其他的手段，只是叶子距离根更近更远的区别，但是仅此足矣吧。
+- 信息论，数学，频谱分析，图论等领域，强化学习，遗传算法等缺不了。
