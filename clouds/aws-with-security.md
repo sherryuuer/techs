@@ -422,3 +422,33 @@ S3的access point：针对桶中的不同文件夹，可以根据文件夹的名
 **S3数据加密**
 
 **Load Balancing**
+
+**ACM**
+
+**AWS Backup**
+
+### 6 - Management and Security Governance
+
+**AWS Organization**
+
+**Control Tower**
+
+**AWS Config**
+
+**Trusted Advisor**
+
+**Cost Explorer**
+
+**AWS Cost Anomaly Detection**
+
+**CloudFormation**
+
+**Service Catalog**
+
+**RAM: Resource Access Manager**
+
+### others
+
+**CloudShell**
+
+不能直接访问VPC中的EC2和RDS等资源，是用来方便APIcall的。要连接EC2必须设置instance connect之类的。

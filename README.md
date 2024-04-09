@@ -15,7 +15,7 @@
 - [树算法：迭代深度优先搜索](algo/iterativedfs.md)
 - [堆算法：堆和优先队列的实现](algo/heap.md)，[TopK-Elements](algo/topk-elements.md)，[两个堆](algo/two-heaps.md)
 - [回溯算法：树迷宫路径问题](algo/treemaze.md)
-- [回溯算法：子集](algo/subsets.md)
+- [回溯算法：子集](algo/subsets.md)，[回溯Backtracking相关问题](algo/backtracking.md)
 - [回溯算法：排列](algo/combinations.md)
 - [回溯算法：组合](algo/permutations.md)
 - [树图算法：深度优先和广度优先算法](algo/dfsbfs.md)
@@ -33,6 +33,7 @@
 
 ## Machine learning
 - [AI时代提问准则](ml/ai-4-prompt.md)
+<!-- - [机器学习以及它的分类总结](ml/mltypes.md) -->
 - [数据预处理：ML中最重要的步骤](ml/feature-engineering.md)
 - [防止过拟合的技术：正规化&Dropout&EarlyStopping](ml/overfit.md)
 - [容易混淆的几个概念：缩放，标准化，归一化，正则化](ml/some-confusion-words.md)
@@ -78,6 +79,7 @@
 - [Databricks-ML-spark](clouds/databricks-ml-spark.md)
 - [AWS机器学习系统的构架和服务](clouds/aws-with-ml.md)
 - [AWS安全专家认证考试相关内容](clouds/aws-with-security.md)
+- [AWSSysOps运维考试内容整理](clouds/aws-with-sysops.md)
 <!-- - [AWS-Bedrock项目实践1：Code Generation (APIGateway,S3,bedrock)](cloud/bedrock-pj1.md) -->
 <!-- - [AWS-Bedrock项目实践2-3：Notes Summarisation & Image Generation & 模型评估 & RAG](cloud/bedrock-pj2-3.md) -->
 
@@ -85,6 +87,7 @@
 - [系统设计概念System-Design-concepts](morefun/system-design.md)
 - [full-stack构架一个油管网站](morefun/youtube-clone.md)
 - [G检定深度学习考试相关日语词汇和概念解释](morefun/gtest.md)
+- [东京大学区块链公开讲座笔记](morefun/tokyouniversity-blockchain.md)
 
 ## Principal
 - [程序员原则](principals/whats-not-change.md)
