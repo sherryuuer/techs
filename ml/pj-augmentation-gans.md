@@ -1,10 +1,16 @@
-## 项目代码：简单的数据增强基于GANs实现
+## 项目代码：简单的数据增强基于GANs实现（code and app）
 
 ---
 
-这是一个简单的线性数据集，基于GANs技术实现的例子。
+从一个简单的线性数据集的生成开始，基于GANs技术实现的代码示例。主要是代码的简单说明，理论部分在GAN解析那一篇讲过了这里不做赘述，最后会有我用 streamlit 制作的可以直接可视化的应用随便玩一下，点击run就可以在线看训练的变化。
 
-### 1 - Import the libraries
+笔记本连接：[project folder](https://github.com/sherryuuer/projects-drafts/blob/main/gans-linear-dataset/dataset-augmentation-GANs.ipynb)
+
+streamlit app的可视化应用链接：[streamlit-application](https://sallysapps.streamlit.app/GANs-Linear-loss-vision) (如果应用在睡觉请手动唤醒)
+
+下述的代码可以自己粘贴在自己的笔记本里跑着玩～
+
+### 1 - 导入需要的包 Import the libraries
 
 ```python
 import time
@@ -16,7 +22,7 @@ from IPython import display
 %matplotlib inline
 ```
 
-### 2 - Create the data
+### 2 - 创建线性数据 Create the data
 
 生成一个标准正态分布1000x2的数据集。并自定义张量，用于数据集的生成。然后使用TensorDataset封装数据集，并生成数据集加载器。
 
@@ -43,9 +49,9 @@ dataloader = torch.utils.data.DataLoader(
 )
 ```
 
-### 3 - Define the models
+### 3 - 模型定义 Define the models
 
-生成网络是一个简单的2-2，判别网络是2-5-3-1的结构。这里定义的是一个基本的生成网络模型。通过这种方式定义生成器和判别器，我们可以建立一个训练过程，使得生成器不断生成更加逼真的假数据，而判别器不断提高鉴别真假数据的能力，从而达到最终的目标：生成逼真的数据样本。
+生成网络是一个简单的2-2，判别网络是2-5-3-1的结构。这里定义的是一个基本的生成网络模型。通过这种方式定义生成器和判别器，从而建立一个训练过程，使得生成器不断生成更加逼真的假数据，而判别器不断提高鉴别真假数据的能力，从而达到最终的目标：生成逼真的数据样本。
 
 ```python
 Gen = nn.Sequential(
@@ -61,7 +67,7 @@ Disc = nn.Sequential(
 )
 ```
 
-### 4 - Define the function for discriminator updates
+### 4 - 定义判别器的更新函数 Define the function for discriminator updates
 
 ```python
 def update_D(X, Z, nnet_D, nnet_G, loss, trainer_D):
@@ -141,7 +147,7 @@ def update_D(X, Z, nnet_D, nnet_G, loss, trainer_D):
     return loss_D
 ```
 
-### 5 - Perform generator updates
+### 5 - 定义生成网络的更新函数 Perform generator updates
 
 ```python
 def update_G(Z, nnet_D, nnet_G, loss, trainer_G):
@@ -211,7 +217,7 @@ def update_G(Z, nnet_D, nnet_G, loss, trainer_G):
     return loss_G
 ```
 
-### 6 - Initialize the parameters
+### 6 - 初始化参数的函数 Initialize the parameters
 
 ```python
 def init_params(Discriminator, Generator, lr_D, lr_G):
@@ -286,7 +292,7 @@ def init_params(Discriminator, Generator, lr_D, lr_G):
     return loss, trainer_D, trainer_G, fig, axes, loss_D, loss_G
 ```
 
-### 7 - Compute the losses
+### 7 - 计算损失的函数 Compute the losses
 
 ```python
 def compute_losses(X, net_D, net_G, loss, trainer_D, trainer_G, batch_size, latent_dim, data_iter):
@@ -360,7 +366,7 @@ def compute_losses(X, net_D, net_G, loss, trainer_D, trainer_G, batch_size, late
     return metrics
 ```
 
-### 8 - Display generated distributions
+### 8 - 现实生成的数据分布的函数 Display generated distributions
 
 ```python
 def display_gen_dist(net_G, axes, latent_dim, data):
@@ -418,7 +424,7 @@ def display_gen_dist(net_G, axes, latent_dim, data):
     axes[1].legend(['real', 'generated'])
 ```
 
-### 9 - Display the losses
+### 9 - 现实损失变化的函数 Display the losses
 
 ```python
 def display_losses(metrics, loss_D, loss_G, axes, fig, epoch):
@@ -485,7 +491,7 @@ def display_losses(metrics, loss_D, loss_G, axes, fig, epoch):
     return loss_D, loss_G
 ```
 
-### 10 - Create the training function
+### 10 - 创建训练用函数 Create the training function
 
 ```python
 def train(net_D, net_G, data_iter, num_epochs, lr_D, lr_G, latent_dim, data):
@@ -564,7 +570,7 @@ def train(net_D, net_G, data_iter, num_epochs, lr_D, lr_G, latent_dim, data):
     print(f'loss_D {loss_D[-1]}, loss_G {loss_G[-1]}, {(metrics[2]*num_epochs) / (tok-tik):.1f} examples/sec')
 ```
 
-### 11 - Train the model
+### 11 - 模型训练 Train the model
 
 ```python
 lr_D, lr_G, latent_dim, num_epochs = 0.05, 0.005, 2, 30
@@ -596,7 +602,5 @@ train(Disc, Gen, dataloader, num_epochs, lr_D, lr_G, latent_dim, data[:100].deta
 lr_D, lr_G, latent_dim, num_epochs = 0.05, 0.005, 2, 30
 train(Disc, Gen, dataloader, num_epochs, lr_D, lr_G, latent_dim, data[:100].detach().numpy())
 ```
-
-笔记本连接：[project folder](https://github.com/sherryuuer/projects-drafts/blob/main/gans-linear-dataset/dataset-augmentation-GANs.ipynb)
 
 最终的生成器的损失不断下降，判别器的损失开始上升，因为它渐渐识别出不生成器的结果。损失开始接近。

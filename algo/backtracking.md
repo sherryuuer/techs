@@ -132,3 +132,154 @@ def flood_fill(grid, sr, sc, target):
 顺利通过，是一种优化的方法。还是很喜欢stack。
 
 学习笔记：时间和空间复杂度都是O(m x n)。
+
+### 问题2:Word Search
+
+经典的搜索问题，在一个二维字符网格中查找给定的单词是否存在。单词可以在网格中按顺序横向或纵向连续出现，但不能跨越网格中的字符。
+
+具体来说，给定一个二维字符网格和一个单词，需要判断是否能在网格中找到单词的完整路径。路径的方向可以是水平或垂直的，但不能是对角线方向。每个单元格中的字符只能使用一次。
+
+例如，给定一个网格和单词 "ABCCED"：
+
+```
+[
+  ['A','B','C','E'],
+  ['S','F','C','S'],
+  ['A','D','E','E']
+]
+```
+
+可以看到单词 "ABCCED" 存在于网格中，路径为 (0,0) -> (0,1) -> (0,2) -> (1,2) -> (2,2) -> (2,1) -> (2,0)。
+
+Word Search问题的解法通常使用深度优先搜索（DFS）算法来搜索可能的路径。我们从网格中的每个字符开始，尝试构建以该字符为起点的路径，递归地向四个方向探索，直到找到完整的单词或无法继续探索为止。这就是完整了解题思路了。回溯问题的解决思路很好说清楚，剩下的就是逻辑处理了。
+
+代码尝试：本着先尝试再修改的原则。
+
+```python
+def word_search(grid, word):
+
+    def dfs(grid, visit, r, c, idx, word):
+        if r < 0 or c < 0 \
+                or r >= len(grid) or c >= len(grid[0]) \
+                or (r, c) in visit \
+                or idx > len(word) - 1:
+            return
+        if grid[r][c] == word[idx] and idx == len(word) - 1:
+            return True
+
+        visit.add((r, c))
+
+        res = dfs(grid, visit, r - 1, c, idx + 1, word) or \
+            dfs(grid, visit, r + 1, c, idx + 1, word) or \
+            dfs(grid, visit, r, c - 1, idx + 1, word) or \
+            dfs(grid, visit, r, c + 1, idx + 1, word)
+        if res:
+            return True
+
+        visit.remove((r, c))  # 回溯时要移除访问标记
+
+        return False
+
+    for row in range(len(grid)):
+        for col in range(len(grid[0])):
+            if grid[row][col] == word[0]:
+                print(row, col)
+
+                if not dfs(grid, set(), row, col, 0, word):
+                    continue
+                else:
+                    return True
+    return False
+
+
+grid = [
+    ["N", "W", "L", "I", "M"],
+    ["V", "I", "L", "Q", "O"],
+    ["O", "L", "A", "T", "O"],
+    ["R", "T", "A", "I", "N"],
+    ["O", "I", "T", "N", "C"]
+]
+word = "LATIN"
+
+res = word_search(grid, word)
+print(res)
+```
+
+然后进行代码优化：
+
+- 让代码更快地判断返回，可以在一开始就判断是否到了最后一个字符，那么就可以直接返回 True，节省了不必要的空间和时间。
+- 四个方向的遍历使用direction列表进行。
+- 回溯不要忘记remove元素的步骤。
+- 主程序的判断部分也没必要那么复杂，直接符合条件返回True即可。
+
+```python
+def word_search(grid, word):
+    def dfs(grid, visit, r, c, idx, word):
+        if idx == len(word) - 1:
+            return True
+
+        visit.add((r, c))
+
+        for dr, dc in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
+            nr, nc = r + dr, c + dc
+            if 0 <= nr < len(grid) and 0 <= nc < len(grid[0]) and (nr, nc) not in visit and grid[nr][nc] == word[idx + 1]:
+                if dfs(grid, visit, nr, nc, idx + 1, word):
+                    return True
+
+        visit.remove((r, c))
+
+        return False
+
+    for row in range(len(grid)):
+        for col in range(len(grid[0])):
+            if grid[row][col] == word[0]:
+                if len(word) <= 1 or dfs(grid, set(), row, col, 0, word):
+                    return True
+
+    return False
+```
+
+参考答案给的代码：结构和上面的一样。
+
+```python
+# Function to search a specific word in the grid
+def word_search(grid, word):
+    n = len(grid)
+    m = len(grid[0])
+    for row in range(n):
+        for col in range(m):
+            if depth_first_search(row, col, word, 0, grid):
+                return True
+    return False
+
+# Apply backtracking on every element to search the required word
+def depth_first_search(row, col, word, index, grid):
+    if len(word) == index:
+        return True
+
+    if row < 0 or row >= len(grid) or col < 0 or col >= len(grid[0]) \
+            or grid[row][col] != word[index]:
+        return False
+
+    temp = grid[row][col]
+    grid[row][col] = '*'
+
+    for rowOffset, colOffset in [(0, 1), (1, 0), (0, -1), (-1, 0)]:
+        if depth_first_search(row + rowOffset, col + colOffset, word, index + 1, grid):
+            return True
+
+    grid[row][col] = temp
+    return False
+```
+
+学习笔记：
+
+这道题的时间复杂度取决于两个方面：
+
+1. 遍历整个二维网格：这一步的时间复杂度为 O(m*n)，其中 m 和 n 分别是网格的行数和列数。
+
+2. 在每个可能的起始位置上进行深度优先搜索：最坏情况下，我们需要在网格的每个位置上都进行深度优先搜索。在每个搜索过程中，我们最多需要搜索目标单词的长度个位置。因此，深度优先搜索的时间复杂度为 O(m*n*l)，其中 l 是目标单词的长度。
+
+综合考虑以上两个方面，整体的时间复杂度为 O(m*n*l)。
+
+至于空间复杂度，主要取决于深度优先搜索的递归调用栈以及记录已访问位置的集合。在最坏情况下，递归调用栈的深度为目标单词的长度，因此空间复杂度为 O(l)。另外，记录已访问位置的集合也会消耗额外的空间，其大小最多为网格的大小，即 O(m*n)。因此，整体的空间复杂度为 O(m*n + l)。

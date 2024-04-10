@@ -56,8 +56,7 @@
 - [CNN：SqueezeNet和CIFAR10数据集](ml/squeezenet.md)
 - [CNN：ResNet和ImageNet超大数据集](ml/resnet.md)
 - [RNN：循环神经网络RNN&LSTM代码实现](ml/rnn.md)
-- [生成式AI](ml/generativeai.md)：[模型原理，自动编码器和变分自编码器](ml/autoencoders.md)，[生成对抗网络GAN解析](ml/gan.md)
-<!-- [项目实践：简单的数据增强之基于GANs实现](ml/pj-augmentation-gans.md) -->
+- [生成式AI](ml/generativeai.md)：[模型原理，自动编码器和变分自编码器](ml/autoencoders.md)，[生成对抗网络GAN解析](ml/gan.md)，[项目实践：简单的数据增强之基于GANs实现](ml/pj-augmentation-gans.md)
 <!-- - [Transformers：注意力，自注意力和多头注意力](ml/attention.md) -->
 <!-- [Transformers关键组件：以及和认知科学关联的思考](ml/transformers-parts.md) -->
 <!-- [Transformers编码器构架各个模块的代码实践](ml/transformers-encoder.md) -->
@@ -83,16 +82,20 @@
 <!-- - [AWS-Bedrock项目实践1：Code Generation (APIGateway,S3,bedrock)](cloud/bedrock-pj1.md) -->
 <!-- - [AWS-Bedrock项目实践2-3：Notes Summarisation & Image Generation & 模型评估 & RAG](cloud/bedrock-pj2-3.md) -->
 
+## Principal
+- [程序员原则](principals/whats-not-change.md)
+- [计算机思维](principals/computeritize.md)
+- [工程师心得](principals/engineer.md)
+
+## Computer Science
+<!-- - [网络的基础知识-构架，协议栈，应用层](cs/internet-base-app-layer.md) -->
+<!-- - [ID认证：WorkloadIdentity是什么，如何让外部ID可以在GCP内作业](cs/workloadidentity.md) -->
+
 ## System Design and more fun
 - [系统设计概念System-Design-concepts](morefun/system-design.md)
 - [full-stack构架一个油管网站](morefun/youtube-clone.md)
 - [G检定深度学习考试相关日语词汇和概念解释](morefun/gtest.md)
 - [东京大学区块链公开讲座笔记](morefun/tokyouniversity-blockchain.md)
-
-## Principal
-- [程序员原则](principals/whats-not-change.md)
-- [计算机思维](principals/computeritize.md)
-- [工程师心得](principals/engineer.md)
 
 ## logbooks
 - [航海日志：定期思维检修1](principals/checkmind1.md)
