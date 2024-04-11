@@ -34,6 +34,7 @@
 ## Machine learning
 - [AI时代提问准则](ml/ai-4-prompt.md)
 <!-- - [机器学习以及它的分类总结](ml/mltypes.md) -->
+<!-- - [机器学习算法之线性回归](ml/regression.md) -->
 - [数据预处理：ML中最重要的步骤](ml/feature-engineering.md)
 - [防止过拟合的技术：正规化&Dropout&EarlyStopping](ml/overfit.md)
 - [容易混淆的几个概念：缩放，标准化，归一化，正则化](ml/some-confusion-words.md)
@@ -88,7 +89,8 @@
 - [工程师心得](principals/engineer.md)
 
 ## Computer Science
-<!-- - [网络的基础知识-构架，协议栈，应用层](cs/internet-base-app-layer.md) -->
+<!-- - [网络基础-构架，协议栈，应用层，HTTP，DNS](cs/internet-base-app-layer.md) -->
+<!-- - [网络基础-传输层，TCP/UDP](cs/internet-base-transport-layer.md) -->
 <!-- - [ID认证：WorkloadIdentity是什么，如何让外部ID可以在GCP内作业](cs/workloadidentity.md) -->
 
 ## System Design and more fun

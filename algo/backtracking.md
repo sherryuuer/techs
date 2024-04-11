@@ -283,3 +283,95 @@ def depth_first_search(row, col, word, index, grid):
 综合考虑以上两个方面，整体的时间复杂度为 O(m*n*l)。
 
 至于空间复杂度，主要取决于深度优先搜索的递归调用栈以及记录已访问位置的集合。在最坏情况下，递归调用栈的深度为目标单词的长度，因此空间复杂度为 O(l)。另外，记录已访问位置的集合也会消耗额外的空间，其大小最多为网格的大小，即 O(m*n)。因此，整体的空间复杂度为 O(m*n + l)。
+
+### 问题3:N-Queens
+
+N皇后问题是一个经典的组合问题，旨在找到在N×N的棋盘上放置N个皇后，使得它们互相不受攻击。在国际象棋中，皇后可以沿着水平线、垂直线和对角线移动，因此在解决N皇后问题时，需要确保任何两个皇后都不在同一行、同一列或同一对角线上。
+
+这个问题是一个NP难问题，在一般情况下没有有效的多项式时间算法来解决。通常采用回溯算法来解决N皇后问题。回溯算法是一种深度优先搜索算法，它尝试每一种可能的解决方案，并在遇到无效解时进行回溯，尝试其他的路径。
+
+N皇后问题的解决方案通常包括以下步骤：
+1. 定义棋盘：创建一个N×N的棋盘，其中每个格子表示一个位置，初始状态下所有位置都为空。
+2. 回溯搜索：从第一行开始，在每一行选择一个位置放置皇后，并检查是否满足皇后不相互攻击的条件。如果满足条件，则继续递归地放置下一行的皇后；如果不满足条件，则回溯到上一行，尝试其他位置。
+3. 终止条件：当所有皇后都成功放置在棋盘上时，得到一个有效解；当所有可能的位置都尝试完毕时，回溯到上一行，继续尝试其他解决方案，直到找到所有解或者没有解为止。
+
+N皇后问题的解决方案数量随着N的增加呈指数级增长，因此对于较大的N，求解可能会非常耗时。对于较小的N，可以通过回溯算法在合理的时间内找到所有解决方案。
+
+代码尝试：
+
+```python
+def solve_n_queens(n):
+
+    def is_safe(row, col, queens):
+        # queues is the list for all the quenes that has been added
+        # check if put a new queue at (row, col) is safe
+        for r, c in queens:
+            if row == r or col == c or abs(row - r) == abs(col - c):
+                return False
+        return True
+
+    def backtracking(row, queens):
+        # check from rowth
+        if row == n:
+            res.append(queens[:])
+            return
+        for col in range(n):
+            if is_safe(row, col, queens):
+                queens.append((row, col))
+                backtracking(row + 1, queens)
+                queens.pop()
+
+    res = []
+    backtracking(0, [])
+
+    return len(res)
+```
+
+给出的题解参考和我上述的方法类似，使用回溯试错重来。
+
+```python
+def is_valid_move(proposed_row, proposed_col, solution):
+    for i in range(0, proposed_row):
+        old_row = i
+        old_col = solution[i]
+        diagonal_offset = proposed_row - old_row
+        if (old_col == proposed_col or
+            old_col == proposed_col - diagonal_offset or
+                old_col == proposed_col + diagonal_offset):
+            return False
+            
+    return True
+
+def solve_n_queens_rec(n, solution, row, results):
+    if row == n:
+        results.append(solution[:])
+        return
+
+    for i in range(0, n):
+        valid = is_valid_move(row, i, solution)
+        if valid:
+            solution[row] = i
+            solve_n_queens_rec(n, solution, row + 1, results)
+
+# Function to solve N-Queens problem
+def solve_n_queens(n):
+    results = []
+    solution = [-1] * n
+    solve_n_queens_rec(n, solution, 0, results)
+    return len(results)
+```
+
+学习笔记：
+
+- 时间复杂度：
+  - 在回溯函数中，每个皇后都要尝试放置在每一行的每一个列位置上，因此有 n 行和 n 列，总共有 n^2 种尝试的可能性。
+  - 对于每个放置皇后的位置，都要检查之前已经放置的皇后位置，因此在 `is_safe` 函数中，需要遍历已经放置的皇后位置，时间复杂度为 O(n)。
+  - 因此，整个算法的时间复杂度为 O(n^3)。
+
+- 空间复杂度：
+  - 空间复杂度主要取决于保存解的列表，以及递归过程中的栈空间。
+  - 在递归过程中，每次递归调用都会创建一个新的列表 `queens`，其中保存了当前已经放置的皇后的位置。这些列表的长度最大为 n，因此递归过程中的栈空间最大为 O(n)。
+  - 在保存解的列表中，最多会保存 n! 个解，每个解包含 n 个位置，因此解的总空间复杂度为 O(n^2 x n!)。
+  - 因此，整个算法的空间复杂度为 $O(n^2 x n! + n)。
+
+总的来说，这个算法的时间复杂度是 O(n^3)，空间复杂度是 O(n^2 x n! + n)。虽然时间复杂度相对较高，但是由于 N 皇后问题的规模通常较小（通常 n 值不会很大），因此这个算法在实践中是可行的。
