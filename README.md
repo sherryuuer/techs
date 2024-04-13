@@ -16,6 +16,7 @@
 - [堆算法：堆和优先队列的实现](algo/heap.md)，[TopK-Elements](algo/topk-elements.md)，[两个堆](algo/two-heaps.md)
 - [回溯算法：树迷宫路径问题](algo/treemaze.md)
 - [回溯算法：子集](algo/subsets.md)，[回溯Backtracking相关问题](algo/backtracking.md)
+<!-- [子集subsets相关练习问题](algo/subsets-problems.md) -->
 - [回溯算法：排列](algo/combinations.md)
 - [回溯算法：组合](algo/permutations.md)
 - [树图算法：深度优先和广度优先算法](algo/dfsbfs.md)
@@ -58,7 +59,7 @@
 - [CNN：ResNet和ImageNet超大数据集](ml/resnet.md)
 - [RNN：循环神经网络RNN&LSTM代码实现](ml/rnn.md)
 - [生成式AI](ml/generativeai.md)：[模型原理，自动编码器和变分自编码器](ml/autoencoders.md)，[生成对抗网络GAN解析](ml/gan.md)，[项目实践：简单的数据增强之基于GANs实现](ml/pj-augmentation-gans.md)
-<!-- - [Transformers：注意力，自注意力和多头注意力](ml/attention.md) -->
+- [Transformers：注意力，自注意力和多头注意力](ml/attention.md)
 <!-- [Transformers关键组件：以及和认知科学关联的思考](ml/transformers-parts.md) -->
 <!-- [Transformers编码器构架各个模块的代码实践](ml/transformers-encoder.md) -->
 - [GNN：图基础和图论的数学-Graph-Neural-Networks](ml/gnn.md)，[GCN图卷积神经网络和它的实现-Graph-Convolutional-Networks，（是比较难的两章，有空通过视频讲解再次学习后再深入研究一下）](ml/gcn.md)
@@ -92,6 +93,8 @@
 <!-- - [网络基础-构架，协议栈，应用层，HTTP，DNS](cs/internet-base-app-layer.md) -->
 <!-- - [网络基础-传输层，TCP/UDP](cs/internet-base-transport-layer.md) -->
 <!-- - [ID认证：WorkloadIdentity是什么，如何让外部ID可以在GCP内作业](cs/workloadidentity.md) -->
+<!-- - [GithubActions实现workload工作流：自动化GCS部署和notification](cs/ghactions-autodeploy.md) -->
+<!-- - [网络安全分类：访问控制、身份管理、数据加密与网络防护的清晰分类](cs/network-security-tree.md) -->
 
 ## System Design and more fun
 - [系统设计概念System-Design-concepts](morefun/system-design.md)
@@ -100,6 +103,7 @@
 - [东京大学区块链公开讲座笔记](morefun/tokyouniversity-blockchain.md)
 
 ## logbooks
+- [项目过程心得总结-不定期添加](principals/pj-thinking.md)
 - [航海日志：定期思维检修1](principals/checkmind1.md)
 
 ---

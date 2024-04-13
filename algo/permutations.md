@@ -32,7 +32,7 @@ def helper(i, nums):
     return resPerms
 ```
 
-迭代算法刚好相反，先给出base情况空数组，然后从一地位开始迭代遍历，每次试图插入一个数字，直到最后一个数字也被完全插入所有的位置。
+迭代算法刚好相反，先给出base情况空数组，然后从一地位开始迭代遍历，每次试图插入一个数字，直到最后一个数字也被完全插入所有的位置。这感觉很像动态规划的优化版本。
 
 ```python
 # Time: O(n^2 * n!)
@@ -45,7 +45,7 @@ def permutationsIterative(nums):
             for j in range(len(p) + 1):
                 pcopy = p[:]
                 pcopy.insert(j, nums[i])
-                resPerms.append(pcopy)
+                nextPerms.append(pcopy)
         perms = nextPerms
     return perms
 ```
@@ -103,6 +103,28 @@ print("全排列结果：", result)
 ### leetcodes
 
 - 排列[leetcode46 题目描述](https://leetcode.com/problems/permutations/description/)
+
+```python
+class Solution(object):
+    def permute(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: List[List[int]]
+        """
+        def helper(i, nums):
+            if i == len(nums):
+                return [[]]
+            res = []
+            perms = helper(i + 1, nums)
+            for p in perms:
+                for j in range(len(p) + 1):
+                    pCopy = p[:]
+                    pCopy.insert(j, nums[i])
+                    res.append(pCopy)
+            return res
+
+        return helper(0, nums)
+```
 
 - 排列2[leetcode47 题目描述](https://leetcode.com/problems/permutations-ii/description/)
 

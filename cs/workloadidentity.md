@@ -61,6 +61,8 @@ gcloud iam service-accounts add-iam-policy-binding service-account-email \
 
 总的来说，虽然您可以直接使用 STS 发行的访问令牌代替服务账号进行操作，但是使用 Workload Identity 可以提供更安全、更可管理的身份验证和授权机制，使您的应用程序更加健壮和可靠。
 
+**我将文章发给我的上司看了，总结出了结论就是STS是一种认证，WorkloadIdentity是一种认可。双重保证。**。
+
 关于设置，可以通过上述的命令也可以通过GUI画面进行设置，设置时候的详细到具体内容的东西不再概述。
 
 只举出要点：
