@@ -3,7 +3,7 @@
 ---
 在[上一篇](ml/transformers-parts.md)学习的基础上，这里开始，构架一个 Transformer 的编码器。虽然 Pytorch 里面有直接可以用的类，但是这里都是从零开始的代码，通过对代码结构，从而更好的理解模型的内部原理。这是目的。
 
-### recap the architecture
+### 框架回顾
 
 编码器的最终输出是输入序列经过多个编码器层处理后得到的高维表示。这个高维表示包含了输入序列的各个位置的信息，并且经过了多层的特征提取和组合，具有丰富的语义信息。
 
@@ -11,7 +11,7 @@
 
 编码器的最终输出被传递给解码器，用于生成输出序列。解码器使用编码器的输出作为输入，并结合自身的注意力机制来逐步生成输出序列。在解码器的每一步中，它会根据当前的上下文信息和编码器的输出，预测下一个位置的输出，并更新当前的状态。解码器的自注意力机制会确保在生成输出时使用了输入序列的信息，并根据需要调整注意力权重以关注不同位置的信息。
 
-**Transformer 编码器**构架重申：
+**Transformer 编码器**构架回顾：
 
 为了处理一个句子，我们需要执行以下三个步骤：
 
@@ -30,9 +30,9 @@
 
 在实际的构架中，上述块可以多次复制以形成编码器。在原始论文中，编码器由 6 个相同的块组成。
 
-下面的编码主药注重对每个重要模块的学习。
+下面的编码部分主要注重对每个重要模块的学习。
 
-### Linear layers
+### 线性层 Linear layers
 
 从最简单的线性层开始：按照下面的简单结构进行coding。这部分是复用简单的 PyTorch 线性层，就不再赘述了。
 
@@ -76,7 +76,7 @@ class FeedForward(nn.Module):
 FeedForward(10, 100, 0.1)
 ```
 
-### Layer normalization
+### 线性层归一化 Layer normalization
 
 归一化的计算公式，是 LN(x) = alpha(x - mean/standard_deviation)+beta
 
@@ -99,7 +99,7 @@ class LayerNorm(nn.Module):
         return self.a * (x - mean) / (std + self.eps) + self.b
 ```
 
-### Skip connection
+### 跳跃连接 Skip connection
 
 残差连接层。
 
@@ -124,13 +124,13 @@ class SkipConnection(nn.Module):
         return x + self.dropout(sublayer(self.norm(x)))
 ```
 
-### EncoderLayer
+### 编码器层 Encoder Layer
 
-编码器单层的代码，这其中用到了多头注意力类，这个类在 [注意力机制](ml/attention.md) 中有详细的代码和解说，这里就不再repeat我自己了。回去参考即可。
+编码器单层的代码，这其中用到了多头注意力类，这个类在 [注意力机制](ml/attention.md) 那一篇中有详细的代码和解说，这里就不再repeat我自己了。回去参考即可。
 
 其中的sublayer，使用列表推导式创建了一个包含两个 SkipConnection 层的 nn.ModuleList。每个 SkipConnection 层都包含一个子层，分别是自注意力机制和前向传播网络。使用 copy.deepcopy 复制 SkipConnection 层，以便每个层都有独立的参数。
 
-前向传播部分可能会有费解的感觉，解释就是：
+前向传播部分可能会有费解的感觉，解释起来就是：
 - x = self.sublayer[0](x, lambda x: self.self_attn(x, x, x, mask))：使用第一个 SkipConnection 层对输入张量 x 进行处理，其中传入的函数是自注意力机制（self.self_attn）对输入张量的计算结果。
 - return self.sublayer[1](x, self.feed_forward)：使用第二个 SkipConnection 层对经过自注意力机制处理后的张量 x 进行处理，其中传入的函数是前向传播网络（self.feed_forward）对输入张量的计算结果。
 - 因为上面一个模块已经定义了sublayer: Union[MultiHeadAttention, FeedForward]，如此就实现了一次定义两个层然后进行复用的方便手法。
@@ -155,7 +155,7 @@ class EncoderLayer(nn.Module):
         return self.sublayer[1](x, self.feed_forward)
 ```
 
-### Encoder
+### 编码器 Encoder
 
 将单一layer堆叠，加上了mask和归一化。
 
@@ -177,7 +177,7 @@ class Encoder(nn.Module):
         return self.norm(x)  # 在输出的时候进行归一化层的处理
 ```
 
-### TransformerEncoder
+### 最终 TransformerEncoder
 
 这里总结了前面的所有步骤：
 
@@ -217,7 +217,7 @@ class TransformerEncoder(nn.Module):
     def forward(self, x: torch.FloatTensor, mask: torch.ByteTensor) -> torch.FloatTensor:
         return self.encoder(x, mask)
 ```
-### recap
+### 总结 recap
 
 `TransformerEncoder` 类的作用是搭建 Transformer 模型的编码器部分。总结一下它的几个部分：
 

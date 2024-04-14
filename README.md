@@ -25,6 +25,7 @@
 - [图算法：最短路径Dijkstra](algo/dijkstra.md)
 - [图算法：最小生成树Prim&Kruskal](algo/prim-kruskal.md)
 - [图算法：拓扑排序](algo/toplogical-sort.md)，[区间合并问题merge-intervals，任务调度问题印象深刻](algo/merge-intervals.md)
+- [贪心算法：相关算法问题](algo/greedy-problems.md)
 - [动态规划：1D&2D基础问题](algo/dp.md)
 - [动态规划：0-1背包问题](algo/01knapsack.md)
 - [动态规划：无限背包问题](algo/unboundedknapsack.md)
@@ -58,8 +59,7 @@
 - [CNN：ResNet和ImageNet超大数据集](ml/resnet.md)
 - [RNN：循环神经网络RNN&LSTM代码实现](ml/rnn.md)
 - [生成式AI](ml/generativeai.md)：[模型原理，自动编码器和变分自编码器](ml/autoencoders.md)，[生成对抗网络GAN解析](ml/gan.md)，[项目实践：简单的数据增强之基于GANs实现](ml/pj-augmentation-gans.md)
-- [Transformers：注意力，自注意力和多头注意力](ml/attention.md)，[Transformers关键组件：以及和认知科学关联的思考](ml/transformers-parts.md)
-<!-- [Transformers编码器构架各个模块的代码实践](ml/transformers-encoder.md) -->
+- [Transformers：注意力，自注意力和多头注意力](ml/attention.md)，[Transformers关键组件：以及和认知科学关联的思考](ml/transformers-parts.md)，[Transformers编码器构架各个模块的代码实践](ml/transformers-encoder.md)
 - [GNN：图基础和图论的数学-Graph-Neural-Networks](ml/gnn.md)，[GCN图卷积神经网络和它的实现-Graph-Convolutional-Networks，（是比较难的两章，有空通过视频讲解再次学习后再深入研究一下）](ml/gcn.md)
 
 ## Python and Math
