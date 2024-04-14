@@ -158,3 +158,90 @@ def letter_combinations(digits):
     return combinations
 ```
 学习笔记：数字的长度是n，每个数字对应的字母数量是k，那么时间复杂度就是O(n * k^n)，空间复杂度为O(nk)。
+
+### 问题3:Generate Parentheses
+
+经典的编程问题，问题的目标是生成所有有效的括号组合。
+
+具体来说，给定一个整数 n，表示生成括号的对数，要求输出所有可能的由 n 对括号组成的合法组合。
+
+合法的括号组合需要满足以下条件：
+
+- 每个左括号都必须有一个相应的右括号与之配对。
+- 左括号必须先于其相应的右括号出现。
+- 在任何一个位置，左括号的数量都必须大于等于右括号的数量。
+
+例如，当 n = 3 时，有效的括号组合包括：
+```
+"((()))"
+"(()())"
+"(())()"
+"()(())"
+"()()()"
+```
+这道题我解的不好，所以不贴自己的代码了，直接上答案的代码，以及另一种我找到的优化代码。
+
+答案代码：
+
+```python
+def back_track(n, left_count, right_count, output, result):
+    if left_count >= n and right_count >= n:
+        result.append("".join(output))
+
+    if left_count < n:
+        output.append('(')
+        back_track(n, left_count + 1,
+                   right_count, output, result)
+        output.pop()
+
+    if right_count < left_count:
+        output.append(')')
+        back_track(n, left_count,
+                   right_count + 1, output, result)
+        output.pop()
+
+
+def generate_combinations(n):
+    result = []
+    output = []
+    back_track(n, 0, 0, output, result)
+
+    return result
+```
+
+这是答案的代码，使用常规的列表output，以及最终结果列表result。因为每个分支都是if，所以要做三次判断，第二个判断结束后，要去第三个if做判断，所以最后需要pop掉最后一个符号。下面是一种优化的解法：
+
+```python
+def generate_combinations(n):
+    def backtrack(s='', left=0, right=0):
+        if len(s) == 2 * n:
+            result.append(s)
+            return
+        if left < n:
+            backtrack(s + '(', left + 1, right)
+        if right < left:
+            backtrack(s + ')', left, right + 1)
+
+    result = []
+    backtrack()
+    return result
+```
+
+这里通过在递归调用时传递更新后的字符串。当我们在递归调用时，将更新后的字符串传递给下一个递归调用，相当于传递了一个副本，因此不需要在递归调用结束后手动将字符串恢复到之前的状态，也就不需要使用 pop 函数来移除最后一个字符。在 Python 中，字符串是不可变的，每次对字符串的操作都会创建一个新的字符串对象，因此传递更新后的字符串并不会导致额外的内存消耗。
+
+这种做法的优点是简化了代码，不需要手动处理字符串的恢复操作，使得代码更加清晰简洁。
+
+学习笔记：
+
+时间复杂度：假设输入为 n 对括号。
+
+- 生成所有有效括号组合的数量：对于每一对括号，都有两种选择：添加左括号或右括号。因此，总共有 (2^(2n)) 种可能的括号组合。
+- 每种组合的长度为 2n。
+- 生成所有有效括号组合的时间复杂度为 O(2^(2n) x 2n) = O(4^n x n)。
+
+空间复杂度：
+
+- 在递归调用过程中，会产生最多 2n 层递归调用（每次递归调用都会增加一个左括号或右括号），因此需要额外的 O(n) 的空间用于存储递归调用栈。
+- 存储所有有效括号组合的空间复杂度取决于结果的数量。由于共有 2^(2n) 种可能的括号组合，因此需要额外的 O(2^(2n)) 的空间来存储结果。
+
+综上所述，总的空间复杂度为 O(n + 2^(2n))，其中 2^(2n) 项的空间复杂度占主导。
