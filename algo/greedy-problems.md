@@ -47,3 +47,56 @@ def jump_game(nums):
 ```
 
 学习笔记：该算法的时间复杂度为 O(n)，其中 n 是数组的长度。该算法的空间复杂度为 O(1)，因为它只需要使用一个变量来记录当前能够到达的最后位置。
+
+### 问题2:Boats to Save People
+
+有一艘大船，你可以假设它就是泰坦尼克，需要对船上的人进行救援，救生船的数量无限制。如何用最少的船的数量，救所有的人。
+
+已知 input 数据：people，是乘客的重量列表。limit是每艘船的重量上限。同时，每艘船空间上最多可以坐2个人。单个人不会超过船的载重限制。
+
+题解思路：
+
+- 将people列表从小到大排列。
+- 初始化两个指针 left 和 right 分别指向列表的开始和结尾。
+- 从两头开始遍历列表，检查最轻的人和最重的人的组合是否不超过船载重限制。
+  - 若是则向中间移动两个指针一步，若否则只载重的人，将右指针向左移动一步。
+  - 增加一艘船的数量。
+- 当所有指针相遇，结束遍历，返回船的数量。
+
+代码尝试：
+
+```python
+def rescue_boats(people, limit):
+    people.sort()
+    left, right = 0, len(people) - 1
+    count = 0
+
+    while left <= right:
+        if people[left] + people[right] <= limit:
+            left += 1
+            right -= 1
+        else:
+            right -= 1
+        count += 1
+
+    return count
+```
+
+下面是给出的参考答案，简化了几行代码：
+
+```python
+def rescue_boats(people, limit):
+    people.sort()
+    left = 0
+    right = len(people) - 1
+    boats = 0  
+
+    while left <= right:  
+        if people[left] + people[right] <= limit:
+            left += 1  
+        right -= 1
+        boats += 1 
+    return boats
+```
+
+学习笔记：这道题只要想好并跟着解题思路写就很简单，贪心算法难的不是内部逻辑，而是人的解题思维，这么看来确实是一种符合直觉的解题方法。这道题的时间和空间复杂度集中在对列表的排序上，时间复杂度O(nlogn)，空间复杂度O(n)。
