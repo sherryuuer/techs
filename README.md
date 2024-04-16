@@ -58,7 +58,10 @@
 - [CNN：ResNet和ImageNet超大数据集](ml/resnet.md)
 - [RNN：循环神经网络RNN&LSTM代码实现](ml/rnn.md)
 - [生成式AI](ml/generativeai.md)：[模型原理，自动编码器和变分自编码器](ml/autoencoders.md)，[生成对抗网络GAN解析](ml/gan.md)，[项目实践：简单的数据增强之基于GANs实现](ml/pj-augmentation-gans.md)
-- [Transformers：注意力，自注意力和多头注意力](ml/attention.md)，[Transformers关键组件：以及和认知科学关联的思考](ml/transformers-parts.md)，[Transformers编码器构架各个模块的代码实践](ml/transformers-encoder.md)
+- [Transformers：注意力，自注意力和多头注意力](ml/attention.md)
+- [Transformers关键组件：以及和认知科学关联的思考](ml/transformers-parts.md)
+- [Transformers编码器构架各个模块的代码实践](ml/transformers-encoder.md)
+<!-- - [VisionTransformer模型实现的细节和回顾](ml/transformer-vision.md) -->
 - [GNN：图基础和图论的数学-Graph-Neural-Networks](ml/gnn.md)，[GCN图卷积神经网络和它的实现-Graph-Convolutional-Networks，（是比较难的两章，有空通过视频讲解再次学习后再深入研究一下）](ml/gcn.md)
 
 ## Python and Math
@@ -88,8 +91,9 @@
 - [工程师心得](principals/engineer.md)
 
 ## Computer Science
-<!-- - [网络基础-构架，协议栈，应用层，HTTP，DNS](cs/internet-base-app-layer.md) -->
+- [网络基础-构架，协议栈，应用层，HTTP，DNS](cs/internet-base-app-layer.md)
 <!-- - [网络基础-传输层，TCP/UDP](cs/internet-base-transport-layer.md) -->
+<!-- - [使用Python实现的套接字编程](cs/python-sockets-programming.md) -->
 <!-- - [ID认证：WorkloadIdentity是什么，如何让外部ID可以在GCP内作业](cs/workloadidentity.md) -->
 <!-- - [GithubActions实现workload工作流：自动化GCS部署和notification](cs/ghactions-autodeploy.md) -->
 <!-- - [网络安全分类：访问控制、身份管理、数据加密与网络防护的清晰分类](cs/network-security-tree.md) -->

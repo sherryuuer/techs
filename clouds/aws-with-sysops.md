@@ -112,7 +112,8 @@
 
 **用户和连接管理** Identity and access management
 
-- IAM是对所有在环境中进行活动的用户的管理
+- IAM是对所有在环境中进行活动的用户的管理。
+  - 策略中Deny的优先级最高。
 - STS(security token service)临时的认证。
 
 **验证（Authentication）和授权（Authorization）**
