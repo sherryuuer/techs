@@ -80,21 +80,29 @@
 物联网/
 机器人技术/
 
-
+主体：人，环境（服务器，数据库，应用），数据，内外
 
 ### 管理监控统筹部分（management，monitoring，governance）
 
 **多账户multi-account管理服务**
 
 - Orgnization组织管理很重要。统筹作用。
+  - 想删除组织内创建的账户，需要这个账户有自己的支付方式和详细信息。
 - ControlTower的landing zone中也可以设置很多关于组织的东西，比如log archive acount，账号监察用的账号，都是关于安全用的，还有各种服务的限制等。它也像是一个统筹的服务。其他还有kms的设定，cloud Trail的设定等。和**安全有关**的很多。
 - Service Catalog也是多账户服务，制定可以使用的service范围。规定大家可以用什么不可以用什么。
+  - tag option library
 
 **monitoring监控服务**
 
-- CloudWatch可以做为很多后续步骤的一个trigger。也有自己的可视化仪表盘insight了。alarm，SNS，Eventbridge都可以自由组合。
+- CloudWatch
+  - 可以做为很多后续步骤的一个trigger。也有自己的可视化仪表盘insight了。alarm，SNS，Eventbridge都可以自由组合。
+  - CloudWatch RUM 是一个可以实时关注application性能的功能。
+  - CloudWatch ServiceLens 可以可视化分析application的机能。
+  - Cloudwatch synthetics 可以监控和测试应用程序的端点。RestAPI，URL，网络内容。
+  - 要整合不同region的监控数据，需要cli将数据聚合到cw。
 - CloudTrail以人为主体。
 - AWSConfig以环境为主体。
+  - 可以统筹多账户，多区域的构成config管理。
 - AWS Health以时间为线索。
 
 **management统筹管理**
@@ -105,7 +113,7 @@
 
 **Deployment部署服务：**
 
-- CloudFormation超级重要，IaC。重点是基础设施的自动化。
+- CloudFormation超级重要，IaC。重点是基础设施的自动化。变更集功能，可以只更改代码差分的部分并且留有记录，很方便。
 - OpsWorks是应用程序的管理服务，也是代码化。Chef（recipes和cookbooks）和Puppet（manifest，应用程序即代码服务，和dataform好像）。
 
 ### 安全认证和合规（security，identity，compliance）
@@ -114,21 +122,35 @@
 
 - IAM是对所有在环境中进行活动的用户的管理。
   - 策略中Deny的优先级最高。
+  - 混乱代理问题的解决：ExternalID的设置，或者IAMAccessAnalyser用于验证对方身份。（和workloadIdentity好像）
+  - ABAC（tags）和RBAC是基于属性和基于role的访问权限。
+  - PermissionBoundary权限边界可以限制user的权限。
+  - 给人分配一个临时用的角色使用role而不是user。
 - STS(security token service)临时的认证。
 
 **验证（Authentication）和授权（Authorization）**
 
 - AWS Directory Service创建管理集成用户目录，然后直接可以使用AWS的资源。
 - Amazon Cognito针对应用程序的认证。
+  - 针对应用程序的user管理和认证。
+  - 针对外部的idp应用的id federation认证。（这个像workloadidentity）
+  - user-pool是认证用，id-pool（单独也可以完成认可认证两件事）是认可用。（idp：3rd-part）
 
 **加密和保护** Encryption and protection
 
 - AWS KMS数据加密。
+  - key的删除最短要7天，删除后加密的数据无法恢复。
+- CouldHSM
+  - 符合FIPS 140-2密码学标准。
 - AWS Certification Manager加密认证网络通信的数字证书。
 - AWS Secrets Manager保护密码。
+  - 主要是数据库，然后还有其他的key-value。
 - Amazon Security Hub整合下面所有。
 - Amazon Macie保护个人信息。
 - Amazon GuardDuty针对网络和账号安全。
+  - DNS log
+  - VPC flow logs
+  - Cloud Trail
 - Amazon Detective针对GD找到的findings之类的问题进行深入分析。
 - Amazon Inspector针对应用程序的安全分析检测。
 
@@ -143,11 +165,16 @@
 **数据对象管理** 主要是S3
 
 - S3
+  - Amazon S3 Inventory 管理 Amazon S3 存储桶中的对象。它可帮助创建存储桶中对象的完整列表、跟踪对象的更改、满足合规性要求、提高数据治理以及优化存储成本。
 
 **计算机服务的存储**
 
 - EFS
 - EBS
+  - 从snapshot恢复的ebs需要一个初始化，一开始读数据很慢。空的不需要初始化。
+  - Throughput Optimized HDD (st1):适用于大型、高吞吐量的工作负载，如数据仓库、日志处理等。提供了较低的价格，并支持高吞吐量。最大吞吐量为 500 MB/s。
+  - Provisioned IOPS SSD (io1):适用于需要更高 IOPS（每秒输入/输出操作数）的工作负载，如数据库和应用程序。最多支持 64,000 IOPS。每秒1000MB吞吐。
+  - 使用DLM服务控制生命周期。
 - FSx
 
 **备份服务**
@@ -158,18 +185,33 @@
 
 - EC2虚拟服务器
 - Auto Scaling自动扩张（总是和LB结合使用）
+  - step scaling
 - Lambda（serverless）小型电脑的感觉。
 
 ### 网络和内容传递（networking Content delivery）
 
-**虚拟网路服务**（VPC）
+**虚拟网路服务**（VPC：虚拟云，局域网，子网的集合）
 - VPC/Subnet
+  - route table 是路由表设定。设定IP的跳跃路径。
+  - security group 是一种防火墙。
 - VPC Flow logs
 - VPC Peering
+  - 局域网之间的连接。
 - VPC Endpoint
+  - Gateway:S3/DynamoDB(route table setting) 使用PrivateLink技术。EC2/Lambda -> S3/DynamoDB
+  - Interface:50+service(ENI&DNS setting)
 - ENI（弹性网卡）
+  - ENI 是 Elastic Network Interface 的缩写，是一种虚拟网络接口，允许你在 AWS (Amazon Web Services) 的云计算实例中连接到 VPC (Virtual Private Cloud) 中的一个或多个子网。ENI 可以附加到实例上，充当实例与 VPC 之间的桥梁，允许实例与其他资源进行通信，包括其他实例、互联网和其他 VPC。
+  - 当在 AWS EC2 上创建一个新的实例时，默认情况下会分配一个新的 ENI（Elastic Network Interface）。这个 ENI 会附加到实例上，并与所选 VPC 中的一个子网相关联。通常情况下，每个 EC2 实例都会有至少一个默认的 ENI。
+  - 这个默认的 ENI 会负责实例的网络通信，并且通常会自动配置一个内部 IP 地址。你可以根据需要配置额外的 IP 地址、安全组、子网等属性。
+
+Egress-Only 在网络领域通常指的是一种网络配置，用于 IPv6 地址。在这种配置下，IPv6 地址只能用于出站连接，而不能接收入站连接。这种配置通常用于提高网络安全性，防止未经授权的入站连接。具体来说，Egress-Only 是一种 IPv6 地址类型，它允许主机向外部网络发出连接请求，但不允许外部网络主动连接到主机。这对于一些服务器和设备来说是一种常见的安全设置，特别是在需要与互联网通信的情况下。
 
 **VPN**
+
+- 动态路由加静态IP
+- Site-to-Site VPN的设置需要在路由表中登陆虚拟网关。
+- AWS设置虚拟网关，路由到客户端的客户网关。
 
 **Gateway**
 - AWS Transit Gateway
@@ -177,12 +219,17 @@
 **Content Delivery Network**
 - CloudFront
 - Global Accelerator
+  - ELB group 后，load balancer 的地方可以check这个功能。
+  - 利用 Amazon 的全球边缘网络来高效地路由互联网流量，提高应用程序性能。
+  - 没有 cache 功能。
 
 **DNS**
 - Route53
 
 **Load Balancer**
 - ELB
+  - ELB（Elastic Load Balancing）的 Connection Draining 是一项功能，用于确保当从 ELB 上移除实例时，已经建立的连接能够优雅地完成而不被中断。最大3600秒。
+  - 对于大规模的access，NLB不需要预热申请，很厉害，ALB和CLB需要申请。
 
 ### 数据库（database）
 
@@ -190,10 +237,13 @@
 
 - RDS
 - Aurora
+- Redshift
+  - 没有跨区域复制功能（cross-region-replication）。你只能复制snapshot。
 
 **NoSQL**
 
 - DynamoDB
+  - global table 可以实现 region 共享。
 
 **In-memory**
 
@@ -203,6 +253,7 @@
 
 - SQS
 - SNS
+- SES：适合富文本的电子邮件分发服务。
 - EventBridge
 
 ### 分析（Analytics）

@@ -25,3 +25,72 @@
     - l1_ratio是 ElasticNet 混合参数，其值介于 0 和 1 之间。
     - 当l1_ratio= 0 时，使用 L2 正则化。当 l1_ratio= 1，使用 L1 正则化。当 0 < l1_ratio< 1，使用 L1 和 L2 的组合。
 
+- 可以进行回归的支持向量机。
+  - 支持向量机（Support Vector Machine，SVM）通常被认为是一种用于分类问题的算法，但实际上，它也可以用于解决回归问题。这个版本被称为支持向量回归（Support Vector Regression，SVR）。
+  - SVR的基本思想与SVM类似，但目标是拟合数据点，使得数据点尽可能地接近或在边界上，并且在边界上存在尽可能少的数据点。在SVR中，我们不再寻找一个超平面（在分类问题中的分割边界），而是寻找一个函数，这个函数在输入空间中有较小的误差，即预测值与真实值之间的差异尽可能小，同时在预测值与真实值之间存在一个ε-tube，以此来控制模型的复杂度。
+  - ε-tube用于限制预测值与真实值之间的误差范围。模型的目标是在训练数据上达到尽可能小的误差，同时保持模型的泛化能力，即在未见过的数据上也能表现良好。
+  - 超平面在分类算法中是尽量使得数据点远离平面，在回归中则相反，是让数据点尽量距离这个平面近。分类中超平面表示决策边界，回归中，超平面表示拟合的线性函数，用于预测连续型目标变量的值。它是一个线性函数，可以被视为将输入特征映射到对应的目标值的函数。
+  - SVR通过引入一个成本函数来实现这一点，该成本函数包括两个部分：一部分是误差的总和，另一部分是边界上的数据点。优化过程的目标是最小化这个成本函数。
+  - SVR使用了核技巧（Kernel Trick），它可以将数据从输入空间映射到更高维的特征空间中，以便在新的特征空间中找到一个更好的超平面来拟合数据。这使得SVR在处理非线性问题时非常有效。
+  - 尽管SVR是基于SVM的，但它被设计用于解决回归问题，可以有效地处理线性和非线性回归任务。
+
+- 可以进行回归的最邻近算法Nearest Neighbour Regression。
+  - 一种基于邻居的非参数回归方法，用于解决回归问题。它的主要思想是利用训练数据集中的最近邻居的信息来预测新数据点的输出值。
+  - 这个算法一开始也是在分类的算法中出现的，对于回归问题，可以将这 K 个邻居的输出值进行加权平均或简单平均，作为测试样本的预测输出值。加权平均通常根据距离进行加权，距离越近的邻居权重越大。
+  - 但在处理大规模数据集或需要更高预测精度的情况下，可能需要考虑其他更复杂的回归模型。
+
+- Decision Tree Regression（决策树回归）
+  - 基于树形结构的回归方法，它通过对输入特征空间进行递归的划分，将输入空间划分为一系列的矩形区域，并在每个区域内拟合一个简单的模型（通常是一个常数）。它的主要思想是通过构建一棵树来对输入特征进行分段，然后在每个叶节点上预测输出值。
+  - 决策树可以用来解决回归问题的原因在于它的基本结构和算法机制允许它对连续型输出变量进行预测。虽然决策树通常与分类问题联系紧密，但实际上它也适用于回归问题。
+  - 在决策树的叶节点上存储的不再是类别标签，而是该叶节点对应的连续型输出值。这意味着每个叶节点代表了一个特定的预测输出值。
+
+### 接触很少的回归模型
+
+1. **Least Angle Regression (LARS)**:
+Least Angle Regression 是一种用于高维数据集的回归方法，它的主要特点是在每一步选择具有最小残差的特征，并沿着与目标变量最相关的方向移动。它与lasso回归（Lasso Regression）密切相关，并且在处理具有高度相关特征的数据集时表现良好。
+
+```python
+from sklearn.linear_model import Lars
+# 创建LARS回归模型
+lars_model = Lars()
+```
+
+2. **Polynomial Regression**:
+多项式回归是一种基于多项式函数的回归方法，它允许通过使用多项式拟合数据来捕获输入特征和输出之间的非线性关系。通过在原始特征上添加高次项，多项式回归可以对数据进行更灵活的建模，以适应不同的数据模式。
+
+```python
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import make_pipeline
+# 创建多项式回归模型
+degree = 3  # 多项式的阶数
+poly_reg_model = make_pipeline(PolynomialFeatures(degree), LinearRegression())
+```
+
+3. **Bayesian Regression**:
+贝叶斯回归是一种基于贝叶斯统计理论的回归方法，它利用先验概率和观测数据的联合分布来估计参数。与传统的最小二乘回归相比，贝叶斯回归可以提供对参数不确定性的更好估计，并且能够在参数较少的情况下处理多个输入特征。
+
+```python
+from sklearn.linear_model import BayesianRidge
+# 创建贝叶斯回归模型
+bayesian_model = BayesianRidge()
+```
+
+4. **Robustness Regression**:
+鲁棒性回归是一种对异常值或数据噪声具有鲁棒性的回归方法。它通过使用鲁棒性损失函数（如Huber损失函数）来减少异常值对拟合模型的影响，从而提高模型的稳健性和鲁棒性。
+
+```python
+from sklearn.linear_model import HuberRegressor
+# 创建鲁棒性回归模型
+huber_model = HuberRegressor()
+```
+
+5. **Isotonic Regression**:
+保序回归（Isotonic Regression）是一种非参数的回归方法，它假设输出变量随输入变量的增加而单调递增或单调递减。保序回归通过将数据分段进行单调递增或递减的拟合，从而产生一个保持输入顺序的预测输出序列。
+
+```python
+from sklearn.isotonic import IsotonicRegression
+# 创建保序回归模型
+isotonic_model = IsotonicRegression()
+```
+世界上有很多算法，都是针对具体问题出现的，没有万能的算法，只有针对问题和情况最适用的算法。也许未来会出现真正的强人工智能，不，一定会的。
