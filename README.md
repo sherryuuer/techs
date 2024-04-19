@@ -124,17 +124,20 @@
 <!-- - [GithubActions实现workload工作流：自动化GCS部署和notification](cs/ghactions-autodeploy.md) -->
 <!-- - [网络安全分类：访问控制、身份管理、数据加密与网络防护的清晰分类](cs/network-security-tree.md) -->
 
-
-## System Design and more fun
+## System Design and More Fun
 - [系统设计概念System-Design-concepts](morefun/system-design.md)
 - [full-stack构架一个油管网站](morefun/youtube-clone.md)
 - [G检定深度学习考试相关日语词汇和概念解释](morefun/gtest.md)
 - [东京大学区块链公开讲座笔记](morefun/tokyouniversity-blockchain.md)
+- [WEB3:](morefun/web3.md)
+
+## Fundation Base
 
 ## logbooks
 - [项目过程心得总结-不定期添加](principals/pj-thinking.md)
 - [航海日志：定期思维检修1](principals/checkmind1.md)
 
 ---
+- 科技再发展也离不开基础，所有的科技新发展，都是对基础的一种深度挖掘和联结。
 - 对世界知识和信息的探索，就像是拿着一片树叶，通过纹理想要感受到远古树根长出来前土壤的芳香，甚至贪婪的想找到远古土壤的成分。宛如大海捞针。但是仅仅是这种千丝万缕的关联，就让人兴奋和欣然，毕竟没有什么其他的手段，只是叶子距离根更近更远的区别，但是仅此足矣吧。
 - 加密学，区块链，网络安全，信息论，数学，频谱分析，图论等领域，强化学习，遗传算法。

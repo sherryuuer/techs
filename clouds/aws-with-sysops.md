@@ -169,7 +169,7 @@
 
 **计算机服务的存储**
 
-- EFS
+- EFS：network file system。mount。add by acl or security group。
 - EBS
   - 从snapshot恢复的ebs需要一个初始化，一开始读数据很慢。空的不需要初始化。
   - Throughput Optimized HDD (st1):适用于大型、高吞吐量的工作负载，如数据仓库、日志处理等。提供了较低的价格，并支持高吞吐量。最大吞吐量为 500 MB/s。
@@ -236,6 +236,7 @@ Egress-Only 在网络领域通常指的是一种网络配置，用于 IPv6 地�
 **关系型数据库**relational
 
 - RDS
+  - RDS Proxy ：用于帮助提高 Amazon RDS 数据库的扩展性、可用性和安全性。它充当应用程序和 RDS 数据库之间的中间层，有效地管理数据库连接。
 - Aurora
 - Redshift
   - 没有跨区域复制功能（cross-region-replication）。你只能复制snapshot。
@@ -244,6 +245,7 @@ Egress-Only 在网络领域通常指的是一种网络配置，用于 IPv6 地�
 
 - DynamoDB
   - global table 可以实现 region 共享。
+  - scan 是过滤整个表，query是根据键查询的，更有效率。
 
 **In-memory**
 
