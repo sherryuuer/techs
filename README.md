@@ -128,7 +128,6 @@
 - [系统设计概念System-Design-concepts](morefun/system-design.md)
 - [full-stack构架一个油管网站](morefun/youtube-clone.md)
 - [G检定深度学习考试相关日语词汇和概念解释](morefun/gtest.md)
-- [东京大学区块链公开讲座笔记](morefun/tokyouniversity-blockchain.md)
 - [WEB3:](morefun/web3.md)
 
 ## Fundation Base
