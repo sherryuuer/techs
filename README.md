@@ -38,6 +38,7 @@
 - [图算法：最小生成树Prim&Kruskal](algo/prim-kruskal.md)
 - [图算法：拓扑排序](algo/toplogical-sort.md)
 - [图算法：区间合并问题merge-intervals，任务调度问题印象深刻](algo/merge-intervals.md)
+- [图算法：graphs相关算法问题](algo/graphs-problems.md)
 - [贪心算法：相关算法问题](algo/greedy-problems.md)
 - [动态规划：1D&2D基础问题](algo/dp.md)
 - [动态规划：0-1背包问题](algo/01knapsack.md)
@@ -49,7 +50,7 @@
 ## Machine learning
 - [AI时代提问准则](ml/ai-4-prompt.md)
 <!-- - [机器学习以及它的分类总结](ml/mltypes.md) -->
-<!-- - [机器学习算法之线性回归：比想象中重要的算法](ml/regression.md) -->
+<!-- - [机器学习算法之线性回归，特征选择方法，评估方法，非常用回归模型](ml/regression.md) -->
 - [数据预处理：ML中最重要的步骤](ml/feature-engineering.md)
 - [防止过拟合的技术：正规化&Dropout&EarlyStopping](ml/overfit.md)
 - [容易混淆的几个概念：缩放，标准化，归一化，正则化](ml/some-confusion-words.md)
@@ -117,8 +118,9 @@
 ## Computer Science
 - [网络基础-构架，协议栈，应用层，HTTP，DNS](cs/internet-base-app-layer.md)
 - [网络基础-传输层，TCP/UDP](cs/internet-base-transport-layer.md)
-<!-- - [使用Python实现的套接字编程](cs/python-sockets-programming.md) -->
+- [使用Python实现的套接字编程](cs/python-sockets-programming.md)
 <!-- - [网络基础-网络层，IP，ARP，DHCP，ICMP，firewall，nat](cs/internet-base-network-layer.md) -->
+<!-- - [网络基础-链路层，以太网，MAC地址](cs/internet-base-link-layer.md) -->
 <!-- - [网络限流(throttling)，指数退避(ExponentialBackoff)和Python的代码实现](cs/exponential-backoff.md) -->
 <!-- - [ID认证：WorkloadIdentity是什么，如何让外部ID可以在GCP内作业](cs/workloadidentity.md) -->
 <!-- - [GithubActions实现workload工作流：自动化GCS部署和notification](cs/ghactions-autodeploy.md) -->

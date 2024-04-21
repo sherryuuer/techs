@@ -1,4 +1,4 @@
-## 机器学习算法之线性回归
+## 机器学习算法之线性回归，特征选择方法，评估方法，非常用回归模型
 
 ---
 ### 线性回归重要性
@@ -43,6 +43,281 @@
   - 基于树形结构的回归方法，它通过对输入特征空间进行递归的划分，将输入空间划分为一系列的矩形区域，并在每个区域内拟合一个简单的模型（通常是一个常数）。它的主要思想是通过构建一棵树来对输入特征进行分段，然后在每个叶节点上预测输出值。
   - 决策树可以用来解决回归问题的原因在于它的基本结构和算法机制允许它对连续型输出变量进行预测。虽然决策树通常与分类问题联系紧密，但实际上它也适用于回归问题。
   - 在决策树的叶节点上存储的不再是类别标签，而是该叶节点对应的连续型输出值。这意味着每个叶节点代表了一个特定的预测输出值。
+
+- 对非数值型特征的处理one-hot-encoder方法要注意防止多重共线性。
+
+- 数值变量变换：在统计分析和机器学习中，对数值变量进行变换是一种常见的数据预处理技术，旨在改善数据的分布特性、减少偏斜或者增强模型的性能。以下是常见的数值变量变换方法：
+  - 对数变换（Log Transformation）：对数变换是常用的一种方法，特别适用于偏斜分布（长尾）的数据。通过取自然对数、以2为底的对数或者以10为底的对数等，可以使数据更加接近正态分布。
+  - 平方根变换（Square Root Transformation）：平方根变换可以减少数据的右偏，并且对数据中的较小值影响较大，对大值的影响较小。
+  - 反正弦变换（Arcsine Transformation）**：适用于介于0和1之间的数据，如比率或百分比数据，可以将其进行反正弦变换来改善数据的分布。
+  - Box-Cox 变换：Box-Cox 变换是一种广义的幂函数变换，可以自动确定最适合数据的变换指数，从而使数据更加接近正态分布。
+  - Yeo-Johnson 变换：与 Box-Cox 变换类似，但可以处理负值。
+  - 指数变换（Exponential Transformation）：指数变换可以增加数据的差异性，使其更加适合某些模型的假设。
+  - 分位数变换（Quantile Transformation）：将数据转换为服从指定分位数的分布，如正态分布。
+  - Rank 变换：将数据转换为其排名的百分比，以消除异常值的影响并减少偏斜。
+  - 幂次变换（Power Transformation）：一般形式为 y = x^lambda，通过调整参数 lambda，可以对数据进行适当的调整。
+
+- 幂次变换（Power Transformation）是一种常用的数据变换方法，用于处理数据的偏斜或不均匀方差等问题。在幂次变换中，通过引入一个幂次lambda，将数据 x 变换为 x^lambda 的形式。lambda 取值包括：当 lambda = 0 时，即进行对数变换，也称为对数转换（Log Transformation）。对数变换常用于处理右偏斜数据，使其更接近于正态分布。当 lambda = 1 时，不进行任何变换，即原始数据。lambda = -1 时，即进行倒数变换，也称为倒数转换。倒数变换常用于处理左偏斜数据。lambda = 0.5 或其他小于 1 的值：这些值可以用于减小数据的右偏斜，但比对数变换更轻。lambda = 2 或其他大于 1 的值：这些值可以用于增加数据的右偏斜，使其更加接近于正态分布。在实际应用中，可以使用诸如 Box-Cox 变换或 Yeo-Johnson 变换等方法来自动确定最优的 lambda 值。
+
+### 特征选择方法
+
+在统计学习中也学习过如何进行特征选择，简单说就是要选出所有特征中最重要的那几个，目的是防止过拟合，减少计算量，提高计算速度等。毕竟很多相关性很高的特征都用来预测也没什么用处。
+
+**Scikit-learn中有自己内置的特征选择方法：**
+
+使用 scikit-learn 中的 `SelectFromModel` 可以从给定的模型中选择重要的特征。这个模块可以与各种不同的模型一起使用，比如线性模型、树模型等，通过模型自身的特征重要性来选择最重要的特征。使用这个模块的时候需要选择一个模型，该模型能够给出特征的重要性排名。例如，你可以选择随机森林、梯度提升树或者线性模型等。下面是[官网示例](https://scikit-learn.org/stable/modules/generated/sklearn.feature_selection.SelectFromModel.html)的代码：
+
+```python
+from sklearn.feature_selection import SelectFromModel
+# 这里选了逻辑回归作为模型标准
+from sklearn.linear_model import LogisticRegression
+X = [[ 0.87, -1.34,  0.31 ],
+     [-2.79, -0.02, -0.85 ],
+     [-1.34, -0.48, -2.55 ],
+     [ 1.92,  1.48,  0.65 ]]
+y = [0, 1, 0, 1]
+# 定义选择器的时候是可以自定义threshold的参数的，这里没有定义的情况内部会默认，大多数情况是mean
+selector = SelectFromModel(estimator=LogisticRegression()).fit(X, y)
+# 度量各个特征的相关性
+selector.estimator_.coef_
+# 打印阈值
+selector.threshold_
+# 返回一组布尔值，表达该特征是否支持
+selector.get_support()
+# 转换特征向量为选出的向量
+selector.transform(X)
+```
+
+**Wrapper Methods：**
+
+Wrapper Methods 是一种特征选择的方法，它通过在特征子集上训练模型并根据模型性能来评估特征的重要性。与过滤方法（如方差阈值、相关系数等）不同，Wrapper Methods 使用机器学习模型本身的性能来评估特征的贡献。
+
+Wrapper Methods 的一般思想是不断尝试不同的特征子集，直到找到一个最优的子集，使得模型性能达到最佳。这个过程可以通过贪心搜索、递归特征消除等技术来实现。
+
+常见的 Wrapper Methods 包括：
+
+- 递归特征消除（Recursive Feature Elimination，RFE）：该方法通过不断训练模型并剔除最不重要的特征，直到达到指定的特征数量为止。在每一轮迭代中，根据模型性能选择要删除的特征，直到达到指定的特征数量或达到某个性能指标。
+- 正向特征选择（Forward Feature Selection）：该方法从一个空特征集开始，每次迭代将最重要的特征添加到特征集中，直到达到指定的特征数量或达到某个性能指标。
+- 后向特征选择（Backward Feature Selection）：与正向特征选择相反，该方法从所有特征开始，每次迭代将最不重要的特征从特征集中移除，直到达到指定的特征数量或达到某个性能指标。
+- 基于模型的特征选择（Model-Based Feature Selection）：该方法使用特定的学习模型（如逻辑回归、支持向量机等）来评估特征的重要性，并选择对模型性能最有利的特征子集。
+
+Wrapper Methods 的优点是可以考虑特征之间的交互作用，因为它们是基于模型性能来选择特征的。然而，由于需要在每一轮迭代中重新训练模型，因此 Wrapper Methods 的计算成本通常较高。
+
+**特征选择的过滤方法：基于统计而不是基于模型**
+
+过滤方法是一种特征选择的方法，它通过计算特征与目标变量之间的统计指标来选择最相关的特征，而不涉及到模型的训练。常见的过滤方法包括：
+
+方差阈值（Variance Thresholding）：计算特征的方差，剔除方差低于某个阈值的特征。适用于移除方差过小的特征，这些特征可能对目标变量的预测没有太大帮助。
+
+单变量特征选择（Univariate Feature Selection）：SelectKBest 和 SelectPercentile 都是Scikit-learn中用于单变量选择的类。
+- 回归问题：使用诸如 F 检验或者皮尔逊相关系数等统计指标来评估特征与目标变量之间的相关性，然后选择与目标变量显著相关的特征。
+- 分类问题：同样，使用统计指标（如卡方检验、t 检验等）来评估特征与目标变量之间的相关性，选择与目标变量显著相关的特征。
+
+互信息（Mutual Information）：衡量特征与目标变量之间的非线性相关性，选择与目标变量信息量最大的特征。
+
+相关系数（Correlation Coefficient）：计算特征与目标变量之间的线性相关系数，选择与目标变量具有高相关性的特征。
+
+基于树的特征选择（Tree-Based Feature Selection）：利用决策树或者随机森林等树模型中特征的重要性评估来选择特征。这类方法通常用于回归和分类问题，因为树模型可以直接提供特征的重要性排序。
+
+代码示例1：
+
+```python
+from sklearn.datasets import make_regression
+from sklearn.feature_selection import SelectKBest
+from sklearn.feature_selection import f_regression
+
+# 生成数据集
+X, y = make_regression(n_samples=100, n_features=100, n_informative=10)
+# n_samples：样本数量为100，n_features：特征数量为100，n_informative：具有信息量的特征数量为10
+
+# 定义特征选择器
+fs = SelectKBest(score_func=f_regression, k=10)
+# 使用 f_regression 作为评分函数，选择 10 个最佳特征的 SelectKBest 对象
+
+# 应用特征选择
+X_selected = fs.fit_transform(X, y)
+# 使用特征选择器对数据进行特征选择，将原始数据 X 通过 SelectKBest 选择最佳的 10 个特征
+
+# 打印所选择的特征的形状
+print(X_selected.shape)
+# 输出所选择的特征的形状
+```
+
+这段代码的作用是生成一个包含100个样本和100个特征的回归数据集，然后使用 `SelectKBest` 类来选择与目标变量最相关的前10个特征，并打印所选择的特征的形状。
+
+f_regression 用于计算输入特征和输出列的相关性，将其转换为f分数，然后转化为p值。F 分数用于评估模型或组之间的整体差异，而 p 值用于确定这种差异是否显著。
+
+代码示例2:
+
+```python
+from sklearn.datasets import make_classification
+from sklearn.feature_selection import SelectKBest
+from sklearn.feature_selection import f_classif
+
+# 生成数据集
+X, y = make_classification(n_samples=100, n_features=20, n_informative=2)
+# n_samples：样本数量为100，n_features：特征数量为20，n_informative：具有信息量的特征数量为2
+
+# 定义特征选择器
+fs = SelectKBest(score_func=f_classif, k=2)
+# 使用 f_classif 作为评分函数，选择 2 个最佳特征的 SelectKBest 对象
+
+# 应用特征选择
+X_selected = fs.fit_transform(X, y)
+# 使用特征选择器对数据进行特征选择，将原始数据 X 通过 SelectKBest 选择最佳的 2 个特征
+
+# 打印所选择的特征的形状
+print(X_selected.shape)
+# 输出所选择的特征的形状
+```
+
+这段代码的作用是生成一个包含100个样本和20个特征的分类数据集，其中只有2个特征具有信息量，然后使用 `SelectKBest` 类来选择与目标变量最相关的前2个特征，并打印所选择的特征的形状。
+
+f_classif 是 f_regression 的分类问题版本。
+
+代码示例3:
+
+```python
+from sklearn.datasets import load_iris
+from sklearn.feature_selection import SelectKBest, chi2
+
+# 加载鸢尾花数据集
+X, y = load_iris(return_X_y=True)
+# 返回特征矩阵 X 和目标向量 y
+
+print(X.shape)
+# 打印原始特征矩阵的形状
+
+# 选择两个最佳特征
+X_new = SelectKBest(chi2, k=2).fit_transform(X, y)
+# 使用卡方检验作为评分函数，选择最佳的两个特征，并将原始特征矩阵 X 进行特征选择
+
+print(X_new.shape)
+# 打印选择的两个最佳特征的新特征矩阵的形状
+```
+
+这段代码的作用是使用卡方检验（chi2）作为评分函数，选择鸢尾花数据集中最相关的两个特征，并打印选择的两个最佳特征的新特征矩阵的形状。
+
+卡方检验常用于分析分类变量之间的关系，比如检验两个分类变量之间的独立性、检验分类变量对目标变量的影响等。
+
+代码示例4:
+
+```python
+from sklearn.datasets import load_digits
+from sklearn.feature_selection import SelectPercentile, chi2
+
+# 加载数据集
+X, y = load_digits(return_X_y=True)
+# 返回特征矩阵 X 和目标向量 y
+
+print(X.shape)
+# 打印原始特征矩阵的形状
+
+# 基于前 10% 的特征选择
+X_new = SelectPercentile(chi2, percentile=10).fit_transform(X, y)
+# 使用卡方检验作为评分函数，选择前 10% 的最佳特征，并将原始特征矩阵 X 进行特征选择
+
+print(X_new.shape)
+# 打印选择的特征的新特征矩阵的形状
+```
+
+这段代码的作用是使用卡方检验（chi2）作为评分函数，选择鸢尾花数据集中与目标变量最相关的前 10% 特征，并打印选择的特征的新特征矩阵的形状。
+
+代码示例5:
+
+```python
+from sklearn.datasets import load_iris
+import pandas as pd
+
+# 加载鸢尾花数据集
+iris = load_iris()
+
+# 创建特征矩阵和目标向量
+X = iris.data
+y = iris.target
+
+# 将特征矩阵转换为 DataFrame
+df = pd.DataFrame(X, columns=["sepal_length", "sepal_width", "petal_length", "petal_width"])
+# 将特征矩阵 X 转换为 DataFrame，并指定列名为 sepal_length、sepal_width、petal_length、petal_width
+
+# 创建相关系数矩阵
+corr_matrix = df.corr()
+# 计算特征矩阵中各个特征之间的相关系数
+
+print(corr_matrix)
+# 打印相关系数矩阵
+```
+
+这段代码的作用是使用 Pandas 将鸢尾花数据集的特征矩阵转换为 DataFrame，并计算特征之间的相关系数，然后打印相关系数矩阵。
+
+**嵌入式方法（Embedded Methods）：**
+
+嵌入式方法（Embedded Methods）是一种特征选择的方法，它将特征选择过程嵌入到模型训练过程中。在嵌入式方法中，特征选择与模型训练同时进行，模型在训练过程中自动地选择最佳的特征子集，以提高模型的性能或泛化能力。
+
+和其他方法不同，在嵌入式方法中，特征选择是作为模型训练的一部分，模型通过优化目标函数来选择特征，从而得到最佳的特征子集。
+
+常见的嵌入式方法包括：
+
+- L1 正则化（Lasso Regression）：通过在损失函数中加入 L1 正则项，促使模型系数稀疏化，从而实现特征选择。
+- L2 正则化（Ridge Regression）：虽然 L2 正则化不会导致模型系数稀疏化，但它可以减小系数的大小，抑制特征的过拟合，从而达到特征选择的效果。
+- 决策树算法：在决策树算法中，特征选择是通过计算信息增益或基尼不纯度等指标来完成的。在树的生长过程中，模型会自动选择最佳的特征进行分裂，从而实现特征选择。
+- 基于模型的特征重要性评估：一些机器学习模型（如随机森林、梯度提升树等）可以直接提供特征重要性评估，模型可以通过这些评估来选择最佳的特征。
+
+嵌入式方法的优点是它们能够充分利用模型的学习能力来进行特征选择，不需要额外的特征子集搜索过程，并且可以提高模型的性能和泛化能力。然而，嵌入式方法可能会受到选择的模型的限制，因此选择合适的模型对于嵌入式特征选择至关重要。
+
+### 模型评估方法
+
+**Explained Variance Score：**
+
+解释方差得分衡量了模型对数据变化的解释程度，即模型所能解释的目标变量方差的比例。解释方差得分的取值范围为0到1，其中：
+
+- 得分为1表示模型完美地解释了数据的变化，即模型的预测值与实际值完全一致。
+- 得分为0表示模型未能解释目标变量的任何变化，即模型的预测值与实际值之间没有相关性。
+
+相关代码：
+```python
+from sklearn.metrics import explained_variance_score
+y_true = [3, -0.5, 2, 7]
+y_pred = [2.5, 0.0, 2, 8]
+print(explained_variance_score(y_true, y_pred))
+```
+
+**Mean absolute error：**
+
+平均绝对误差（Mean Absolute Error，MAE）是一种用于评估回归模型性能的指标，它衡量了模型预测值与实际值之间的平均绝对差异程度。
+
+具体来说，对于每个样本，MAE 是预测值与实际值之间的绝对差的平均值。
+
+MAE 的取值范围为 0 到正无穷，其值越小表示模型的预测能力越好。当 MAE 等于 0 时，表示模型的预测完全准确，每个样本的预测值与实际值完全一致。
+
+MAE 的一个优点是它对异常值不敏感，因为它只关注了预测值与实际值之间的差异的绝对值。因此，MAE 在评估回归模型时是一个常用的指标之一。
+
+相关代码：
+```python
+from sklearn.metrics import mean_absolute_error
+y_true = [3, -0.5, 2, 7]
+y_pred = [2.5, 0.0, 2, 8]
+print(mean_absolute_error(y_true, y_pred))
+```
+
+**Mean squared error：**
+
+均方误差（Mean Squared Error，MSE）是一种用于评估回归模型性能的指标，它衡量了模型预测值与实际值之间的平均平方差异程度。
+
+具体来说，对于每个样本，MSE 是预测值与实际值之间的平方差的平均值。
+
+MSE 的取值范围为 0 到正无穷，其值越小表示模型的预测能力越好。当 MSE 等于 0 时，表示模型的预测完全准确，每个样本的预测值与实际值完全一致。
+
+与 MAE 相比，MSE 更加关注预测值与实际值之间的差异的平方，因此它更加注重大误差的影响。然而，由于平方的存在，MSE 会对异常值更加敏感。
+
+相关代码：
+
+```python
+from sklearn.metrics import mean_squared_error
+y_true = [3, -0.5, 2, 7]
+y_pred = [2.5, 0.0, 2, 8]
+print(mean_squared_error(y_true, y_pred))
+```
 
 ### 接触很少的回归模型
 
