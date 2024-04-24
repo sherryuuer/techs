@@ -16,6 +16,7 @@
 - [树结构：树和二分树BST](algo/binarytree.md)
 - [树结构：树映射TreeMap](algo/treemap.md)
 - [树算法：前缀树](algo/trie.md)
+- [树算法：字典树trie相关问题](algo/trie-problems.md)
 - [树算法：并查集](algo/union-find.md)
 - [树算法：段树](algo/segmenttree.md)
 - [树算法：迭代深度优先搜索](algo/iterativedfs.md)
@@ -85,7 +86,6 @@
 - [Transformers：注意力，自注意力和多头注意力](ml/attention.md)
 - [Transformers关键组件：以及和认知科学关联的思考](ml/transformers-parts.md)
 - [Transformers编码器构架各个模块的代码实践](ml/transformers-encoder.md)
-<!-- - [VisionTransformer模型实现的细节和回顾](ml/transformer-vision.md) -->
 - [GNN：图基础和图论的数学-Graph-Neural-Networks](ml/gnn.md)，
 - [GCN图卷积神经网络和它的实现-Graph-Convolutional-Networks，（是比较难的两章，有空通过视频讲解再次学习后再深入研究一下）](ml/gcn.md)
 
@@ -119,8 +119,8 @@
 - [网络基础-构架，协议栈，应用层，HTTP，DNS](cs/internet-base-app-layer.md)
 - [网络基础-传输层，TCP/UDP](cs/internet-base-transport-layer.md)
 - [使用Python实现的套接字编程](cs/python-sockets-programming.md)
-<!-- - [网络基础-网络层，IP，ARP，DHCP，ICMP，firewall，nat](cs/internet-base-network-layer.md) -->
-<!-- - [网络基础-链路层，以太网，MAC地址](cs/internet-base-link-layer.md) -->
+- [网络基础-网络层，IP，ARP，DHCP，ICMP，firewall，nat](cs/internet-base-network-layer.md)
+- [网络基础-链路层，以太网，MAC地址](cs/internet-base-link-layer.md)
 <!-- - [网络限流(throttling)，指数退避(ExponentialBackoff)和Python的代码实现](cs/exponential-backoff.md) -->
 <!-- - [ID认证：WorkloadIdentity是什么，如何让外部ID可以在GCP内作业](cs/workloadidentity.md) -->
 <!-- - [GithubActions实现workload工作流：自动化GCS部署和notification](cs/ghactions-autodeploy.md) -->
@@ -128,11 +128,14 @@
 
 ## System Design and More Fun
 - [系统设计概念System-Design-concepts](morefun/system-design.md)
-- [full-stack构架一个油管网站](morefun/youtube-clone.md)
 - [G检定深度学习考试相关日语词汇和概念解释](morefun/gtest.md)
 - [WEB3:](morefun/web3.md)
 
-## Fundation Base
+## Interesting Posts
+- [Langchain官方的RAG-from-scratch系列视频](https://www.youtube.com/playlist?list=PLfaIDFEXuae2LXbO1_PKyVJiQ23ZztA0x)
+- [Fine-Tuning or Retrieval?单纯的RAG可能比RAG加微调更好](https://arxiv.org/abs/2312.05934)
+- [Prompt Design and Engineering: Introduction and Advanced Methods](https://arxiv.org/abs/2401.14423)
+- [竟然有人用Excel实现了GPT2的构架，只要理解了基础，工具只是辅助而已！so coooool!](https://spreadsheets-are-all-you-need.ai/index.html#watch-the-lessons)
 
 ## logbooks
 - [项目过程心得总结-不定期添加](principals/pj-thinking.md)
@@ -140,5 +143,4 @@
 
 ---
 - 科技再发展也离不开基础，所有的科技新发展，都是对基础的一种深度挖掘和联结。
-- 对世界知识和信息的探索，就像是拿着一片树叶，通过纹理想要感受到远古树根长出来前土壤的芳香，甚至贪婪的想找到远古土壤的成分。宛如大海捞针。但是仅仅是这种千丝万缕的关联，就让人兴奋和欣然，毕竟没有什么其他的手段，只是叶子距离根更近更远的区别，但是仅此足矣吧。
 - 加密学，区块链，网络安全，信息论，数学，频谱分析，图论等领域，强化学习，遗传算法。

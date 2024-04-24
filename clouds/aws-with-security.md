@@ -104,17 +104,110 @@
 
 **Guard Duty**
 
-提供持续的监视、检测和保护 AWS 帐户和 AWS 已部署的工作负载。它利用机器学习和行为分析技术来检测恶意活动和未经授权的行为。GuardDuty 分析来自 AWS CloudTrail、Amazon VPC 流量日志和 DNS 日志的数据，以便识别与恶意行为相关的模式和异常活动。
+- 利用机器学习和行为分析技术来检测恶意活动和未经授权的行为。
+- GuardDuty 分析对象来自 AWS CloudTrail、Amazon VPC 流量日志和 DNS 日志的数据，S3 data event，EKS logs等。
+- 后面可以加上EventBridge rules进行通知，trigger target: Lambda,SNS。
+- 防加密货币攻击。有专用的finding方法。
+- 可以在组织 Organization 层级设置一个专用于 GuardDuty 的账户（delegated）用于管理多账户。
+- 一种 finding 构架：GuardDuty -> finding -> EventBridge -> SQS/SNS/Lambda -> HTTP(slack)/Email
+  - 在lambda后可以进行WAF的ACL调整，block恶意ip，或者对subnet的NACL进行调整，block恶意ip。
+  - 也可以将后续动作都包在step functions中。
+- 可设置白名单，威胁名单，还有抑制规则（比如你不想看到的ip，已知没威胁的）。
+- 注意！GuardDuty对于DNSlogs的解析，只针对default VPC DNS resolver。其他的不出finding结果。
 
 **AWS Security Hub**
 
-AWS Security Hub 可集成多种 AWS 服务（例如 Amazon GuardDuty、Amazon Inspector、AWS IAM、Amazon Macie 等）以及第三方安全工具（例如 Check Point、CrowdStrike、Trend Micro 等），从而提供全面的安全性检查和报告。可以跨区域管理，以一个区域为中心进行安全管理。必须激活AWS config服务。
-
-过程：检测-摄取-修复-记录
+- 跨多账户，进行自动安全检测。
+- 可集成多种 AWS 服务：Config，GuardDuty，Amazon Inspector，Amazon Macie，IAM access Analyzer，AWS system manager，AWS firewall manager，AWS Health，AWS Partner Network Solutions。
+- 集成的 findings 可以被发送到以下服务：Audit Manager, AWS Chatbot, Amazon Detective, Trusted Advisor, SSM Explorer, OpsCenter.
+- 还可以针对3rd party工具进行收集和传送。
+- 针对上述服务的内容，它自动生成 findings，然后Detective可以进行调查，还可以通过 EventBridge 触发 event：Custom Actions-Security Hub Findings。-->Lambda/SSM Automations/StepFuntions/SNS
+- 可以跨区域管理，可以管理多个账户，以一个区域为中心进行安全管理。必须激活AWS config服务。各个区域的Config必须手动确保激活。
+- SH支持各种安全标准。Security Standards 可以手动开启。
+- ASFF：AWS Security Finding Format。90天自动删除。
+- Insights：一群findings的集合。有AWS内置的还可以定制自己的。
+- 检测detect - 触发trigger - 补救remediate - log记录
 
 **Detective**
 
+- 机器学习和图算法。
+- 深度分析根源问题。
+- 生成可视化visualizations和细节details。
+- detective检测 - triage问题分类 - scoping问题界定 - response回应
+
 **Penetration Testing**
+
+- 允许的服务：EC2, NAT gateway, ELB, RDS, CloudFront, Aurora, API Gateway, Lambda, Lambda Edge Functions, Lightsail, Elastic Beanstalk.
+- 禁止的攻击：DNS区域遍历（zone walking）via Route53 Hosted Zone，DDoS（分布式DoS）攻击，以及以下DoS攻击：Port flooding，Protocol flooding，Request flooding。
+- DDoS攻击的测试可以进行：必须通过AWS DDoS test partner，要设置ShieldAdvanced，以及满足速率要求等。
+- 如何处置受感染的服务器（Compromised EC2）：（隔离过程可用Lambda自动化）（针对单个container的措施是一样的）
+  - capture the metadata
+  - enable the termination protection
+  - isolate the server, replace the sg with no outbound authorized（隔离：遮断网络进出）
+  - detach from ASG
+  - deregister from ELB
+  - snapshot the EBS for deep analysis
+  - tag the EC2 for investigation ticket
+- 如何调查受感染的服务器：
+  - 关掉instance离线调查，或者snapshot内存memory（可以使用SSM Run Command）和capture network traffic进行在线调查。
+- 如何处置受污染的S3：
+  - GuardDuty特定目标。
+  - CloudTrail和Detective特定恶意活动和API来源。
+  - 然后针对S3做出安全设定。
+- 如何处置受污染的ECS Cluster：
+  - GuardDuty特定目标。
+  - 特定污染源是container image还是task。
+  - 隔离受影响的task。
+  - 评价是否存在恶意活动。（恶意软件）
+- 如何处置受污染的RDS：(大概是DB密码泄露)
+  - GuardDuty特定目标。
+  - 根据情况限制网络通信和可疑用户。restrict the network access and suspected DB user.
+  - rotate the suspected DB user password.
+  - review DB Audit logs to identify leaked data.
+  - Secure DB instance: use Secret Manager（rotate password）,or IAM DB Authentication（manage DB user access without password）.
+- 如何处置受污染的AWS凭证：
+  - GuardDuty特定目标。
+  - rotate更新凭证。
+  - attach explicit deny policy, with STS date condition.
+  - 检查 CloudTrail logs 看是否有其他非法活动。
+  - 查看所有的AWS资源，删除非认可资源。
+  - 核实账户信息。
+  - 如果受污染的是IAM Role，过程大同小异，但是要加上revoke linked AD（Active Directory） access。
+  - 如果受污染的是整个Account，要重置和删除所有的instance上的IAM access keys,IAM user credentials,EC2 key pairs。
+  - 替换所有的EC2Instance 中的 key pairs，可以使用SSM Run Command。
+
+**EC2 instance connect（browser based）**
+
+- 运作方式其实不是从浏览器而是通过CLI到该服务的API。
+- 会推送一个60秒的临时key到metadata。EC2会去metadata拿到这个key。
+- 从AWS固定的IPrange进行ssh连接。18.206.107.24/29
+- EC2的SG需要开放该IP的ssh22号端口的inbound许可。
+- 由于是API请求，所以该行为都会被CloudTrail记录。
+
+**EC2 Serial Console**
+
+- USE CASE: troubleshoot boot, troubleshoot network configuration, analyze reboot issue
+- 默认disable
+- Only one active session per EC2
+- Must set up OS user and password
+- Use with supported Nitro-based EC2
+
+**如果ssh到EC2的accessKey丢了怎么更新EC2内的共钥**
+
+- 一种方法是使用user-data在启动EC2的时候增加一个新的accessKey
+- 一种是使用SSM，Document-ResetAccess,key会被存在ParameterStore中，注意必须安装SSMAgent
+- 一种是使用EC2 instance connect从浏览器进入，如上这是一种一次性的认证方式，进去之后可以更换key
+- 一种是用SerialConsole连接EC2进行修改
+- 一种是通过detach根EBS，然后把它attach到其他temporary的EC2上进行key的修改，然后再attach到原来的EC2上
+- 如果是window环境的话，比较复杂，根据各个AMI的版本，补救方法不一样，最老的似乎是直接删除，然后有2016版本的使用config文件，他们都是通过EBS的detach和attach实现，另外还有SSM的document方法
+
+**EC2Rescue Tool for Linux**
+
+- 用于收集系统信息和日志：system utilizaiton report,logs and details,还可以检测和补救系统问题
+- 需要手动安装或者 run SSM document: AWSSupport-TroubleshootSSH Automation Document
+- 可以自动上传结果 results 文件到 AWS Support or an S3 bucket
+
+
 
 ### 2 - Security Logging and Monitoring
 
