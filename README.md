@@ -109,6 +109,8 @@
 <!-- - [AWS-Bedrock项目实践1：Code Generation (APIGateway,S3,bedrock)](cloud/bedrock-pj1.md) -->
 <!-- - [AWS-Bedrock项目实践2-3：Notes Summarisation & Image Generation & 模型评估 & RAG](cloud/bedrock-pj2-3.md) -->
 - [Google-Gimini-API上手体验和要点总结：目前最爱Gemini](clouds/gemini-api.md)
+- [关于云上的CI/CD服务，以及IaC服务的总结](clouds/cloud-cicd-tools.md)
+- [GCP-cloud-Engineer学习笔记](clouds/gcp-cloud-engineer.md)
 
 ## Principal
 - [程序员原则](principals/whats-not-change.md)
@@ -129,7 +131,7 @@
 ## System Design and More Fun
 - [系统设计概念System-Design-concepts](morefun/system-design.md)
 - [G检定深度学习考试相关日语词汇和概念解释](morefun/gtest.md)
-- [WEB3:](morefun/web3.md)
+- [WEB3：初步接触比特币，元宇宙，以太坊，智能合约等概念](morefun/web3.md)
 
 ## Interesting Posts
 - [Langchain官方的RAG-from-scratch系列视频](https://www.youtube.com/playlist?list=PLfaIDFEXuae2LXbO1_PKyVJiQ23ZztA0x)

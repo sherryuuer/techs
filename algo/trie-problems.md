@@ -308,3 +308,158 @@ TimSort 是由 Tim Peters 在 Python 标准库中实现的一种混合排序算�
 5. **低内存消耗**：TimSort 通过在排序过程中利用辅助数组来减少内存消耗，因此具有较低的内存使用率。
 
 TimSort 在 Python 中被广泛应用，它被用作 Python 内置的排序算法，并且在 Java 的 Arrays.sort() 中也有类似的实现。
+
+### 问题2:Design Add and Search Words Data Structure
+
+力扣题211，同时多加了一点要求的一道题。要求设计一个数据结构：单词字典。包括如下方法：
+
+add方法：将单词加入词典。search方法，查找单词是否在字典里，返回bool，这里的查找对象不仅包括单词本身，而且用`.`替代的字母，也算作该字母存在，也就是说如果查找`.in`，如果`bin`在单词表里那么返回 True，但是`.n`就不可以，一个点代表一个字母。get方法返回所有的单词。
+
+总的来说还是在原数据结构上的修改和增加。
+
+代码如下：经过了多次修改，以及在`get_words`方法中对回溯算法的各种尝试，收获还是很多的，尤其是最后debug成功后，很开心。
+
+```python
+class TrieNode:
+    def __init__(self, val=None):
+        self.children = {}
+        self.word = False
+        self.val = val
+
+
+class WordDictionary:
+    def __init__(self):
+        self.root = TrieNode()
+
+    def add_word(self, word):
+        cur = self.root
+        for c in word:
+            if c not in cur.children:
+                cur.children[c] = TrieNode(c)
+            cur = cur.children[c]
+        cur.word = True
+
+    def search_word(self, word):
+        def dfs(j, root):
+            cur = root
+            for i in range(j, len(word)):
+                c = word[i]
+                if c == '.':
+                    for child in cur.children.values():
+                        if dfs(i + 1, child):
+                            return True
+                    return False
+
+                else:
+                    if c not in cur.children:
+                        return False
+                    cur = cur.children[c]
+            return cur.word
+
+        return dfs(0, self.root)
+
+    def get_words(self):
+        def dfs(cur, curset, subsets):
+            curset.append(cur.val)
+            if cur.word:
+                subsets.append(''.join(curset))
+            # 嵌套字典
+            for child in cur.children.values():
+                dfs(child, curset, subsets)
+            curset.pop()
+
+        result = []
+        for cur in self.root.children.values():
+            dfs(cur, [], result)
+        return result
+
+
+obj = WordDictionary()
+obj.add_word("bad")
+obj.add_word("dad")
+obj.add_word("mad")
+print(obj.get_words())
+print(obj.search_word(".ad"))
+```
+下面是题解给的参考答案：
+
+```python
+class TrieNode():
+  
+  # Initialize TrieNode instance
+  def __init__(self):
+    self.children = []
+    self.complete = False
+    for i in range(0, 26):
+      self.children.append(None)
+
+class WordDictionary:
+    # Initialize the root with TrieNode and set 
+    # the 'can_find' boolean to FALSE
+    def __init__(self):
+        self.root = TrieNode()
+        self.can_find = False
+
+
+    # Function to add a new word to the dictionary
+    def add_word(self, word):
+        n = len(word)
+        cur_node = self.root
+        for i, val in enumerate(word):
+            index = ord(val) - ord('a')
+            if cur_node.children[index] is None:
+                cur_node.children[index] = TrieNode()
+            cur_node = cur_node.children[index]
+            if i == n - 1:
+                if cur_node.complete:
+                    print("\tWord already present!")
+                    return
+                cur_node.complete = True
+        print("\tWord added successfully!")
+
+
+    # Function to search for a word in the dictionary
+    def search_word(self, word):
+        self.can_find = False
+        self.search_helper(self.root, word, 0)
+        return self.can_find
+
+
+    def search_helper(self, node, word, i):
+        if self.can_find:
+            return
+        if not node:
+            return
+        if len(word) == i:
+            if node.complete:
+                self.can_find = True
+            return
+
+        if word[i] == '.':
+            for j in range(ord('a'), ord('z') + 1):
+                self.search_helper(node.children[j - ord('a')], word, i + 1)
+        else:
+            index = ord(word[i]) - ord('a')
+            self.search_helper(node.children[index], word, i + 1)
+
+
+    # Function to get all words in the dictionary
+    def get_words(self):
+        words_list = []
+        if not self.root:
+            return []
+        return self.dfs(self.root, "", words_list)
+
+    def dfs(self, node, word, words_list):
+        if not node:
+            return words_list
+        if node.complete:
+            words_list.append(word)
+
+        for j in range(ord('a'), ord('z') + 1):
+            prefix = word + chr(j)
+            words_list = self.dfs(node.children[j - ord('a')], prefix, words_list)
+        return words_list
+```
+
+学习笔记：时间复杂度上来说，添加单词和搜索单词都使用单词长度的时间O(m)，而取得所有单词的时间复杂度取决于节点数量n所以是O(n)。在空间复杂度上，如果节点数量是n那么最坏情况来说空间为O(n*26)了。

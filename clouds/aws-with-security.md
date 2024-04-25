@@ -9,30 +9,6 @@
 
 ---
 
-在云服务环境中，安全威胁的类型和形式多种多样，其中一些常见的安全威胁包括：
-
-1. **数据泄露**：云存储和数据库中的敏感数据可能因配置错误、访问控制不当或恶意活动而被泄露，导致机密信息暴露给未经授权的用户或攻击者。
-
-2. **账户和凭证泄露**：云账户凭证、API 密钥或访问令牌可能会因为不慎泄露、社会工程攻击或恶意软件而被窃取，从而导致未经授权的人员访问云资源。
-
-3. **拒绝服务（DoS）攻击**：攻击者可能会发起拒绝服务攻击，通过向云服务提供商的服务器发送大量恶意流量或请求来使服务不可用，影响业务正常运行。
-
-4. **恶意软件和恶意行为**：恶意软件可能会通过各种方式进入云环境，并在其中传播、操纵或损坏数据、应用程序或系统。此外，攻击者可能会在云环境中执行恶意活动，例如挖矿、勒索等。
-
-5. **不安全的 API 和管理接口**：云服务提供商的 API 和管理界面可能会因为设计缺陷、配置错误或漏洞而受到攻击，导致未经授权的访问或恶意操作。
-
-6. **数据隔离问题**：云环境中的虚拟化技术和多租户架构可能会导致数据隔离不严格，使得攻击者能够跨越虚拟边界，访问其他用户或租户的数据。
-
-7. **身份和访问管理（IAM）问题**：不当配置的身份和访问管理策略可能会导致未经授权的用户获得对云资源的访问权限，或者允许攻击者提升其权限级别。
-
-8. **社会工程和钓鱼攻击**：攻击者可能通过欺骗手段诱导云服务用户或管理员泄露凭证、敏感信息或执行恶意操作，例如钓鱼邮件、社交工程技术等。
-
-9. **未经授权的配置更改**：云资源的配置可能会因为人为错误或恶意行为而被更改，导致安全性和合规性风险。
-
-以及其他安全风险。
-
----
-
 加密货币攻击是什么？
 
 加密货币攻击指的是针对加密货币和区块链技术的各种安全威胁和攻击。由于加密货币和区块链技术的快速发展和广泛应用，这些攻击已成为互联网安全领域的一个重要议题。
@@ -55,7 +31,7 @@
 
 加密货币攻击是一个动态和不断发展的领域，随着加密货币和区块链技术的普及和发展，攻击者不断寻找新的攻击方法和漏洞。因此，加密货币用户和相关组织需要采取相应的安全措施，加强对加密货币资产和交易的保护。
 
----
+### 服务分类
 
 在 AWS 中，可以使用以下服务和功能来应对各种安全威胁：
 
@@ -63,6 +39,7 @@
    - 使用 AWS IAM 和 AWS KMS 管理和控制对存储在云中的数据的访问权限。
    - 使用 Amazon S3 Bucket Policies 和 AWS IAM 来限制对 S3 存储桶中对象的访问。
    - 使用 Amazon Macie 来监控和发现 S3 存储桶中的敏感数据，并实施数据分类和保护策略。
+   - CloudWatch Logs 作为全部数据存储。
 
 2. **账户和凭证泄露**：
    - 使用 AWS IAM 进行身份和访问管理，强制实施多因素身份验证（MFA）、定期轮换凭证、使用 IAM 角色等安全最佳实践。
@@ -81,7 +58,7 @@
    - 使用 AWS Config 和 AWS CloudTrail 记录和监控对 AWS 资源的操作和事件。
 
 6. **数据隔离问题**：
-   - 使用 AWS VPC 和安全组来隔离和保护云中的网络流量和资源。
+   - 使用 AWS VPC 和安全组来隔离和保护云中的网络流量和资源。VPC Flow Logs/ELB Access Logs/CloudFront Logs/WAF Logs
    - 使用 AWS IAM 和资源标签来实现对资源的访问控制和隔离。
 
 7. **身份和访问管理（IAM）问题**：
@@ -94,6 +71,13 @@
 9. **未经授权的配置更改**：
    - 使用 AWS Config 实时监控和评估 AWS 资源的配置，并确保符合安全和合规标准。
    - 使用 AWS CloudFormation 和 AWS Config Rules 自动化和强制实施安全配置。
+
+10. **系统漏洞**：
+   - Inspector 可以检测 EC2，ECR，lambda 的漏洞和风险。
+
+99. **其他**：
+   - 所以存在S3中的log都可以用Athena进行分析。
+   - Log的深度存储：Glacier
 
 以上列出的 AWS 服务和功能只是一部分可以用来应对各种安全威胁的示例。实际上，AWS 提供了更多的安全工具和功能，组合使用可以帮助用户建立高度安全的云环境，并保护其数据和应用程序不受安全威胁的影响。
 
@@ -207,16 +191,52 @@
 - 需要手动安装或者 run SSM document: AWSSupport-TroubleshootSSH Automation Document
 - 可以自动上传结果 results 文件到 AWS Support or an S3 bucket
 
+**IAM Access Analyzer**
 
+- 可以帮助找到哪些资源被外部非法access，定义一个ZoneofTrust，那么它之外的地方都是findings的区域
+- 审查policy，Policy Validation
+- 可以根据现有的activity活动，比如CloudTrail，生成policy，可能会是一个不错的best practice
+
+**其他概念**
+
+- AUP：AWS Acceptable Use Policy 用户不可以用于非法或者黑客活动，否则将被删除任何相关内容
+- AWS Abuse Report向AWS Trust&Safety发起的滥用报告，如果你发现了你可以汇报，如果你收到了类似邮件，那你必须回复问题，不然你账号一天就没了
+- IAM Credential Report-account level 可以下载用户们的认证和访问记录
+- IAM Access Advisor-user level 可以查看用户被授予的权限，以及最后一次访问是什么时候
 
 ### 2 - Security Logging and Monitoring
 
+**定义和术语**
+
+- 漏洞 Vulnerability – 系统漏洞 weakness in a system, system security procedures, internal controls, or implementation that could be exploited
+- 漏洞利用 Exploit – 利用软件漏洞和安全缺陷的代码 code that takes advantage of software vulnerability or security flaws
+- 有效负载 Payload – 攻击者打算传递给受害者的恶意软件 a malware that the attacker intends to deliver to the victim
+- 漏洞扫描工具 Automated Vulnerability Scanner – a tool that run automated scans of an IT environments to detect vulnerabilities, example : nessus scan (note: you don't need to know that tool for the exam)
+- 常见漏洞和暴露 Common Vulnerabilities and Exposures (CVE) – a list of publicly disclosed security flaws.
+- 通用漏洞评分系统 Common Vulnerability Scoring System (CVSS) – a way to produce a numerical score reflecting the severity of a vulnerability or a security flaws
+
 **Inspector**
+
+- 自动安全评估工具/
+- 对EC2通过SSM Agent(这是服务触达EC2的方式，必须设置)检查OS漏洞，以及网络触达network reachability（端口是不是不应该对公网开放之类的）to EC2
+- 可以检查ECR中上传的Container Images
+- 检查Lambda软件代码和依赖的漏洞，when deployed
+- 结果去想：可以发送到SecurityHub中作为报告，也可以trigger EventBridge出发其他内容
+- 重点：三种服务（EC2,ECRimages,lambda），针对漏洞，漏洞CVE更新那么他会重新检测，会给出一个risk score风险分数
+
 **System Manager**：
 
-Parameter store / Inventory / State Manager / Patch Manager / Maintenance Windows / Session Manager
-
-Document 自动执行功能是我觉得亮眼的功能。
+- 免费服务，可以对应EC2也可以对应On-Premises，系统对应Linux和Windows
+- 自动patching，增强合规性
+- 集成 CloudWatch metrics / dashboard
+- 集成 AWS Config
+- 重要组成：Resource Group / Document / Automation / Maintenance Windows / Parameter store / Inventory / State Manager / Run Command / Patch Manager / Session Manager
+- Document 自动执行功能是我觉得亮眼的功能。
+- 必须在server上安装 SSM Agent，AmazonLinux2和一些Ubuntu自带agent，一般出了问题都是因为没agent或者没对EC2授权相应的Role（Role也可以叫做：IAM instance profile，这是在hands on中看到的）
+- lanch的新的EC2，比如已经安装了SSM Agent的AmazonLinux2的EC2，会直接出现在SSM的Fleet Manager中，作为一个舰队进行管理。
+- 使用 TAGS 对资源进行分组管理：Resource Group，从而进行自动化和cost分配
+- Document 你可以定义parameters和actions，用json或者yaml格式的文件。（很像Github Actions或者Cloud Formation，都是IaC），Parameters也可以从 Parameter Store中取得
+- Run Command功能是直接跑一个小的命令或者跑一个脚本（document=script），通过resource groups可以直接跑一个server集群，它和IAM还有CloudTrail集成，会被记录，不需要通过ssh连接EC2（而是通过SSM Agent，session manager也是通过Agent），可以控制执行速率rate（一次执行多少，或几个server），和错误控制（几个错误就停止之类），跑命令的结果可以在console表示也可以发送到S3或者CWLogs，可以给SNS发消息，也可以被EventBridge Trigger，甚至可以得到一个生成的 CLI 代码自己拿去控制台执行。
 
 **Cloud Watch**
 
