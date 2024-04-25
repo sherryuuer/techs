@@ -50,8 +50,8 @@
 
 ## Machine learning
 - [AI时代提问准则](ml/ai-4-prompt.md)
-<!-- - [机器学习以及它的分类总结](ml/mltypes.md) -->
-<!-- - [机器学习算法之线性回归，特征选择方法，评估方法，非常用回归模型](ml/regression.md) -->
+- [机器学习以及它的分类总结](ml/mltypes.md)
+- [机器学习算法之线性回归，特征选择方法，评估方法，非常用回归模型](ml/regression.md)
 - [数据预处理：ML中最重要的步骤](ml/feature-engineering.md)
 - [防止过拟合的技术：正规化&Dropout&EarlyStopping](ml/overfit.md)
 - [容易混淆的几个概念：缩放，标准化，归一化，正则化](ml/some-confusion-words.md)
@@ -106,8 +106,8 @@
 - [AWS机器学习系统的构架和服务](clouds/aws-with-ml.md)
 - [AWS安全专家认证考试相关内容](clouds/aws-with-security.md)
 - [AWSSysOps运维考试内容整理](clouds/aws-with-sysops.md)
-<!-- - [AWS-Bedrock项目实践1：Code Generation (APIGateway,S3,bedrock)](cloud/bedrock-pj1.md) -->
-<!-- - [AWS-Bedrock项目实践2-3：Notes Summarisation & Image Generation & 模型评估 & RAG](cloud/bedrock-pj2-3.md) -->
+- [AWS-Bedrock项目实践1：Code Generation (APIGateway,S3,bedrock)](cloud/bedrock-pj1.md)
+- [AWS-Bedrock项目实践2-3：Notes Summarisation & Image Generation & 模型评估 & RAG](cloud/bedrock-pj2-3.md)
 - [Google-Gimini-API上手体验和要点总结：目前最爱Gemini](clouds/gemini-api.md)
 - [关于云上的CI/CD服务，以及IaC服务的总结](clouds/cloud-cicd-tools.md)
 - [GCP-cloud-Engineer学习笔记](clouds/gcp-cloud-engineer.md)
@@ -123,10 +123,10 @@
 - [使用Python实现的套接字编程](cs/python-sockets-programming.md)
 - [网络基础-网络层，IP，ARP，DHCP，ICMP，firewall，nat](cs/internet-base-network-layer.md)
 - [网络基础-链路层，以太网，MAC地址](cs/internet-base-link-layer.md)
-<!-- - [网络限流(throttling)，指数退避(ExponentialBackoff)和Python的代码实现](cs/exponential-backoff.md) -->
-<!-- - [ID认证：WorkloadIdentity是什么，如何让外部ID可以在GCP内作业](cs/workloadidentity.md) -->
-<!-- - [GithubActions实现workload工作流：自动化GCS部署和notification](cs/ghactions-autodeploy.md) -->
-<!-- - [网络安全分类：访问控制、身份管理、数据加密与网络防护的清晰分类](cs/network-security-tree.md) -->
+- [网络限流(throttling)，指数退避(ExponentialBackoff)和Python的代码实现](cs/exponential-backoff.md)
+- [ID认证：WorkloadIdentity是什么，如何让外部ID可以在GCP内作业](cs/workloadidentity.md)
+- [GithubActions实现workload工作流：自动化GCS部署和notification](cs/ghactions-autodeploy.md)
+- [网络安全分类：访问控制、身份管理、数据加密与网络防护的清晰分类](cs/network-security-tree.md)
 
 ## System Design and More Fun
 - [系统设计概念System-Design-concepts](morefun/system-design.md)
