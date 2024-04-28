@@ -463,3 +463,70 @@ class WordDictionary:
 ```
 
 学习笔记：时间复杂度上来说，添加单词和搜索单词都使用单词长度的时间O(m)，而取得所有单词的时间复杂度取决于节点数量n所以是O(n)。在空间复杂度上，如果节点数量是n那么最坏情况来说空间为O(n*26)了。
+
+### 问题3:Word Search II
+
+力扣212，hard难度，给定一个矩阵：比如这个矩阵。
+
+```python
+[["C","S","L","I","M"],
+ ["O","I","L","M","O"],
+ ["O","L","I","E","O"],
+ ["R","T","A","S","N"],
+ ["S","I","T","A","C"]]
+```
+
+以及一个字符串列表，["SLIME","SAILOR","MATCH","COCOON"]找出所有在这个单词board上可以找到的单词。单词的意思是它需要在横向或者竖向上是相邻的。
+
+暴力解法是通过对每个单词进行深度优先搜索。但是这种方法我在力扣提交中败给了网友的例题，超时了。所以需要的是前缀树数据结构的优化。
+
+代码如下：代码中对res列表使用了set结构，目的是为了去重，set结构是一种很好的去重的方法，省了很多麻烦，如果不去重，还需要对每次找到的word，进行再次isWord的重新标记。
+
+```python
+class TrieNode:
+    def __init__(self):
+        self.children = {}
+        self.isWord = False
+
+    def addWord(self, word):
+        cur = self
+        for c in word:
+            if c not in cur.children:
+                cur.children[c] = TrieNode()
+            cur = cur.children[c]
+        cur.isWord = True
+
+def find_strings(grid, words):
+    root = TrieNode()
+    for w in words:
+        root.addWord(w)
+
+    ROWS, COLS = len(grid), len(grid[0])
+    res, visit = set(), set()
+
+    def dfs(r, c, node, word):
+        if (
+            r < 0 or c < 0 or
+            r == ROWS or c == COLS or
+            (r, c) in visit or grid[r][c] not in node.children
+        ):
+            return
+        
+        visit.add((r, c))
+        node = node.children[grid[r][c]]
+        word += grid[r][c]
+        if node.isWord:
+            res.add(word)
+
+        directions = [(r + 1, c), (r - 1, c), (r, c + 1), (r, c - 1)]
+        for d in directions:
+            dfs(d[0], d[1], node, word) 
+            
+        visit.remove((r, c))
+    
+    for r in range(ROWS):
+        for c in range(COLS):
+            dfs(r, c, root, "")
+    return list(res)
+```
+学习笔记：时间复杂度上，在进行查找的时候我们从网格(假设有n个点)的每个点开始，同时每次都遍历三个方向（第四个方向是来的地方），单词长度假设为l，那么时间复杂度就是O(n * 3^l)，空间上，需要一个存储单词的前缀树空间，和一个遍历空间，前缀树最坏的情况是所有单词的字母都不重复，我们假设为m好了，遍历空间最坏的情况，一个单词的长度遍布了整个网格n，这时候的空间复杂度总和为O(m + n)。
