@@ -88,7 +88,7 @@
 
 **Guard Duty**
 
-- 利用机器学习和行为分析技术来检测恶意活动和未经授权的行为。
+- 可以利用机器学习和行为分析技术来检测恶意活动和未经授权的行为。
 - GuardDuty 分析对象来自 AWS CloudTrail、Amazon VPC 流量日志和 DNS 日志的数据，S3 data event，EKS logs等。
 - 后面可以加上EventBridge rules进行通知，trigger target: Lambda,SNS。
 - 防加密货币攻击。有专用的finding方法。
@@ -354,6 +354,7 @@
 - CGW有两种方式，一种是本地的publicIP，一种是NAT设备后的privateIP，使用NAT的publicIP。
 - 需要在虚拟网关中开启你子网的路由传播功能：Route propagation
 - 在VGW的inbound安全组SG中需要设置icmp（许多网络工具和实用程序（如 ping、traceroute）使用 ICMP 协议来检测网络中的主机可达性和路径延迟。）协议的开启，不然从本地的服务器无法ping到云端ec2
+- Site-to-Site VPN（使用 IPSec 协议加密通信，提供了一种相对简单和成本较低的方式来扩展本地网络到 AWS 云。）适用于临时性或较低带宽要求的场景，而 Direct Connect（一种专线连接服务，允许用户通过专用网络线路将本地数据中心或办公场所直接连接到 AWS 的数据中心。）则适用于对网络性能和可靠性有较高要求的企业级应用场景。
 
 **AWSVPN CloudHub**
 
@@ -401,82 +402,109 @@
 - 高可用性，安全性。
 - expose端通过一个NLB，消费端VPC通过ENI。两者进行连接。
 - ECS构架：多task多应用 --> ALB --> NLB --> PrivateLink --> ENI-of-VPC/VGW连接的其他VPN网络
+- VPC Endpoint构架：VPC Endpoint interface --> PrivateLink --> S3
 
 **NACL & SG**
 
-
+- NACL是stateless的，SG是statefull的
+- subset级别防火墙，根据数字排列优先级（越小越高）：100，200 and so on
+- defaultNACL对in和out都是all-allow，建议定义customNACL
+- 由于有时候客户端需要发送和接收临时端口的请求，所以在设置NACL的时候，端口可能会需要设置为一个范围。
+- **Managed Prefix Lists**：方便设置SG和路由表的IP地址栏，是一组CIDR的列表，有自定义（自定义IP）和AWS专属（各种resource的专属CIDR列表）两种。
+- SG规则设置为拒绝也无法interrupt切断已经建立的连接，只能等timeout，如果想立刻切断，用NACL立刻deny连接规则就可以。
 
 **AWS Transit Gateway**
 
+- 集中式的网络转发设备，可连接多个 VPC、VPN 连接和 Direct Connect 连接，使得跨多个 VPC 和本地网络之间的流量转发更加简单和高效。
+- 唯一支持网络多播multicast的服务。
+- 支持cross-region
+- 需要设置route-table定义VPC之间的通信
+- 支持 ECMP（Equal-Cost Multi-Path，等价成本多路径）路由策略，以提高网络的容错性、负载均衡和吞吐量。
+- 通过它的转发能力，可以在多账户和多VPC之间，分享一个Direct Connect Gateway（本地数据中心连接）。
+
 **CloudFront**
 
-和S3的区域复制功能的区别：静态内容全球覆盖用CF，动态内容在几个区域覆盖用S3。CF可以设置访问国家的黑白名单。
+- CDN by edge locations
+- 集成Shield web app firewall，有DDos攻击保护功能。
+- 数据源可以是S3也可以是自定义（HTTP）的网站。S3通过OAC（OriginAccessControl）和S3 bucket policy进行安全控制。
+- 和S3的区域复制功能的区别：静态内容全球覆盖用CF，动态内容在几个区域覆盖用S3（没有cache）。
+- CF可以设置访问国家的黑白名单。出于某些法律上的限制。
+- CF Signed URL（一个文件）/Cookies（多个文件）：可以控制用户对特定内容的访问权限，并设置 URL 的有效期限制。可以控制IP，时间范围和请求来源。签名 URL 是通过将访问者的身份信息、访问条件和访问时间戳等信息加密后生成的。使用 AWS 的身份验证密钥（例如访问密钥对）和 CloudFront 提供的 API 或 SDK 来生成签名 URL。相对于S3的署名URL它的控制更精细，来源可以是桶也可以是任何HTTP源。是一种高级的内容控制方式。
+- 支持Filed Level Encryption。字段级别的私密信息加密。
+- OAC可以设置对kms对访问权限，从而支持SSE-S3，SSE-KMS，实现内容加密。过去的OAI使用Lambda@edge的方式即将（或者已经）废止。
+- 通过认证header可以设置很多权限限制：比如ALB：CloudFront Cache Policy
+- 集成Cognito，发行JWTtoken，通过Lambda@edge验证身份。（Lambda@Edge 是 AWS Lambda 服务的一种扩展，在 AWS 的全球性内容分发网络 CloudFront 的边缘位置（Edge）上运行 Lambda 函数。使用 Lambda@Edge 可以对请求进行路由、身份验证、内容压缩、图片优化等操作。）
 
 **WAF**
 
-web application firewall.layer 7.用于第七层的漏洞滤网。
+- Web application firewall所以是layer 7，用于第七层的漏洞滤网。部署在：ALB，CloudFront，APIGateway等
+- WAFACL保护内容：没有DDos，包括：IP地址，HTTP头部，SQL注入，跨网站脚本攻击（XSS：cross-site-script），地理位置匹配，速率规则等
+- 日志发送：CWLogs，S3，kinesisFirehose-others
+- 可灵活创建Rule Groups设置自定义的规则，可以设置优先级，以及在CloudWatch中的Metrics字段。
 
 **Shield**
 
-防止DDoS攻击的。星际攻击防卫战。
+- 防止DDoS攻击的。宛如星际攻击防卫战。
+- ShieldAdvanced：ALB，CLB，NLB，ElasticIP，edge（CloudFront，Route53，GlobalAccelerator）
 
 **WAF & Shield & Firewall manager**
 
-将各种防火墙服务在一处管理，可以一次性统一部署在许多账户。
+- 组织级别管理，各种防火墙服务在一处管理，Firewall Manager可以一次性统一部署FW在许多账户。
+- Region Level
+- 三者的使用规则：一般来说WAF足够，但是要组织级别的管理，新增资源立刻适用规则，那么使用Firewall Manager更好，如果要增加DDos保护，那么加上Shield。
 
 **API Gateway**
 
-包括一个API应有的所有功能。
-
-构架上来说：
-
-- 比如后面可以坐落一个LambdaFunction来被invoke，作为API的后端。
-- 可以有一个http端点，这个端点可以是一个本地的服务器，也可以是一个ALB，所有可以成为http端点的东西。
-- 或者后面可以坐落很多的AWS服务。比如后面可以有一个kinesis服务，让客户端进行更新推送。所以理论上可以通过API网关暴露你的所有服务。
-
-安全认证方法：
-
-- 内部用户可以使用IAM认证。
-- 外部用户可以使用Conito服务。
-- 还可以使用custom logic authorizer创建自己的认证方法。
-
-HTTPS安全Custom domain name使用ACM（aws certification manager）：全球边缘优化管理，认证需要使用美国东部的region，如果是region endpoint，需要和api网关同一个区域设置。另外还需要在Route53中设置cname和A-alias。
-
-学习笔记：
-
-通过一个hands-on让我再次重新理解了API网关。它就像是在服务外面套了一层膜，让我们通过一个link的呼出，就能得到那个膜背后的信息。仅此而已。在发布API的时候设置的一个stage可以是开发产品环境的名字，也可以是version的名字，这就是我们经常说的版本号码。
-
-API的安全问题：可以在resource policy中设置access condition来限制公共访问。而私有API必须通过特定的VPC源（VPC interface endpoint）进行访问，这是一个设置的条件。而在**两个VPC环境**中进行私有访问，不需要进行vpc peering，而同样是在一个中设置vpc interface endpoint在另一个中设置policy条件即可。
-
-一些启发：学习云的好处就是可以通过这些服务的学习，作为一些接口，然后理解整个IT的底层原理，只要有心的话，可以通过不断挖掘，深挖知识点，加深对整个系统的理解，这个系统包括计算机系统，网络构架系统等。
+- 包括一个API应有的所有功能。
+- 构架上来说：
+  - 比如后面可以坐落一个LambdaFunction来被invoke，作为API的后端。
+  - 可以有一个http端点，这个端点可以是一个本地的服务器，也可以是一个ALB，所有可以成为http端点的东西。
+  - 或者后面可以坐落很多的AWS服务。比如后面可以有一个kinesis服务，让客户端进行更新推送。所以理论上可以通过API网关暴露你的所有服务。
+- 安全认证方法：
+  - 内部用户可以使用IAM认证。
+  - 外部用户可以使用Cognito服务。
+  - 还可以使用custom logic authorizer创建自己的认证方法。
+  - HTTPS安全Custom domain name使用ACM（aws certification manager）：全球边缘优化管理，认证需要使用美国东部的region，如果是region endpoint，需要和api网关同一个区域设置。另外还需要在Route53中设置cname和A-alias。
+- API Gateway就像是在服务外面套了一层膜，让我们通过一个link的呼出，就能得到那个膜背后的信息。仅此而已。
+- 在发布API的时候设置的一个stage可以是开发产品环境的名字，也可以是version的名字，这就是我们经常说的版本号码。
+- API的安全问题：可以在resource policy中设置access condition来限制公共访问。而私有API必须通过特定的VPC源（VPC interface endpoint）进行访问，这是一个设置的条件。而在**两个VPC环境**中进行私有访问，不需要进行vpc peering，而同样是在一个中设置vpc interface endpoint（之前endpoint的地方有讲）在另一个中设置policy条件即可。
 
 **AWS Artifact**
 
-下载安全合规文档和报告等地方。可以说不算是一个服务。
+- 下载安全合规文档和报告等地方。可以说不算是一个服务。
 
-**Route53**dns服务
+**Route53**
 
-DNS中毒：是一种IP攻击手段，因为我们使用udp协议从服务器取得网址，udp在安全上比较薄弱，使得黑客可以替换正确的ip导致我们点击错误的网站。
-
-DNSSEC是针对这一问题的安全手段。他是DNS安全扩展，是一种协议。
+- DNS Poisoning中毒：是一种IP攻击手段，因为我们使用udp协议从服务器取得网址，udp在安全上比较薄弱，使得黑客可以替换正确的ip导致我们点击错误的网站。
+- DNSSEC域名系统安全扩展（Domain Name System Security Extensions）是针对这一问题的安全手段。他是DNS安全扩展，是一种协议。DNSSEC 的主要目标是解决 DNS 投毒攻击（DNS spoofing）和 DNS 缓存投毒攻击等安全漏洞，以确保 DNS 查询的真实性和完整性。
+  - 数字签名：DNSSEC 使用数字签名技术来验证 DNS 数据的真实性。在 DNS 数据的传输过程中，DNS 服务器会对 DNS 记录进行数字签名，生成签名数据并附加到 DNS 响应中。
+  - 公钥加密：每个 DNS 区域都有一个公钥和私钥对，用于生成和验证数字签名。DNSSEC 使用公钥加密技术来验证数字签名的有效性，客户端可以使用相应的公钥来验证 DNS 响应的签名数据。
+  - 链式签名验证：DNSSEC 使用链式签名验证（Chain of Trust）来验证 DNS 数据的完整性。在 DNSSEC 中，每个 DNS 区域的签名数据都包含了前一个区域的公钥指纹，客户端可以通过追溯链式签名来验证整个 DNS 查询路径的真实性。
 
 **AWS Network Firewall**
 
-防火墙是一种对VPC全方位的保护，想象它就在VPC的周围环绕。控制任何的网络进出，包括peering vpc和本地vpn连接。可以进行流量过滤和检查。
-
-一种构架：对防火墙的rule group进行审查可以使用GuardDuty，将finding的结果发送到Security Hub，当发现异常，可以通过Eventbridge启动StepFunction进行后续的操作（对防火墙增加规则，屏蔽IP，SNS通知等）。
-
-防火墙还支持，通过ACM进行的流量加密。
-
-**Amazon SES**
+- 是一个对VPC level全方位的保护的服务，网络的layer3～layer7，想象它就在VPC的周围环绕。控制任何的网络进出，包括peering vpc和本地vpn连接。可以进行流量过滤和检查。
+- Inspect traffic（Traffic Filtering by rules & Active Flow Inspection）and do Deep Packet Inspection.
+- 当流量进入Internet Gateway的时候，被NF捕获和检测。
+- 一种构架：对网络防火墙的rule group进行审查可以使用GuardDuty，将finding的结果发送到Security Hub，当发现异常，可以通过Eventbridge启动StepFunction进行后续的操作（对防火墙增加规则，屏蔽IP，SNS通知等）。
+- 支持通过ACM进行的流量加密。
 
 ### 4 - Identity and Access Manager
 
+文档howdoesIAMworks：https://docs.aws.amazon.com/IAM/latest/UserGuide/intro-structure.html
+
 **IAM Policy**
 
-用json格式定义的各种规则。
-
-判定逻辑：首先所有的action是被隐式拒绝的。
+- 用json格式定义的各种规则：allow/deny，action/notaction，principal，resource，condition
+- PrincipalArn包括：user，role，root，sts federated user session，然后就是SourceArn。
+- Calledvia条件：通过某服务进行操作，一般有四个：athena，dynamodb，kms，cloudformation
+- NotAction：表示except。
+- Global Service：CloudFront，IAM，Route53，Support需要显示的允许，因为他们是us-east-1区域的。如果限制deny一个区域以外的所有服务，要对全球服务开放notaction来排除他们。
+- 其他条件：IP/VPC/PrincipalTags/ResourceTags
+- 边界许可PermissionBoundaries：规定了User和Role可以有的最大权限。
+- 组织的SCP + 边界许可PB + Identity权限 = 有效权限
+- 跨账户许可：IAMPolicy，Resource-base-policy，OrgnizationID等都很有帮助
+- 判定逻辑：首先所有的action是被隐式拒绝的。
 ```
 没有显式deny(no explicit deny) 
 --> 组织SCP为allow: allow on organization scps level 
@@ -486,19 +514,25 @@ DNSSEC是针对这一问题的安全手段。他是DNS安全扩展，是一种�
 --> session策略是否许可: allow on session policy
 --> 许可: finally allow
 ```
-IAM role：即使是跨账户也可以轻松使用的好功能。是给用户或者应用的临时权限，会随着时间的推移而过期。当要授予一个服务角色的时候，需要先给一个user这种权限，iam:Passrole权限，然后才可以由特定的user进行角色授予。
-
-ABAC：Attribute based access control：基于tag的控制，比如都打有同样标签的user对同样标签的资源进行访问。这可以轻松地扩展资源。基于角色的权限-RBAC（role based access control）在增加资源的时候可能需要手动更新权限。
+- IAM Role：即使是跨账户也可以轻松使用的好功能。是给用户或者应用的临时权限，会随着时间的推移而过期。当要授予一个服务角色的时候，需要先给一个user这种权限，iam:Passrole权限，然后才可以由特定的user进行角色授予。
+- ABAC：Attribute based access control：基于tag的控制，比如都打有同样标签的user对同样标签的资源进行访问。这可以轻松地扩展资源。基于角色的权限是RBAC（role based access control）在增加资源的时候可能需要手动更新权限。
+- MFA认证。如果你设置了MFA而没激活，那么你没法删除设备选项，必须请求管理员删除未激活的MFA设备然后重新设置。
+- 设置用户的AccessKey的Rotation：IAM Credentials Report可以查看key的期限，但是更好的方法是用AWS Config设置规则然后用SSM自动更新。
+- 用户的PassRole权限，是用户可以对resource设置Role的权限。
 
 **STS**:security token service
 
-安全令牌服务，一种临时权限。用户向STS（还有一个服务cognit）发送一个AssumeRoleAPI请求一个临时认证（认证会去IAMpolicy确认可不可以授权）后才可以得到临时的role进行访问。
-
-使用AWSRevokeOlderSessionPolicy可以让老的session在一定时间后失效，这可以让token权限定时过期。
+- 安全令牌服务，一种临时权限。用户向STS（还有一个服务Cognit）发送一个AssumeRoleAPI请求一个临时认证（认证会去IAMpolicy确认可不可以授权）后才可以得到临时的role进行访问。
+- SAML：SSO/WebIdentity：第三方网络服务Google，FB等/AWS推介使用Cognito
+- 使用AWSRevokeOlderSessionPolicy可以让老的session在一定时间后失效，这可以让token权限定时过期。
+- version1:STS API 是 AWS 提供的全局服务，可以通过 AWS 全局终端节点（global endpoint）进行访问。STS API 提供了一系列 API 操作，如 AssumeRole、AssumeRoleWithSAML、AssumeRoleWithWebIdentity 等，用于生成临时安全凭证（Temporary Security Credentials）。
+- version2:AWS STS Regional Endpoints 是在 AWS 全球基础设施中提供的区域级服务，每个 AWS 区域都有一个对应的 STS 终端节点。AWS STS Regional Endpoints 提供了与全局 STS API 相同的 API 操作，但是它们将请求限制在特定的 AWS 区域范围内。
+- ExternalID：解决混乱代理问题
+- 如果STS的token泄漏了可以通过 AWSRevokeOlderSessionPolicy 立刻ban掉所有的session。一次性的。
 
 **SCP的相关Policy示例**
 
-限制EC2type的权限：
+- 限制EC2type的权限：
 
 ```json
 {
@@ -521,7 +555,10 @@ ABAC：Attribute based access control：基于tag的控制，比如都打有同�
 }
 ```
 
-为全球服务豁免。因为全球服务只在 us-east-1 区域提供，所以当要限制某个区域的服务时，在 NotAction 中列出这些全球服务，就可以正常使用了。
+- 为全球服务豁免。因为全球服务只在 us-east-1 区域提供，所以当要限制某个区域的服务时，在 NotAction 中列出这些全球服务，就可以正常使用了。
+<details>
+
+<summary>点击展开/折叠</summary>
 
 ```json
 {
@@ -589,33 +626,105 @@ ABAC：Attribute based access control：基于tag的控制，比如都打有同�
     ]
 }
 ```
+</details>
 
 **IMDS**
 
-EC2 instance metadata service。提供服务器的元数据。（hostname, instance type, networking settings...）
-
-http://169.254.169.254/latest/meta-data 是每个服务器的endpoint。以键值对的方式，方便进行自动化的设置。这个取得方法是第一个版本，它不使用Token，在 CW 中也可以监控到这个的使用 ：MetadataNoToken 指标。
-
-但是不推介第一个版本，第二个版本更安全，分为两步：
-
-- 首先使用 Header 和 PUT 取得 Session Token。`token = 'cur xxx'; cur xxx -H`
-- 然后使用 Session Token call IMDSv2，并且使用 Header。
+- EC2 instance metadata service。提供服务器的元数据。（hostname, instance type, networking settings...）
+- http://169.254.169.254/latest/meta-data 是每个服务器的endpoint。以键值对的方式，方便进行自动化的设置。这个取得方法是第一个版本，它不使用Token，在 CW 中也可以监控到这个的使用 ：MetadataNoToken 指标。
+- 但是不推介第一个版本，第二个版本更安全（使用token），分为两步：
+  - 首先使用 Header 和 PUT 取得 Session Token。`token = 'cur xxx'; cur xxx -H with token`
+  - 然后使用 Session Token call IMDSv2，并且使用 Header。
+- 如何限制对metadata的访问：
+  - sudo iptables工具，设置本地防火墙规则。
+  - 使用控制台或CLI：HttpEndpoint=disabled
 
 **S3和对象的跨账户访问权限**
 
-判断一个用户是否可以access一个S3bucket里的object的时候，首先判断user是否有IAM权限，然后是BucketPolicy是否显式拒绝访问，最后是要访问的object是否对用户开放访问（ACL：access control lists，这个现在已经被弃用，但是可以设置开启，但是也可以手动开启：Onwer Enforced setting = Disabled）。
+- 判断一个用户是否可以access一个S3bucket里的object的时候：
+  - 首先判断user是否有IAM权限
+  - 然后是BucketPolicy是否显式拒绝访问
+  - 最后是要访问的object是否对用户开放访问（ACL：access control lists，这个现在已经被弃用，但是可以设置开启，但是也可以手动开启：Onwer Enforced setting = Disabled）。
+- 区分桶和object访问权限的policy表记：BucketPolicy的访问权限一般是对S3桶资源。Object对象访问权限，一般是在arn对url后面有一个*符号表示是bucket内的资源。
+- 跨账户的S3资源访问的方法
+  - IAM Policy + BucketPolicy
+  - IAM Policy + ACLs（for objects）：only works when Bucket Owner Enforced setting = Disabled但是默认是Enabled，因为刚刚上面说了，如果一个创建了桶的owner不能对里面的object控制，那么事情会变得复杂。有ACLs的时候需要开放对桶主的访问许可：s3:x-amz-acl:bucket-owner-full-control
+  - Cross-account IAM Roles ：bucket policy拥有授予对应账户的stsAssumeRole权限，就可以开放对别的账户Role（临时桶访问）权限了。
+- 总之S3的访问权涉及一个用户本身的认证和一个Bucket的Policy。原本还有一个ACL是针对桶里的对象的，但是它会让事情变得复杂，比如A自己的桶别人放的文件反而桶的所有者不能访问，需要很复杂的设定，所以ACL被弃用了。
+- 同账户不需要 Bucket Policy
+- S3的Access Point Policy（服务页面中有这个tab选项）：针对桶中的不同文件夹，可以根据文件夹的名字prefix设置不同的访问策略，更灵活地控制访问权。这是一种很好的层级控制策略。比如不同部门有不同的prefix。
+  - 但是相对的，必须设置VPC Endpoint（interface/gateway）来访问这些Access Points。
+  - 在bucket policy层级要设置，限制只能通过Access Point进行访问的Policy。
+  - 多区域 Access Points 可以设置failover，提高可用性。
+- Bucket Policy的其他用法：限制只能用Https访问，限制特定IP源，限制特定user。
+- Bucket有一种因为policy设置错误，而被锁locked的情况，只能通过root账户删除bucket的policy然后重新开启。
+- CORS：（跨域资源共享）S3 CORS（跨域资源共享）是 Amazon S3（简称 S3）中的一种机制，用于允许客户端网页从不同域名的网站上加载 S3 存储桶中的资源，而无需绕过浏览器的同源策略限制。浏览器的同源策略规定了网页只能请求来自同一源（域名、协议、端口号组合）的资源，这意味着在默认情况下，来自不同域名的网页无法直接访问 S3 存储桶中的资源，以防止跨站点请求伪造（CSRF）等安全问题。通过配置 S3 CORS，您可以允许特定的网站（或者所有网站），或者特定的S3桶，从浏览器中直接加载S3存储桶中的资源，从而实现更灵活的网站设计和更好的用户体验。
 
-BucketPolicy的访问权限一般是对S3桶资源。Object对访问权限，一般是在arn对url后面有一个*符号表示是bucket内的资源。
+以下是一个示例 S3 CORS 配置的 JSON 格式：
 
-跨账户的S3资源访问的方法：一个是使用IAM的user权限和对象账户的BucketPolicy的许可权，另一个是IAM Role访问。
+```json
+{
+  "CORSRules": [
+    {
+      "AllowedOrigins": ["http://example.com"],
+      "AllowedMethods": ["GET", "PUT"],
+      "AllowedHeaders": ["*"],
+      "MaxAgeSeconds": 3000
+    }
+  ]
+}
+```
 
-总之S3的访问权涉及一个用户本身的认证和一个Bucket的Policy。原本还有一个ACL是针对桶里的对象的，但是它会让事情变得复杂，比如A自己的桶别人放的文件反而桶的所有者不能访问，需要很复杂的设定，所以ACL被弃用了。
-
-S3的access point：针对桶中的不同文件夹，可以根据文件夹的名字prefix设置不同的访问策略，更灵活地控制访问权。
+在这个示例中，配置了允许来自 `http://example.com` 域名的网站通过 `GET` 和 `PUT` 方法访问 S3 存储桶中的资源，允许任意标头，并设置了一个最大缓存时间为 3000 秒。Headers的部分可以设置Authorization。这里Origin设置最好是特定的网站或者S3bucket，防止别人重新搞一个网站用你的资源。
 
 **Cognito**
 
+- Amazon Cognito 是 AWS 提供的一项身份验证和用户管理服务，用于帮助开发者构建安全、可扩展的身份验证和用户管理功能。Cognito 提供了一系列功能，包括用户注册、登录、认证、访问控制、数据同步等，可用于 Web 应用程序、移动应用程序和 IoT 设备等各种场景。
+- CUP：用户池（User Pools）：是 Cognito 的核心组件，用于存储用户的身份信息，包括用户名、密码、电子邮件、手机号码等。开发者可以通过用户池管理用户注册、登录、身份验证等流程，并可自定义身份验证方法，包括用户名密码认证、手机短信验证码认证、社交登录认证（如 Google、Facebook、Amazon 登录）、OpenID Connect、SAML 等。
+  - CUP 集成 AWS API Gateway，ALB等服务。用户认证成功后会从 CUP 收到一个JWT（json web token），这个JWT用于AWS资源和CUP之间的验证。
+  - CUP 内可以设置 User Group 以便更好的控制用户权限。
+- 身份池（Identity Pools）以前叫联合认证：身份池用于管理用户的身份凭证，如 AWS Access Key、Token 等，以便访问 AWS 资源。身份池与用户池关联，可以将用户池中的用户身份映射到身份池中的 AWS IAM 角色，从而实现对 AWS 资源的访问控制。
+  - 具体来说在用户池给了用户JWT后，通过身份池，可以从STS等服务发行一个AWS资源访问的TempCredentials，使用这个临时身份，就可以像一般的AIAM用户一样临时访问资源了。
+  - AWS内的Policy对CognitoUser的权限使用Role。并且通过UserID细化。使用Policy Variables定义用户ID关联的资源。
+- 通过这两种服务，可以通过 Cognito 对用户的访问进行细粒度的控制，包括用户群组管理、权限管理、设备管理、会话管理等。
+- 数据同步：Cognito 提供了数据同步功能，可用于在多个设备和平台之间同步用户数据、应用程序状态等信息，确保用户在不同设备上的一致性体验。
+
+**Identity Federation**
+
+- IAM Policy使用Policy Variable（类似${resource.user_id}）来控制访问
+- SAML2.0
+  - IdPs
+  - Microsoft AD
+  - 需要建立IAM和SAML提供者之间的trust关系
+  - UnderTheHood：STS API：AssumeRoleWithSAML
+  - 这是一个oldway，更新的方式是用SSO
+- Custom Identity Broker
+  - 建立方式一样，但是这个只有在上面一种不满足要求的时候使用。
+  - 需要自己觉得赋予的Role
+  - 使用的STSAPI是 AssumeRole or GetFederationToken
+- Web Identity Federation with/without Cognito
+  - 官方推介Cognito，因为它支持匿名，MFA，数据同步。
+- SSO
+  - 也就是下面一个标题Identity Center
+
 **IAM Identity Center**
+
+- 前身就是AWS Sigle Sign-On
+- 一键登录所有的AWS account，组织，还有其他第三方应用。TB案件中的AWS登录就是这样的。
+- Identity Center中的权限控制使用 Permission Sets
+- 权限组来自MicroAD或者该服务的built-in Identity Store，通过 group + permission sets 进行管理
+- ABAC细度管理
+
+**AWS Directory Services**
+
+- AWS Managed Microsoft AD：AWS和On-premises都要设置，双方建立trust关系进行认证，是双方的。支持MFA。要和本地的AD连接需要VPC的VPN连接（Direct Connect或S2S VPN）无缝连接。
+- AD Connector：只需要on-premises设置，从AWS认证，中间设置Proxy代理，访问本地AD进行认证，是单方的认证。需要VPC的VPN连接（Direct Connect或S2S VPN）
+- SimpleAD：只在AWS内有，非常简单。
+
+- 概念：
+- 什么是MicrosoftAD：是一种由微软提供的目录服务，用于在组织内集中管理和存储网络资源和用户身份信息。它是基于LDAP（轻型目录访问协议）的目录服务，旨在提供对组织内用户、计算机、打印机、应用程序等资源的集中管理和身份验证。Object的组织是trees，一组tree是forest。
+- 什么是ADFS：是指 Active Directory Federation Services，是由 Microsoft 提供的用于实现单点登录（SSO）和跨组织身份验证的解决方案。它允许用户使用一组凭据（通常是用户名和密码）在不同的应用程序、服务和组织之间进行身份验证，而无需在每个系统中单独登录。ADFS 可以与现有的身份基础设施（如 Active Directory）集成，允许组织利用现有的用户和组织结构信息进行身份验证。
+
 
 ### 5 - Data Protection
 

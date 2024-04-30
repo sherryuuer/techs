@@ -238,3 +238,74 @@ class TimeStamp:
             return ""
 ```
 学习笔记：这道题的关键，在于在时间戳列表中，找到目标时间戳或者它前面的那个位置，也就是使用二分查找，最后就是可以满足查找条件的数据结构。时间复杂度上set是O(1)，get是二分查找的O(logn)。空间复杂度上是数字键值对的长度O(n)。
+
+### 问题3:LRU Cache
+
+LRU实现问题，是力扣的146题，中等难度。
+
+LRU（Least Recently Used，最近最少使用）是一种常见的缓存淘汰算法，用于管理缓存中的数据。LRU 数据结构维护了一个有序列表，记录了最近访问过的数据项，当缓存空间满时，会优先淘汰最近最少使用的数据项。
+
+LRU 数据结构的实现通常基于双向链表和哈希表：
+
+- 双向链表：LRU 数据结构使用双向链表来维护数据项的访问顺序。链表的头部表示最近访问过的数据项，尾部表示最久未访问的数据项。每次访问一个数据项时，将其移动到链表的头部。
+- 哈希表：为了快速定位数据项在链表中的位置，LRU 数据结构使用哈希表来存储数据项的键和对应的链表节点。
+- 访问数据项：当访问一个数据项时，如果它已经在缓存中，则将其移到链表的头部；如果不在缓存中，则将其添加到链表的头部，并将其存储在哈希表中。如果缓存已满，则将链表尾部的数据项淘汰，并从哈希表中删除对应的条目。
+- 淘汰数据项：当缓存空间满时，淘汰链表尾部的数据项，即最近最少使用的数据项。
+
+在这道题中：
+
+- 用容量大小初始化数据结构。
+- 用get方法返回key的值，如果不存在返回-1。
+- 用set方法更新在key处的值，如果不存在则加在最后面。如果这个操作使得容量到达了上限，则删除最旧的key。
+- 要求操作他们的时间复杂度都为O(1)。
+
+这是一道我之前做过的重要的题，代码如下：
+
+```python
+class Node:
+    def __init__(self, key, value):
+        self.key, self.value = key, value
+        self.prev = self.next = None
+
+class LRUCache:
+    def __init__(self, capacity):
+        self.capacity = capacity
+        self.cache = {}
+        # LRU dummy endpoint
+        self.left = Node(0, 0)
+        # MRU dummy endpoint
+        self.right = Node(0, 0)
+        self.left.next = self.right
+        self.right.prev = self.left
+
+    def remove(self, node):
+        # remove a node from the linked list
+        prev, nxt = node.prev, node.next
+        prev.next, nxt.prev = nxt, prev
+
+    def insert(self, node):
+        # insert the node to the point of before-right
+        prev, nxt = self.right.prev, self.right
+        prev.next = nxt.prev = node
+        node.prev, node.next = prev, nxt
+
+    def get(self, key):
+        if key in self.cache:
+            # update the linked list
+            self.remove(self.cache[key])
+            self.insert(self.cache[key])
+            return self.cache[key].value
+        return -1
+
+    def set(self, key, value):
+        if key in self.cache:
+            self.remove(self.cache[key])
+        self.cache[key] = Node(key, value)
+        self.insert(self.cache[key])
+        # check the capacity
+        if len(self.cache) > self.capacity:
+            lru = self.left.next
+            self.remove(lru)
+            del self.cache[lru.key]
+```
+学习笔记：这道题如题要求，时间复杂度和空间复杂度都是O(1)，因为他们使用了操作上都很有优势的链表和hashmap。空间复杂度上是缓存的长度O(n)。这是一道非常棒的题。

@@ -11,6 +11,7 @@
 - [链表算法：快慢指针](algo/fast-slow-pointers.md)
 - [排序算法：排序全家桶](algo/sort.md)
 - [排序算法：K-way Merge排序融合：（heap，two-pointer）](algo/kway-merge.md)
+- [排序算法：循环排序CyclicSort](algo/cyclicsort.md)
 - [递归算法：宇宙的开始和终结](algo/recursion.md)
 - [数据结构：矩阵MATRIX](algo/matrix.md)
 - [树结构：树和二分树BST](algo/binarytree.md)
@@ -48,6 +49,9 @@
 - [动态规划：相关问题](algo/dp-problems.md)
 - [位运算：bit操作](algo/bit-operations.md)
 - [自定义数据结构：数据结构的调整和组合](algo/custom-ds.md)
+- [核心技巧CoreSkills：数据结构和算法/系统设计/机器学习基础]()
+- [Leetcode重点题：Blind150]()
+
 
 ## Machine learning
 - [AI时代提问准则](ml/ai-4-prompt.md)
@@ -150,3 +154,4 @@
 - 科技再发展也离不开基础，所有的科技新发展，都是对基础的一种深度挖掘和联结。
 - 加密学，区块链，网络安全，信息论，数学，频谱分析，图论等领域，强化学习，遗传算法。
 - 这是一个充满API的世界，从程序包到云服务，都是API的连接，组合，一体化。
+- 宇宙的编程语言是数学。
