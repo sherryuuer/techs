@@ -37,7 +37,7 @@ Databricks数据洞察包含以下组件：
 
 创建一个分布式的cluster环境后就可以打开笔记本了，整个环境是在一个workspace中的，虽然自己对Azure接触的不多，但是从公司提供的环境看，接入环境，启动环境集成服务器，以及进入笔记本都非常方便。
 
-但是每次更换笔记本的时候都要重新手动接上cluster，这个要注意。
+但是每次更换笔记本的时候有可能短线，都要重新手动接上cluster，这个要注意。
 
 **Delta数据类型**
 
@@ -382,11 +382,117 @@ from databricks import feature_store
 fs = feature_store.FeatureStoreClient()
 ```
 
+- 创建特征表：
+```python
+fs.create_table(
+    name=table_name,
+    primary_keys=["index"],
+    df=numeric_features_df,
+    schema=numeric_features_df.schema,
+    description="Numeric features of airbnb data"
+)
+```
 
+然后就可以在特征量仓库中找到各种特征了。
 
+通过代码也可以确认特征：
+```python
+fs.get_table(table_name).path_data_sources
+fs.get_table(table_name).description
+```
 
+除此之外还有可以更新特征和记录日志。以及可视化表示。
 
-### 3 - 知识概念补充
+**XGBoost**：可以使用第三方的库进行训练。`from xgboost.spark import SparkXGBRegressor`，然后作为pipeline的一部分进行训练。
+
+**Inference with Pandas UDFs**
+
+PandasUDF（Pandas User Defined Function）是 Apache Spark 中的一种用户自定义函数，用于在 PySpark 中执行基于 Pandas 的操作。PandasUDF 允许用户编写自定义函数，这些函数以 Pandas 数据帧（DataFrame）作为输入，并返回 Pandas 数据帧作为输出。在执行过程中，Spark 会自动将数据分割为多个分区，并在每个分区上执行自定义函数，最后将结果合并起来。
+
+并且它利用Apache Arrow使得计算高速化。
+
+Apache Arrow是一个跨语言的内存布局和数据传输格式，旨在提高大规模数据分析的性能和互操作性。它提供了一个统一的内存数据结构，用于在不同的系统和编程语言之间高效地传输和共享数据。它支持多种编程语言，包括 Python、Java、C++、R 等，可以在这些语言之间高效地传输和共享数据。
+
+Arrow 提供了一种内存布局格式，以最大程度地减少数据传输和序列化开销。它使用了列式存储和扁平内存布局，使得数据可以被快速加载到内存中，并且易于进行高效的数据操作。支持零拷贝操作，可以在不同的系统和编程语言之间高效地传输数据，而无需复制或序列化数据。这大大提高了数据传输的速度和效率。
+
+Apache Arrow 提供了统一的数据格式和接口，使得不同系统和应用程序之间可以轻松地共享和交换数据。它可以与多种开源工具和项目集成，如 Apache Spark、Pandas、NumPy 等。
+
+### 3 - Pyspark 学习笔记
+
+打印schema：
+```python
+train_data.printSchema()
+```
+
+对Categorical数据进行处理：
+```python
+from pyspark.ml.feature import (VectorAssembler,VectorIndexer,OneHotEncoder,StringIndexer)
+gender_indexer = StringIndexer(inputCol='Sex',outputCol='SexIndex')
+gender_encoder = OneHotEncoder(inputCol='SexIndex',outputCol='SexVec')
+```
+
+训练fit数据往往不是sklearn那样包含X，y，而是将两者打包了：
+```python
+from pyspark.ml.linalg import Vectors
+from pyspark.ml.feature import VectorAssembler
+assembler = VectorAssembler(inputCols=["Avg Session Length", "Time on App", "Time on Website", 'Length of Membership'], outputCol="features")
+output = assembler.transform(data)
+final_data = output.select("features",'label')
+train_data, test_data = final_data.randomSplit([0.7, 0.3])
+lrModel = lr.fit(train_data)
+```
+
+进行结果预测：
+```python
+final_results = final_lr_model.transform(test_new_data)
+final_results.select('id','prediction').show()
+```
+
+用evaluate进行评估：
+```python
+pred_and_labels = fitted_model.evaluate(test_data)
+```
+
+显示结果：
+```python
+pred_and_labels.predictions.show()
+```
+
+使用二分类evaluator进行结果auc结果评估：
+```python
+label_eval = BinaryClassificationEvaluator(rawPredictionCol='prediction', labelCol='label')
+auc = label_eval.evaluate(pred_and_labels.predictions)
+```
+
+多分类结果评估：
+```python
+evaluator = MulticlassClassificationEvaluator(predictionCol='prediction', labelCol='label', metricName='accuracy')
+```
+
+Pipeline自身就可以看作是一个model：
+```python
+from pyspark.ml import Pipeline
+pipeline = Pipeline(stages=[gender_indexer, embark_indexer, gender_encoder, embark_encoder, assembler, log_reg_titanic])
+fit_model = pipeline.fit(train_titanic_data)
+results = fit_model.transform(test_titanic_data)
+```
+
+梯度提升树官方sample：
+```python
+from pyspark.ml.classification import GBTClassifier
+data = spark.read.format("libsvm").load("sample_libsvm_data.txt")
+(trainingData, testData) = data.randomSplit([0.7, 0.3])
+gbt = GBTClassifier(labelCol="label", featuresCol="features", maxIter=10)
+model = gbt.fit(trainingData)
+predictions = model.transform(testData)
+predictions.select("prediction", "label", "features").show(5)
+```
+
+一个印象深刻的项目：在狗狗食品中4中防腐剂哪种对快速腐败具有重要影响。这道题的目的是找出features中的最重要的feature。
+
+repo地址：machine-learning-lab/Pyspark/Spark_for_Machine_Learning/Tree_Methods/Tree_Methods_Consulting_Project.ipynb
+
+### 4 - 知识概念补充
 
 **优化参数方法 TPE**
 
@@ -555,8 +661,6 @@ Scala 和 Apache Spark 之间有着密切的关系，Scala 是 Spark 的首选�
 
 ### 5 - 参考内容
 
-官方的notebook，我自己的github[链接](https://github.com/sherryuuer/machine-learning-lab/tree/main/Databricks-pyspark)，是日文版，官方的已被删除。
-
 阿里巴巴的[文档](https://help.aliyun.com/document_detail/167619.html?spm=a2c4g.167618.0.nextDoc.78563233WGEoGL)也不错。
 
-大象教程[文档](https://www.hadoopdoc.com/spark/spark-principle)挺不错的。
+[官方教程](https://spark.apache.org/docs/latest/api/python/index.html)和[documentation](https://spark.apache.org/docs/latest)是最好的学习资料。

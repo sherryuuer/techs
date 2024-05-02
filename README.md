@@ -10,7 +10,7 @@
 - [链表结构：反转单链表及其变体问题](algo/reverse-linkedlist.md)
 - [链表算法：快慢指针](algo/fast-slow-pointers.md)
 - [排序算法：排序全家桶](algo/sort.md)
-- [排序算法：K-way Merge排序融合：（heap，two-pointer）](algo/kway-merge.md)
+- [排序算法：K-way Merge排序融合](algo/kway-merge.md)
 - [排序算法：循环排序CyclicSort](algo/cyclicsort.md)
 - [递归算法：宇宙的开始和终结](algo/recursion.md)
 - [数据结构：矩阵MATRIX](algo/matrix.md)
@@ -39,7 +39,7 @@
 - [图算法：最短路径Dijkstra](algo/dijkstra.md)
 - [图算法：最小生成树Prim&Kruskal](algo/prim-kruskal.md)
 - [图算法：拓扑排序](algo/toplogical-sort.md)
-- [图算法：区间合并问题merge-intervals，任务调度问题印象深刻](algo/merge-intervals.md)
+- [图算法：区间合并问题merge-intervals](algo/merge-intervals.md)
 - [图算法：graphs相关算法问题](algo/graphs-problems.md)
 - [贪心算法：相关算法问题](algo/greedy-problems.md)
 - [动态规划：1D&2D基础问题](algo/dp.md)
@@ -50,8 +50,7 @@
 - [位运算：bit操作](algo/bit-operations.md)
 - [自定义数据结构：数据结构的调整和组合](algo/custom-ds.md)
 - [核心技巧CoreSkills：数据结构和算法/系统设计/机器学习基础]()
-- [Leetcode重点题：Blind150]()
-
+- [Leetcode：Blind150]()
 
 ## Machine learning
 - [AI时代提问准则](ml/ai-4-prompt.md)
@@ -62,9 +61,9 @@
 - [防止过拟合的技术：正规化&Dropout&EarlyStopping](ml/overfit.md)
 - [容易混淆的几个概念：缩放，标准化，归一化，正则化](ml/some-confusion-words.md)
 - [梯度消失和梯度爆炸](ml/gradient-problems.md)
-- [评估方法：混淆矩阵family](ml/confusion-matrix.md)
+- [*评估方法：混淆矩阵family](ml/confusion-matrix.md)
 - [PCA：降维算法原理学习](ml/pca.md)
-- [Kaggle王者算法：XGBoost](ml/xgboost.md)
+- [梯度提升算法XGBoost过程示例](ml/xgboost.md)
 - [Scikit-learn建模学习:回归，分类，调参，聚类](ml/scikit-learn-data-modeling.md)
 - [神经网络：从维度的角度重新解构](ml/nn-the-dim.md)
 - [神经网络：优化算法的进化](ml/nn-optimizer.md)
@@ -92,8 +91,8 @@
 - [Transformers：注意力，自注意力和多头注意力](ml/attention.md)
 - [Transformers关键组件：以及和认知科学关联的思考](ml/transformers-parts.md)
 - [Transformers编码器构架各个模块的代码实践](ml/transformers-encoder.md)
-- [GNN：图基础和图论的数学-Graph-Neural-Networks](ml/gnn.md)，
-- [GCN图卷积神经网络和它的实现-Graph-Convolutional-Networks，（是比较难的两章，有空通过视频讲解再次学习后再深入研究一下）](ml/gcn.md)
+- [*GNN：图基础和图论的数学-Graph-Neural-Networks](ml/gnn.md)，
+- [*GCN图卷积神经网络和它的实现-Graph-Convolutional-Networks](ml/gcn.md)
 
 ## Python and Math
 - [用Python进行统计分析](python/statistics-with-python.md)
@@ -110,7 +109,7 @@
 ## Clouds
 - [Databricks-ML-spark](clouds/databricks-ml-spark.md)
 - [AWS机器学习系统的构架和服务](clouds/aws-with-ml.md)
-- [AWS安全专家认证考试相关内容](clouds/aws-with-security.md)
+- [*AWS安全专家认证考试相关内容](clouds/aws-with-security.md)
 - [AWSSysOps运维考试内容整理](clouds/aws-with-sysops.md)
 - [*AWS-Bedrock项目实践1：Code Generation (APIGateway,S3,bedrock)](clouds/bedrock-pj1.md)
 - [AWS-Bedrock项目实践2-3：Notes Summarisation & Image Generation & 模型评估 & RAG](clouds/bedrock-pj2-3.md)

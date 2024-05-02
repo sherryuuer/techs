@@ -118,3 +118,81 @@ def find_missing_number(nums):
     return res
 ```
 学习笔记：这道题的重点就是不利用额外空间得到结果。时间复杂度为O(n)，空间复杂度O(1)。
+
+### 问题2:Find the Corrupt Pair
+
+这道题和上面的题很像。给出1 - n个数字的数组，当然数组长度就是n，比如 [4, 1, 3, 4, 5]，返回其中缺失的数字和重复的数字：（missing，duplicated）。
+
+解题思路仍然是先进行 cyclic 排序，然后遍历找到位置错误的数字，最后返回结果即可。
+
+代码尝试：基本将上一道题的题解复制过来进行修改，就可以得到结果了。
+
+```python
+def find_corrupt_pair(nums):
+    len_nums = len(nums)
+    index = 0
+
+    while index < len_nums:
+        value = nums[index]
+
+        if value <= len_nums and value != nums[value - 1]:
+            nums[index], nums[value - 1] = nums[value - 1], nums[index]
+
+        else:
+            index += 1
+    print(nums)
+    for x in range(len_nums):
+        if (x + 1) != nums[x]:
+            return [x + 1, nums[x]]
+    return -1
+```
+
+学习笔记：时间复杂度为O(n)，空间复杂度为O(1)。
+
+### 问题3:First Missing Positive
+
+找到一个数组中的最小的非负数。并且要使用O(n)的复杂度。
+
+比如[3, 4, -1, 2]那么最小的缺失正数就是1，比如[3, 4, 2, 1]那么最小的缺失正数就是5，比如[7, 8, 9, 10]那么最小的缺失正数就是1。
+
+解题思路同样是用 cyclic 排序，然后再次遍历找到第一个和index不符合的数字，如果全都符合那么就是长度加一。
+
+代码尝试：
+
+```python
+def smallest_missing_positive_integer(nums):
+    for i in range(len(nums)):
+        correct_spot = nums[i] - 1
+        
+        while 1 <= nums[i] <= len(nums) and nums[i] != nums[correct_spot]:
+            nums[i], nums[correct_spot] = nums[correct_spot], nums[i]
+            correct_spot = nums[i] - 1
+
+    for x in range(len(nums)):
+        if (x + 1) != nums[x]:
+            return x + 1
+    
+    return len(nums) + 1
+```
+
+或者：
+
+```python
+def smallest_missing_positive_integer(nums):
+    i = 0
+    while i < len(nums):
+        correct_spot = nums[i] - 1
+        if 0 <= correct_spot < len(nums) and nums[i] != nums[correct_spot]:
+            nums[i], nums[correct_spot] = nums[correct_spot], nums[i]
+        else:
+            i += 1
+
+    for i in range(len(nums)):
+        if i + 1 != nums[i]:
+            return i + 1
+    return len(nums) + 1
+```
+
+只是尽心cyclic排序的方式稍有不同而已。
+
+学习笔记：如题要求的时间复杂度O(n)，空间复杂度为O(1)。但是有固定的模式，因此有限定的问题。

@@ -62,7 +62,19 @@ clf = LogisticRegression(random_state=0).fit(X_train, y_train)
   - KD树：是一种二叉树数据结构，用于组织数据以支持高效的KNN搜索。它的基本思想是递归地将数据集划分成嵌套的超矩形区域，直到每个区域只包含一个样本。在搜索时，KD树可以通过剪枝和减少搜索空间的方式，显著减少搜索时间。KD树特别适用于低维度数据集。
   - 球树（ball-tree）：是另一种用于加速KNN搜索的数据结构。与KD树不同，球树在构建时不断地将数据集划分成球形区域。在搜索时，球树根据球形区域的相交关系来确定是否需要继续探索某个区域。球树适用于高维度数据集，尤其是当数据集具有不规则分布时。
   - 这些算法都是KNN的变体，旨在提高搜索效率并降低计算成本。在实际应用中，可以根据数据集的特点和算法的性能选择合适的算法来实现KNN分类。
-- 集成算法分类算法是分类器的投票表决。
+- 集成算法分类算法是分类器的投票表决。投票也分为硬投票和软投票，硬投票就相当于每个人的地位平等，按照人头算票数，软投票则会设置权重，根据加权平均求解。
+- Stacking（堆叠）是一种集成学习方法，它通过结合多个基本（Base-model）分类器或回归器的预测结果来提高整体模型的性能。在堆叠中，我们将不同的基本模型的预测结果作为输入特征，然后再应用一个元模型（Meta-model）来进行最终的预测。
+- Bagging 是一种并行式集成学习方法，它通过随机抽取训练集的子集进行训练，然后对子模型的预测结果进行平均或投票来得到最终预测结果。
+  - Pasting：从数据集中随机抽取子集作为样本的随机子集。每个子模型都是基于数据集中的不同样本训练的，但样本是不重复的。
+  - Bootstrapping：从数据集中抽取样本时采用可替换的抽样方法，带替换的抽样意味着一旦样本被抽取出来，其特性就被记录，并放回到同一个数据集中，这样它有可能再次被抽取。
+  - Random Subspaces：每个基本模型都是在不同的特征子集上训练的，因此每个模型都会关注数据的不同方面。当使用集成方法（如 Bagging 或 Random Forest）时，随机子空间可以与样本的随机抽样相结合，从而构建更多样化和更强大的模型。
+  - Random Patches：随机子空间（Random Subspaces）和 Pasting 的结合。具体而言，Random Patches 在构建模型时同时对样本和特征进行随机抽样。Random Patches 的主要思想是通过同时对样本和特征进行随机抽样，来降低模型的方差，提高模型的泛化能力。这种技术尤其适用于高维数据集和具有很多冗余特征的情况，可以帮助集成模型更好地捕获数据的特征和结构。
+  - 常见的使用 Random Patches 技术的算法包括随机森林（Random Forest），其中每棵树都是在随机抽样的样本和特征子集上训练的。Random Patches 技术在实践中被广泛应用于解决各种机器学习问题，特别是在处理高维数据和避免过拟合方面表现出色。
+- Boosting 是一种串行式集成学习方法，它通过顺序地训练一系列弱学习器，每个学习器都试图修正前一个学习器的错误来构建一个更强大的模型。
+  - XgBoost (Extreme Gradient Boosting)：总之好处多多，比其他梯度提升算法快十倍（红豆泥），支持分布式环境如hadoop，还擅长处理稀疏数据，支持并行处理，以利用系统中的所有内核。
+  - Light GBM：一种使用基于树的学习算法（决策树）的梯度提升框架。不建议将 LightGBM 用于小型数据集，因为它容易过度拟合。根据文档，LightGBM 的优点是：它具有更快的训练速度并提供良好的效果。它具有较低的内存使用率，并且支持并行和 GPU 学习。它能够处理大型数据集。
+  - CatBoost：CatBoost是梯度提升算法的开源库之一，在社区中也很有名。它在 Kaggle 的比赛中也被广泛使用。 它减少了选择最佳超参数所花费的时间。它使用默认参数给出最佳结果。它在 GPU 上与 XGBoost 和 LightGBM 一样快速且可扩展。不需要对分类变量进行编码。还可以自行处理缺失值。请注意，分类缺失值仍然需要用“missing”变量或最常见的分类值来填充。它还提供可视化工具。（猫猫好哎）
+- 学习曲线（Learning Curve）是一种图形化表示模型性能随着训练数据量或训练迭代次数的变化而变化的曲线。学习曲线通常以训练样本数量（或训练迭代次数）为横轴，模型性能指标（如准确率、损失函数值等）为纵轴。学习曲线的主要意义在于帮助我们评估模型的训练情况和泛化能力，并指导我们进行模型调优和改进。
 
 ### 巩固贝叶斯定理
 
@@ -95,6 +107,73 @@ P(A|B) = P(B|A) x P(A) / P(B)
 
 在实践中，通过调整模型的复杂度（例如调整模型的参数、增加或减少特征、使用正则化等方法），我们可以尝试找到一个合适的平衡点，以最小化模型的总体泛化误差。
 
+### 关于不平衡分类问题
+
+分类的世界不一定类别总是平衡，比如欺诈检测就是小众类别的检测。有一些应对方法值得了解：
+
+- 过采样 oversampling
+
+增加小众数据的数量，比如复制，随机过采样，或者通过其他的算法进行合成。
+
+SMOTE（Synthetic Minority Over-sampling Technique）算法是一种用于处理类别不平衡问题的过采样技术。它通过合成新的少数类样本来增加少数类样本的数量，从而平衡类别分布。
+
+SMOTE 算法的基本思想是对于少数类样本中的每个样本，找到它的 k 个最近邻的样本（通常是欧氏距离最近的样本），然后从这些邻居样本中随机选择一些样本点，并沿着这些样本点之间的线段生成新的合成样本。
+
+Scikit-learn社区中有整个开源的代码：https://github.com/scikit-learn-contrib/imbalanced-learn
+
+- 欠采样 undersampling
+
+它选择或者删除多数类别的数据，但是删除数据总是不太好的，所以随机删除就不是一个好的选择。
+
+Tomek Links 欠采样是最广泛使用的欠采样技术之一。它涉及仔细删除多数类样本。训练数据集中最近邻但属于不同类的那些数据对，然后删除多数类的那个。 它通常倾向于删除错误分类的实例，沿着类边界的那些，属于大多数类的实例会删除。
+
+- 直接用集成算法，他们可以直接处理不平衡数据。
+
+- Cost-sensitive learning 
+
+我不知道怎么翻译直接用英文了，是一种处理类别不平衡问题的机器学习方法，它考虑了不同类别的分类错误所造成的不同代价。在现实世界的许多应用中，不同类别的分类错误可能会导致不同程度的后果，因此考虑这种代价可以更好地适应真实场景。
+
+它的基本思想是通过修改模型的损失函数，引入类别权重或代价矩阵，以考虑不同类别的分类代价。
+
+- 技巧组合。
+
+### 超参优化技巧
+
+交叉验证，网格搜索，随机搜索都是用于超参优化的技巧。
+
+网格搜索是指通过尝试网格中存在的值来查找最佳的超参数值。它尝试网格中指定的所有可能的值组合，并返回那些给我们带来良好结果的组合。
+
+Scikit Learn 提供了GridSearchCV使用网格中指定的每个参数组合来实现交叉验证的类。对于给定值，GridSearchCV详尽考虑所有参数组合。它提供了超参数的最佳组合以及与这些超参数相对应的最佳分数。
+
+相对的随机搜索在调整超参数时尝试随机值或不同超参数的随机组合。这个一听就是一个相对网格搜索比较节省资源的方法。
+
+**贝叶斯优化方法**：
+
+贝叶斯优化是一种用于优化黑箱函数的方法，它通过建立一个代理模型来估计目标函数的表现，并根据代理模型的预测结果来选择下一个要探索的超参数值。贝叶斯优化的目标是在尽可能少的实验次数下找到最优的超参数组合。这也是我第一次听的方法。
+
+基本步骤：
+
+- 选择代理模型：贝叶斯优化通常会选择高斯过程（Gaussian Process）作为代理模型，因为高斯过程能够提供对目标函数的先验估计，并且能够估计不确定性。
+- 选择优化策略：贝叶斯优化通常使用一种称为“采集函数”（Acquisition Function）的策略来选择下一个要尝试的超参数值。采集函数根据代理模型的预测结果和不确定性来衡量不同超参数值的潜在价值，并选择使目标函数最有可能提高的超参数值。
+- 初始化：贝叶斯优化通常会随机选择一组初始超参数值，并使用这些值来初始化代理模型。
+- 循环迭代：在每次迭代中，贝叶斯优化根据采集函数选择下一个要尝试的超参数值，并将该值应用于目标函数。然后，贝叶斯优化使用新的观察结果更新代理模型，并继续下一轮迭代。
+- 收敛判断：通常情况下，贝叶斯优化会在达到一定迭代次数或满足一定条件时停止。停止条件通常是当目标函数的改进量小于某个阈值时停止。
+
+**遗传算法**：
+
+遗传算法的灵感来自于人类进化以及染色体如何代代相传。
+
+它们基于进化论，即具有最佳生存能力和对环境适应能力的个体更有可能生存并将其能力传递给后代。
+
+超参数被视为染色体。然后进行进一步的基本操作，如交叉和变异，以尝试不同的超参数值，并选择给我们最好结果的一个。
+
+听起来很抽象但是我个人也很看好这些正在研究的领域。
+
+**其他的开源调参工具**：
+
+Hyperopt 是一个开源 Python 模块，它提供了寻找最佳超参数的自动化方法。这个在Databrick的学习中也遇到过了，不日就要再次学习了。
+
+Optuna 是另一个著名的超参数优化工具，它有助于高效地找到正确的超参数。这个我不是很了解。但是名字还挺好听的。
 
 ### 一些代码
 
@@ -122,14 +201,87 @@ clf = gnb.fit(X_train, y_train)
 
 k邻近算法：
 
+算法参数可以使用如下选择：
+- ball_tree.：它将使用球树算法。
+- kd_tree.：它将使用KD-Tree算法。
+- brute：它将使用暴力搜索。
+- auto：它将尝试根据传递给 fit 方法的值来决定最合适的算法。
+
 ```python
 from sklearn.neighbors import KNeighborsClassifier
 neigh = KNeighborsClassifier(n_neighbors=3,algorithm="kd_tree")
 clf = neigh.fit(X_train, y_train)
 ```
 
-算法可以使用如下选择：
-- ball_tree.：它将使用球树算法。
-- kd_tree.：它将使用KD-Tree算法。
-- brute：它将使用暴力搜索。
-- auto：它将尝试根据传递给 fit 方法的值来决定最合适的算法。
+XgBoost算法参数：
+
+- max_depth：基础学习器的最大树深度。
+- learning_rate: 学习率
+- n_jobs：XGBoost 运行的并行线程数以提高其速度。
+- reg_alpha：为 L1 正则化指定的值。
+- reg_lambda：这是为 L2 正则化指定的值。
+- missing：数据集中的值需要以缺失数据集的形式呈现，例如np.nan。
+
+```python
+from xgboost import XGBClassifier
+clf = XGBClassifier(random_state=1,learning_rate=0.01, n_jobs=-1).fit(X_train, y_train)
+print("The accuracy on test set is {0:.2f}".format(clf.score(X_test, y_test)))
+```
+
+Light GBM算法参数：
+
+- metric：指定要在现有数据集上评估的指标。它可以采用rmse均方根误差、binary_logloss二元分类问题等的值。
+- max_depth：指定正在构建的树的最大深度的参数。如果模型过度拟合（在训练数据集上表现良好，但在测试数据集上表现不佳），那么首先要尝试的是减少参数max_depth。
+- learning_rate: 学习率
+- n_jobs：LightGBM 运行的并行线程数，以提高其速度。
+- lambda_l1：是为 L1 正则化指定的值。
+- lambda_l2：是为 L2 正则化指定的值。
+- objective：该参数指定模型的应用，是回归问题还是分类问题。它可以分别针对回归、二元分类和多类分类问题采用值regression、binary和multiclass。
+
+```python
+import lightgbm as lgb
+d_train = lgb.Dataset(X_train, label=y_train)
+params = {}
+params['learning_rate'] = 0.02
+params['objective'] = 'multiclass'
+params['num_class'] = '3'
+params['metric'] = 'multiclass'
+params['max_depth'] = 10
+clf = lgb.train(params, d_train, 100)  # 100是迭代次数
+y_pred = clf.predict(X_test)
+
+import numpy as np
+from sklearn.metrics import accuracy_score
+y_pred = [np.argmax(line) for line in y_pred]
+print("The accuracy on test set is {0:.2f}".format(accuracy_score(y_test, y_pred)))
+```
+
+CatBoost参数：
+
+- iterations：可以创建的最大树数。
+- learning_rate: 学习率
+- l2_leaf_reg：是为 L2 正则化指定的值。
+- max_depth：这是指定正在构建的树的最大深度的参数。如果模型过度拟合（在训练数据集上表现良好，但在测试数据集上表现不佳），那么首先要尝试的是减少参数max_depth。
+
+```python
+from catboost import CatBoostClassifier
+clf = CatBoostClassifier(
+    iterations=2,
+    max_depth=2,
+    learning_rate=1,
+    verbose=True
+)
+clf.fit(X_train,y_train)
+y_pred = clf.predict(X_test)
+y_pred = y_pred.flatten().tolist()
+print("The accuracy on test set is {0:.2f}".format(clf.score(X_test, y_test)))
+```
+
+和回归问题一样，分类也有虚拟估计器，作为一个基线标准。
+
+```python
+# Fitting the BaseLine DummyEstimator
+from sklearn.dummy import DummyClassifier
+clf = DummyClassifier(strategy='most_frequent', random_state=0)
+clf.fit(X_train, y_train)
+```

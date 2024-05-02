@@ -43,10 +43,79 @@
 
 是精确率和召回率的综合评估。
 
-### ROC曲线和AUC
+### ROC，AUC，PR
 
-关注上面召回率中提到的TPR真阳性率和，FPR假阳性率指标，这两个指标，可以得到ROC曲线。
+关注上面召回率中提到的TPR真阳性率和，FPR假阳性率指标，这两个指标，可以得到ROC曲线。X轴是假阳性率，Y轴是真阳性率。
 
 把TPR放在X轴上，把FPR放在Y轴上，就可以得到一条ROC曲线。这条曲线阈值0到1，当全都预测正确的时候，也就是FPR是0TPR是1的时候，曲线是Y轴和Y=1平行于X轴的，这两条线的形状。这个时候曲线下面的面积AUC就是1，当相反，也就是全预测错了的时候，AUC是0，曲线是贴着下面X轴和X=1的垂直线的形状。
 
-为什么ROC是一个很好的指标，因为有时候我们不一定设置阈值为0.5，而这条曲线可以评估各种阈值情况下的模型优劣。
+为什么ROC是一个很好的指标，因为有时候我们不一定设置阈值为0.5，而这条曲线可以评估**各种阈值情况下的模型优劣**。
+
+PR曲线分别在 y 轴和 x 轴上取 Precision 和 Recall，分别针对 0 和 1 之间的不同阈值。同样它也是计算曲线下的面积。该值越大，模型的性能越好。这很好理解，面积越大意味着精确率和召回率都很高。
+
+### Python代码
+
+混淆矩阵的计算。
+
+```python
+def confusion_matrix_calculation(y_true, y_pred):
+    """
+    This function calculates the following values (TP, FP, TN, FN).
+    It takes in y_true (which are actual class labels) and y_pred(which 
+    are predicted class labels).
+    """
+    TP = 0
+    FP = 0
+    TN = 0
+    FN = 0
+
+    for i in range(len(y_pred)): 
+        if y_true[i]==y_pred[i]==1:          
+           TP += 1
+        if y_pred[i]==1 and y_true[i]!=y_pred[i]:
+           FP += 1
+        if y_true[i]==y_pred[i]==0:
+           TN += 1
+        if y_pred[i]==0 and y_true[i]!=y_pred[i]:
+           FN += 1
+
+    return(TP, FP, TN, FN)
+
+y_true = [1, 0, 1, 0, 0, 1]
+y_pred = [0, 0, 1, 1, 0, 1]
+TP, FP, TN, FN = confusion_matrix_calculation(y_true, y_pred)
+print("The True Class Labels are {}.".format(y_true))
+print("The Predicted Class Labels are {}.".format(y_pred))
+print("The number of True Positives are {}.".format(TP))
+print("The number of False Positives are {}.".format(FP))
+print("The number of False Negatives are {}.".format(FN))
+print("The number of True Negatives are {}.".format(TN))
+```
+
+准确率分数：
+
+```python
+from sklearn.metrics import accuracy_score
+y_pred = [0, 2, 1, 3]
+y_true = [0, 1, 2, 3]
+print(accuracy_score(y_true, y_pred))
+```
+
+分类结果报告：
+
+```python
+from sklearn.metrics import classification_report
+y_true = [0, 1, 2, 2, 0]
+y_pred = [0, 0, 2, 1, 0]
+target_names = ['class 0', 'class 1', 'class 2']
+print(classification_report(y_true, y_pred, target_names=target_names))
+
+# output
+#              precision    recall  f1-score   support
+
+#     class 0       0.67      1.00      0.80         2
+#     class 1       0.00      0.00      0.00         1
+#     class 2       1.00      0.50      0.67         2
+
+# avg / total       0.67      0.60      0.59         5
+```

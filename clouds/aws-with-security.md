@@ -728,19 +728,160 @@
 
 ### 5 - Data Protection
 
+**加密类型**
+
+- 传输中的加密TLS/SSL=HTTPS，存储中的服务器加密Server-Side加密，客户端加密Client-Side加密即信封加密
+- 加密类型：对称和非对称，信封加密
+- 数字签名：使用非对称加密技术，对消息的摘要进行哈希变换，和私钥加密，对方使用公钥解密验证摘要哈希值是否一致
+
 **CloudHSM**
+
+- 硬件加密，专用硬件，硬件由AWS管理但是加密是自我管理，非free，必须安装客户端软件和HSM进行SSL连接，管理keys和users。
+- 使用SSE-C加密的时候是一个好的选择。
+- IAM permission：CRUD an HSM Cluster（Multi-AZ）高可用性
+- 和KMS的CustomKeyStore集成，所以APIcall可以被CloudTrail捕获
+- 和其他Account共享cluster：通过共享其所在的subnet，设置subnet的SG来允许traffic
 
 **KMS**
 
-**Secerts Manager**
+- 对称加密（AES256）和非对称加密（RSA）：
+  - 对称加密广泛用于内部服务，如果你用客户端信封加密，这个是必须。
+  - 无法取得对称加密的密钥，只能通过API使用。
+  - 非对称加密可以取得公钥（无法取得私钥）进行数据加密和上传，适用于给无法进行APIcall的user。
+- Keys的类型：
+  - CustomManagedKeys：客户管理，需要进行信封加密。
+  - AWSManagedKey：用于内部服务加密，每年自动更新。
+  - AWSOwnedKeys：AWS自己使用的用于某些服务的加密，你啥也摸不到。
+- Keys的来源：三种方式
+  - KMS创建和管理。外部上传（自制信封加密自己上传管理）。HSMCluster创建的存在CustomKeyStore中的keys。
+- Multi-RegionKeys：可用于灾难恢复，主key+复制key，KeyID一样，可以跨区使用，比如一个区加密，一个区解密。一般不推介使用，只有在特殊情况才被推介使用，比如全球服务的DynamoDB GlobalTable或者GlobalAurora，方便客户端在不同区域也可以使用API进行解密。
+
+- 加密过程：
+  - 数据<4KB：通过Encrypt API（限制就是4kb）请求Encrypt和Decrypt，KMS确认IAM权限然后进行相应的操作即可。
+  - 数据>4KB：通过信封加密：Envelope Encryption == GenerateDataKey API：
+  - 信封加密过程
+    - client:GenerateDataKey API(请求生成用于加密数据的数据密钥)
+    - server:Send plaintext data encrypt key(DEK)(加密数据的key) and Encrypted DEK(被加密的加密数据key)
+    - client:Encrypt File with DEK(用加密数据key加密数据)
+    - client:Final File(Encrypted datafile and Encrypted DEK)(将加密后的数据和加密后的key放在一起即可)，丢掉没加密的DEK。
+    - 那么你想解密的时候就需要请求KMS解密DEK。
+  - 信封解密过程
+    - client:Decrypt API call
+    - server:Send plaintext data encrypt key(DEK)
+    - client:Decrypt File with DEK
+  - 以上的信封加密和解密都是在客户端发生的，只有DEK的解密会在KMS发生。
+  - Encryption SDK：feature-DataKeyCaching 功能可以节省API使用一个key加密多个files（LocalCryptoMaterialsCache），另外，Data Key Cache还可以缓解API call limit的问题。It's a trade-off
+
+- KMS Automatic Key Rotation:
+  - 是为了 Customer-Managed CMK not AWS Managed key
+  - every 1 year
+  - 只改变背后的key，而key-id不变，这样你不用更改各种设置
+- 手动更新key（为了提高更新频率之类的目的）：适用于你自己管理的CMK，但是这会改变key的ID，所以最好给key设置别名alias（UpdateAlias API call）。
+- Key deletion：
+  - KMS生成的key删除会有7-30天冷却时间，期间不能使用，可以恢复，到期会完全被删除。或者可以选择手动disabled，可以随时恢复。
+  - ImportedKey：可以设置expiration时间，到期KMS会帮你删除。手动删除该key material，metadata会帮你保留以便重新import。手动disable或者设置到期删除，则会帮你完全删除。
+  - AWS自己管理的Key你无法删除。
+  - 包含导入材料的密钥：可以设置有效期或者立刻删除。
+- Key删除检测：
+  - APIcall - CloudTrail - CWLogs - CloudWatchAlarm - SNS。
+  - APIcall - CloudTrail - EventBridge - SNS/SSManager(CancelKeyDeletion)
+- 删除Multi-Region Key必须先删除复制的keys，并且要过7-30冷却期，主key也要冷却。如果想只删除主key，需要promote其他key为新的主key，才能删除老主key。
+
+- KMS Key Grant：让你将自己的key的使用权，临时赋予给别人，而不会影响整个IAM KMS Policy。没有过期时间需要手动删除。只能通过CLI执行：`aws kms create-grant`（AWS众多服务背后都使用grant，使得他们可以使用KMS加密的内容，在工作结束后会自动删除grant权限 kms:GrantIsForAWSResource）
+- 认可流程：显式deny - OUScp - VPCEndpointPolicy - KeyPolicy - Grant - CallerPolicy - same account 之间的组合使用
+- 跨账户CrossAccount使用许可：普通的是双方许可，当涉及其他服务比如EBS则需要Grants权限。
+- KMS的权限和S3的很像，key的权限，服务的权限，IAM的权限，加上一个授予别人使用的Grant权限。
+- ABAC管理，key可以基于tags&aliases管理。
+
+- EBS加密key无法改变，只能通过snapshot重新create的时候使用新的key。
+- EBS的加密不是默认的，需要在account-level对加密进行per-region对有效化设置。
+- EFS的重新加密，需要创建新的加密EFS，使用DataSync迁移数据。
+- SSMParameterStore的加密也是通过KMS，使用对称加密，需要双方权限。两个标准：Standard所有的parameters使用同一个key，Advanced每个parameter使用不同的uniquekey进行信封加密。
+
+**Secrets Manager**
+
+- 强制在X天后进行Rotation
+- 使用Lambda可以自动生成新的Secrets：需要Lambda对SecretManager和数据库的访问许可，包括对subnet的网络设置（VPCEndpointorNATGateway）
+- 内部使用KMS进行加密，对称加密，发送GenerateDataKeyAPI进行信封加密，需要双方service的权限
+- 与各种DB集成用于密码存储和轮换
+- 跨区复制功能，用于灾难恢复，跨区DB和跨区应用等
 
 **S3数据加密**
 
+- 四种加密object的方式：（加密方式信息都在uploadAPI的HTTPS的Header部分表示）
+  - SSE-S3：AmazonS3管理的server-side加密（AES-256）（default）
+  - SSE-KMS：KMS管理的server-side加密，便于自己控制和CloudTrail追踪，相对应的，使用也会受到KMSAPI限制，bucket公开外面也看不到因为没有KMS权限，上传文件的人还需要有GenerateDataKeyAPI权限用来加密数据。
+  - SSE-C：客户提供Key，server-side管理，必须使用HTTPS，将key放在Header一起传递给S3进行加密
+  - CSE：客户client-side加密上传数据，完全自己管理
+- 强制传输中的HTTPS安全，使用BucketPolicy：aws:SecureTransport条件设置，还可以用BucketPolicy设置强制使用什么类型的加密。
+- S3-Bucket-Keys（减少对KMS的APIcall，降低费用）：当使用SSE-KMS的时候，可以设置的一种bucket-level的KEY。KMS只生成一次bucket keys，每次上传object，它就会生成新的key用于加密。
+- 大文件的multi-part-upload需要的KMS权限：kms:GenerateDataKey,kms:Decrypt。需要对各个部分进行加密，上传后自动被解密合并为一个完整的文件。
+- Amazon S3 Inventory 是 Amazon Simple Storage Service (S3) 提供的一项服务，用于提供有关存储桶中对象的详细清单报告。S3 Inventory 可以定期生成清单报告，以列出存储桶中的所有对象及其相关的元数据信息，如对象键 (Key)、大小、最后修改时间等。
+- 如何使用S3-Batch批量加密：
+  - 需要对S3和KMS的访问权限。
+  - 通过S3 Inventory列出和metadata相关的所有object的状态，包括加密状态。
+  - 用S3 select&Athena 过滤需要加密的对象。
+  - 使用s3:PutObjectAPI进行批量上传加密。
+- S3 Glacier Vault Lock：
+  - 目的是为了实现 WORM（Write once read many）比如不应该被修改的日志文件。
+  - 需要创建一个 Vault lock policy。然后锁定该policy防止被修改。（该锁定过程会发行一个lockID需要再24小时内完成锁定）
+  - 然后再通过API存放文件。（没有UI界面）
+  - 使用S3 Object Lock也可以达到同样的目的但是比较复杂，需要开启版本保护，一起RetentionMode（保留模式）以及 LegalHold 及其期限和相关权限。
+- S3 LifeCycle：各个存储层级的移动。
+- S3 Replication：需要开启versioning，非同步复制更新，CRR（跨区复制）和SRR（同区复制）两种。开启复制delete-marker后，删除只会被标记，但是永久删除某版本不会被标志，被复制的文件还是存在（这可以防止恶意删除）。不会发生chaining连锁复制。
+
 **Load Balancing**
+
+- 类型：
+  - ALB（HTTP/HTTPS/gRPC（谷歌开发的开源远程过程调用框架））是应用层的，静态DNS-URL
+  - NLB（TCP/UDP）是传输层，静态IP（ElasticIP）
+    - 它的LB目标是EC2或者IP，还可以是ALB（HTTP/HTTPS）。
+    - 健康检查支持TCP/HTTP/HTTPS协议。
+    - IP Preservation（IP保留功能），默认开启（出了IP地址TCP/TCP/TLS默认关闭）该功能可以在流量进来的时候，获取ClientIP地址，关闭则获得的是NLB的私有IP地址。
+    - 现在ALB和NLB都支持绑定SG，这很方便，因为可以更精细的控制流量（比如NLB的SG被EC2的SG允许），SG之间具有控制传递，我的理解SG就像联通门，NACL就像是双向电网。
+  - Sticky Session：ALB和NLB支持粘性会话。
+    - 两种cookies：Application-based cookies（客户端生成或者LB生成），Duration-based cookies（LB生成Cookies）。
+  - GLB（Gateway-IP，GENEVE协议）是网络层，GENEVE（Generic Network Virtualization Encapsulation）协议是一种用于网络虚拟化的封装协议。该LB将流量引向EC2防火墙，有针对 IP Packets 的入侵检测功能。
+  - 传输中安全：User - HTTPS - LB - HTTP - PraviteEC2
+    - TLS 和 TCP Listeners：TLS监听会在LB就终止443端口安全通信然后解密数据（use SSL certificates key）通过私网传递个target服务器。如果想要端到端的加密，需要TCP监听，从而实现私网中也是加密的状态，但是target服务器需要有解密流量的功能。总之TLS监听的加密在LB结束，TCP的监听方式是全程加密的。
+  - LB的的HTTPS安全协议用的是X.509 Certificates(TLS/SSL Certificates)，可以通过ACM设置，也可以自己上传。
+  - SNI（Server Name Indication）
+    - 是一种 TLS（Transport Layer Security）协议扩展：在单个服务器上托管多个域名的 HTTPS 网站的时候，服务器就可以根据主机名选择合适的证书来建立加密连接，而不再受到 IP 地址的限制。
+    - 支持 ALB 和 NLB。
+    - 当背后有多个Target Group的时候，就可以使用不同的域名访问了。
 
 **ACM**
 
+- 可以发行Public SSL Certificates。
+- 支持LB，CloudFront，APIs on APIGateway。
+- 自动更新和维护证书。手动上传的需要自己更新和维护。如果自动更新失败了那可能是CNAME没设置。也可以用Email更新但是需要Domain Owner。
+- 公有的和私有的，需要对应的CA认证。公有的需要公共DNS（可用Route53设置）。私有只适用于内部的应用。
+- 是区域regional服务，如果你服务是全球的你需要各个区域都设置。
+- 公有的证书需要设置CNAME进行DNS有效化验证：（私有的不需要验证有效化）（还可以用Email的方式验证）
+  - 在验证域名所有权时，AWS ACM 要求你在 DNS 中添加特定的记录，以证明你对该域名的控制。
+  - CNAME 记录在这种情况下非常有用，因为它允许你将一个域名指向另一个域名，而不是直接指向 IP 地址。AWS ACM 可以要求你在 DNS 中添加一个特定的 CNAME 记录，将您的域名指向一个由 ACM 控制的特定地址。这样，AWS 就可以验证你对该域名的控制权。
+- 证书过期检测：
+  - ACM send daily expiration events via EventBridge - SNS/Lambda/SQS
+  - AWS Config - acm-certificate-expiration-check via EventBridge - SNS/Lambda/SQS
+
 **AWS Backup**
+
+- 对AWS资源的全局备份管理
+- 支持，跨区域，跨账户。
+- 支持多种备份计划：PITR（point time recovery），tags-based，on-demand，scheduled，to cold storage。
+- 支持Vault-lock。write once read only。
+
+**Amazon Data LifeCycle Manager**
+
+- 针对EBS快照和EBS-based AMIs的生命周期管理，创建，更新，删除，备份，跨账户copy。
+- 可以基于tags的管理。
+- 感觉是很限定的服务。EBS only。
+
+**AWS Nitro Enclaves**
+
+- 完全隔离的虚拟环境，用来处理敏感信息。
+- Cryptographic Attestation（加密认证）技术。
+- 会和一般的EC2有一个安全本地通道。
 
 ### 6 - Management and Security Governance
 

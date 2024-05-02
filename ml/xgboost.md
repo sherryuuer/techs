@@ -1,4 +1,4 @@
-## XGBoost梯度提升算法：Kaggle明星算法
+## XGBoost梯度提升算法：过程示例
 
 ---
 
