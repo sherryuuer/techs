@@ -1,14 +1,14 @@
-## Workload identity federation
+## GCP 的 Workload identity federation 功能
 
 ---
 
-### 课题概述
+### 一，项目中遇到的课题
 
-通过Github的Actions功能，我希望能自动上传merge好的main分支的内容到GCP的对应bucket中，实现代码deploy的自动化。为了不使用SA也能安全操作GCP中的资源，使用到了这个服务。但一知半解让我很难受，所以进行了查找和总结，我觉得我还是没有完全理解所有的细节，但是从整体来说我有了理解。
+通过Github的Actions功能，项目中我希望能自动上传merge好的main分支的内容，到GCP的对应bucket中，实现代码deploy的自动化。为了不使用服务账号SA也能安全操作GCP中的资源，使用到了这个Workload identity服务。但一知半解让我很难受，所以进行了查找和总结，我觉得我还是没有完全理解所有的细节，但是从整体来说我有了一个理解。
 
-### workload identity的工作流程和设置内容
+### 二，workload identity 的工作流程和设置内容
 
-我们在使用一个application去访问GCP云环境的时候，一般来说需要用到service account（SA），通过SA的密钥，进入GCP作业。但是你无法保证这个密钥的安全性，它们在外部的应用手中，没有使用期限，更没有安全保证。而Workload identity federation则提供了解决方案。
+我们在使用一个application去访问GCP云环境的时候，一般来说需要用到service account（SA），通过SA的密钥，进入GCP进行workload作业。但是你无法保证这个密钥的安全性，它们在外部的应用手中，没有使用期限，更没有安全保证。而Workload identity federation则提供了解决方案。
 
 假设有如下parts：外部应用有identity provider，同时有需要执行的workloads。云内部则是SA和需要通过SA执行操作的resource服务。如何把这两者联系起来。
 
@@ -27,9 +27,9 @@ gcloud iam workload-identity-pools create pool-id \
     --description='description' \
     --display-name='display-name'
 ```
-进行这个设置，只要对SA，IAM和workload-identity对访问权限即可。
+进行这个设置，只要拥有对SA，IAM和workload-identity的访问权限即可。
 
-- Workloadidentity可以设置很多pools对每个外部ID都进行授权和设置。在workloadidentity中可以设置关于外部id提供商的各种内部信息，通过属性进行设置。
+- Workloadidentity可以设置很多pools，对每个外部ID都进行授权和设置。在workloadidentity中可以设置关于外部id提供商的各种内部信息，通过属性进行设置。
 ```bash
 gcloud iam workload-identity-pools providers create-oidc provider-id \
     --workload-identity-pool='pool-id' \
@@ -38,7 +38,7 @@ gcloud iam workload-identity-pools providers create-oidc provider-id \
     --attribute-mapping='google.subject=assertion.sub'
 ```
 
-- 需要对SA设置使用权限，这个设置可以通过命令行，也可以在GUI执行，执行的时候要去SA的page，然后点击权限，加入针对SA的权限。用户的iam principal可以在workloadidentity的画面确认到，就是下面的member位置的样子，看起来完全不是一个用户的样子，但是确实是对这个东西授权了对SA对使用权限。（注意这个设置每个人的都不一样，请查过再设置）
+- 需要对SA设置使用权限，这个设置可以通过命令行，也可以在GUI执行，执行的时候要去服务账户SA的页面，然后点击权限，加入针对SA的权限。用户的iam principal可以在workloadidentity的画面确认到，就是下面的member位置的那一串，看起来完全不是一个用户的样子，但是确实是对这个东西授权了对SA对使用权限。（注意这个设置每个人的都不一样，请查过再设置）这里的意思相当于，授权这个member，穿着SA的外衣进行作业。
 
 ```bash
 gcloud iam service-accounts add-iam-policy-binding service-account-email \
@@ -47,9 +47,11 @@ gcloud iam service-accounts add-iam-policy-binding service-account-email \
                 /global/workloadIdentityPools/pool-id/subject/subject'
 ```
 
-- 对你的SA设置相应的工作权限，比如我要对对应的GCS桶执行文件上传操作，那么就需要对SA设置相应的IAMrole权限。
+- 最后，对你的服务账号SA设置相应的工作权限，比如我要对对应的GCS桶执行文件上传操作，那么就需要对SA设置相应的IAMrole权限。
 
-通过以上操作，这时候设置后的流程就变成了：在Workload通过credentials，去到GCP的security token service要求token的时候，security token service就会去workload identity pool中验证请求者的身份是否合规。
+通过以上操作，这时候设置后的workload认证流程就变成了：在Workload通过credentials，去到GCP的security token service要求token的时候，security token service就会去workload identity pool中验证请求者的身份是否合规。
+
+**使用WI的优势？**
 
 是的，您可以像原来那样，使用 STS 发行的访问令牌代替服务账号进行操作。Workload Identity 的主要作用是提供了一种更安全、更可管理的方式来将外部身份与服务账号关联起来。下面是使用 Workload Identity 相对于直接使用 STS 发行的访问令牌的一些优势和区别：
 
@@ -59,7 +61,7 @@ gcloud iam service-accounts add-iam-policy-binding service-account-email \
 
 3. **审计追踪**：Workload Identity 可以提供更好的审计追踪功能。通过将外部身份与服务账号关联起来，可以更容易地跟踪和记录谁在何时执行了哪些操作，从而提高了审计的可追溯性和透明度。
 
-总的来说，虽然您可以直接使用 STS 发行的访问令牌代替服务账号进行操作，但是使用 Workload Identity 可以提供更安全、更可管理的身份验证和授权机制，使您的应用程序更加健壮和可靠。
+总的来说，虽然可以直接使用 STS 发行的访问令牌代替服务账号进行操作，但是使用 Workload Identity 可以提供更安全、更可管理的身份验证和授权机制，使您的应用程序更加健壮和可靠。
 
 **我将文章发给我的上司看了，总结出了结论就是STS是一种认证，WorkloadIdentity是一种认可。双重保证。**。
 
@@ -78,7 +80,7 @@ attritube.repository = assertion.repository
 ```
 assertion.repository == 'xxx/myrepo'
 ```
-### 补充知识
+### 三，补充知识
 
 1，OIDC
 
@@ -92,7 +94,7 @@ IdP 指的是身份提供者（Identity Provider），是指能够验证用户�
 
 身份提供者可以是多种形式的身份验证服务，包括但不限于：
 
-- 组织内部的身份验证服务：由组织自行搭建和管理的身份验证系统，用于验证组织内部员工、合作伙伴或客户的身份。
+- 组织内部的身份验证服务：由组织自行搭建和管理的身份验证系统，如Microsoft AD，用于验证组织内部员工、合作伙伴或客户的身份。
 - 第三方身份验证服务：由第三方提供的身份验证服务，例如 Google、Facebook、GitHub 等，用户可以使用其账号进行登录和身份验证。
 - 单点登录（SSO）提供者：专门用于提供单点登录功能的服务，允许用户在登录后访问多个相关联的应用程序，而无需多次进行身份验证。
 

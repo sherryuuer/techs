@@ -356,6 +356,20 @@
 - 在VGW的inbound安全组SG中需要设置icmp（许多网络工具和实用程序（如 ping、traceroute）使用 ICMP 协议来检测网络中的主机可达性和路径延迟。）协议的开启，不然从本地的服务器无法ping到云端ec2
 - Site-to-Site VPN（使用 IPSec 协议加密通信，提供了一种相对简单和成本较低的方式来扩展本地网络到 AWS 云。）适用于临时性或较低带宽要求的场景，而 Direct Connect（一种专线连接服务，允许用户通过专用网络线路将本地数据中心或办公场所直接连接到 AWS 的数据中心。）则适用于对网络性能和可靠性有较高要求的企业级应用场景。
 
+**Direct Connect**
+
+- 完全走AWS私有网络：通过AWS Direct Connect Location - 物理中心，所以设置要花几个月的时间。
+- VPC端需要一个VGW虚拟网关Private Virtual Interface，或者接到服务资源的Public Virtual Interface。
+- AWS Direct Connect Location：
+  - AWS Direct Connect Endpoint
+  - Customer or Partner Router
+- VGW - DirectConnectLocation - DataCenter
+- 如果是同时接多个VPC，则需要设置：Direct Connect Gateway，进行枢纽
+- 两种类型：Dedicated Connection 是客户直接租用的物理专线连接，而 Hosted Connection 则是通过合作伙伴提供的连接服务来访问 AWS Direct Connect。前者物理上更专有传输速度更快，后者和别的客户共享，设置连接的工程速度更快。
+- 不加密，因为是私有连接。如果要加密，需要在上面加一层VPN连接，进行IPsec加密。
+- 可以进行高弹性设置，也就是冗余。一个VPC连接两个DC，甚至每个DC中两个物理设备接入点。提高workload的弹性。
+- 备份连接：两条DC太贵了，可以用S2SVPN作为备份连接，提高可用性。
+
 **AWSVPN CloudHub**
 
 - 多个CGW，通过 AWS 来设置连接，使用VPN CloudHub，可以实现各个CGW之间的连接。走公网，但是是加密的。
@@ -395,6 +409,12 @@
   - 网络接口可以附加到 EC2 实例上，以提供与 VPC 和 Internet 的连接，也可以附加到其他 AWS 服务（如 ELB 负载均衡器、RDS 数据库实例等）上，以提供网络功能（这些服务的设置页面都有设置选项）。网络接口可以具有私有 IP 地址、公有 IP 地址、Elastic IP 地址、IPv6 地址等，允许与其他资源进行网络通信。
   - 网关通常是独立的网络设备，而网络接口是附加到实例或其他服务上的虚拟设备。
 - 权限和API访问限制：VPC Endpoint Policy。但他的allow不能覆盖IAM和资源权限。
+- **LambdaFunction**的网络工作原理：
+  - 如何在VPC内设置Lambda：设置VPCID，subnet和SG，在引擎下，Lambda会自动create ENI（需要相应的权限:CreateNetworkInterface on EC2:ENIManagementAccess Policy），就是上面说的interface。这样它才能工作。
+  - 那么在VPC中的Lambda中可以接公网吗？？⬇️
+  - 一个在PublicSubnet中的lambda无法像里面的EC2那样访问公共网络或者有公共IP。
+  - 那如何让他有公共访问：放入PrivateSubnet然后设置NatGateway。（这是唯一的方法）。然后在私有子网中和其他内部资源一起工作。
+  - 如何访问DynamoDB：通过上面设置的Nat通过InternetGateway在公网访问DynamoDB，或者不用Nat而是通过VPCEndpointGateway访问。（因为你VPC中的所有资源都可以这么访问S3和DynamoDB）
 
 **AWS PrivateLink**（在GCP中也有同样的暴露方法）
 
@@ -488,6 +508,28 @@
 - 当流量进入Internet Gateway的时候，被NF捕获和检测。
 - 一种构架：对网络防火墙的rule group进行审查可以使用GuardDuty，将finding的结果发送到Security Hub，当发现异常，可以通过Eventbridge启动StepFunction进行后续的操作（对防火墙增加规则，屏蔽IP，SNS通知等）。
 - 支持通过ACM进行的流量加密。
+
+**EKS**
+
+- 通过pod evnets，node events将log送到CWLogs，他们自身的TTL只有60分钟，长久保存需要CW。
+
+**XRay**
+
+- AWS X-Ray 是一项由亚马逊网络服务提供的服务，旨在帮助开发人员分析和调试分布式应用程序。
+- 分布式跟踪：X-Ray 可以跟踪分布式应用程序的请求，并记录每个请求通过的每个服务和组件。这使开发人员能够了解请求是如何在不同的微服务、函数、API 等之间传递的。
+- 性能分析：X-Ray 可以记录每个请求的性能指标，如响应时间、延迟、错误率等。开发人员可以使用这些指标来识别应用程序中的性能瓶颈，并对其进行优化。
+- 故障诊断：X-Ray 可以帮助开发人员诊断分布式应用程序中的错误和故障。它可以显示请求中发生的异常和错误，并帮助开发人员追踪错误的根源。
+- 可视化工具：X-Ray 提供了可视化工具，如跟踪图和服务图，帮助开发人员直观地了解应用程序的架构和调用关系。这些工具可以帮助开发人员快速定位和解决问题。
+
+**AWS Workspaces**
+
+- 对于EC2来说的Security Group，对于Workspaces来说是IP Access Control Group，通过限制IP来限制访问
+- Trusted Devices 认证
+- Certificate-based 认证（Windows，MacOS，安卓）
+
+**CloudShell**
+
+- 可以在浏览器中，用来进行API call，但是不可以访问VPC（EC2，RDS等）不要误解。不要和EC2 Instance Connect弄混了。虽然他们都是浏览器base的。
 
 ### 4 - Identity and Access Manager
 
@@ -725,6 +767,11 @@
 - 什么是MicrosoftAD：是一种由微软提供的目录服务，用于在组织内集中管理和存储网络资源和用户身份信息。它是基于LDAP（轻型目录访问协议）的目录服务，旨在提供对组织内用户、计算机、打印机、应用程序等资源的集中管理和身份验证。Object的组织是trees，一组tree是forest。
 - 什么是ADFS：是指 Active Directory Federation Services，是由 Microsoft 提供的用于实现单点登录（SSO）和跨组织身份验证的解决方案。它允许用户使用一组凭据（通常是用户名和密码）在不同的应用程序、服务和组织之间进行身份验证，而无需在每个系统中单独登录。ADFS 可以与现有的身份基础设施（如 Active Directory）集成，允许组织利用现有的用户和组织结构信息进行身份验证。
 
+**AWS Verified Access**
+
+- 以零信任指导原则为基础构建，在授予访问权限之前验证每个应用程序请求
+- Verified Access 消除了对 VPN 的需求，从而简化了终端用户的远程连接体验，并降低了 IT 管理员的管理复杂性。
+- Zero Trust Principal，零信任：每个 *访问请求* 都必须经过严格的身份验证和授权，才能授予访问权限。 这有助于降低未经授权访问敏感资源的风险，即使攻击者已经渗透到组织的网络内部。
 
 ### 5 - Data Protection
 
@@ -806,6 +853,8 @@
 - 与各种DB集成用于密码存储和轮换
 - 跨区复制功能，用于灾难恢复，跨区DB和跨区应用等
 
+- ECS（worker/task）也集成使用SecretManager和SSMParameterStore的key进行RDS和API的连接。
+
 **S3数据加密**
 
 - 四种加密object的方式：（加密方式信息都在uploadAPI的HTTPS的Header部分表示）
@@ -883,28 +932,135 @@
 - Cryptographic Attestation（加密认证）技术。
 - 会和一般的EC2有一个安全本地通道。
 
+**ECR**
+
+- ElasticContainerRegistry
+- 公有或者私有image存储。
+- in S3
+- 只有创建Registry的时候可以选择加密。
+- 通过KMS加密。信封加密技术。
+- Image Scan：漏洞扫描，basic扫描可以在push时和手动扫描，advanced扫描可以使用Inspector进行（针对OS和编码语言）扫描和通知。
+
+**AWS Signer**
+
+- 允许你在构建和部署在AWS上的应用程序时对其进行数字签名。
+- 数字签名是一种安全机制，用于验证数据的完整性和来源。通过使用AWS Signer，可以轻松地向应用程序添加数字签名，确保它们在传输和存储过程中不被篡改。这对于确保应用程序在部署过程中的安全性和完整性非常重要，尤其是对于那些涉及敏感数据或重要操作的应用程序。
+- AWS Signer支持各种不同的应用程序和开发环境，包括AWS Lambda函数、IoT设备、Docker容器等。
+
+**AWS Glue**
+
+- 构架：S3（put file）- Lambda trigger - Glue（turn file to parquet）- Athena analyze
+- Glue Data Catalog - Glue Data Crawler 从S3，JDBC，RDS，DynamoDB获取数据，依存于Catalog的服务：Athena，Redshift Spectrum，Amazon EMR
+- Glue Job Bookmarks：防止重新处理老数据
+
+**EBS data wiping**
+
+- 当你删除一个EBS的时候，AWS会帮你清除数据，把数据全都用0替换，无需你手动删除。
+
+**RDS&Aurora**
+
+- 数据库从没加密到加密状态，只能通过snapshot，而且只能是从没加密的snapshot创建一个新的db cluster的时候才能重新加密。其他的操作都不能加密。
+
 ### 6 - Management and Security Governance
 
 **AWS Organization**
 
+- 统合账户管理，统合支付。
+- 可以多层嵌套OU。
+- 可以在组织层级设置SCP（Service Control Policy）
+  - Management Account不受scp管制。将该账户放在Root组织层级比较好。
+  - SCP可以设置黑白名单。
+- 可以通过tags进行权限控制。
+
 **Control Tower**
+
+- 在组织之上运作的。适用于多账号管理。
+- 使用SCP和AWS Config控制人和设置的变化和问题。
 
 **AWS Config**
 
+- 指定设置规则，记录资源设置变化（timeline变化记录的方式），检查设置是否合规，dashboard管理。
+- 可以储存日志于S3，可以集成，EventBridge，SNS进行通知，以及其他服务。
+- 是区域服务，但是可以集合各个区域和账户的设置。
+- Rules：可以使用AWS的rules，也可以使用Lambda设置CustomRules。
+- 无法阻止违规设置，只能overview设置和变化。
+- Remediation功能：可以设置用SSM的document进行Automation自动修复。
+- Aggregator：整合各个账户的config数据，到一个账户，如果是OU设置下的不需要各个账户设置，如果不是OU则需要被整合的账户授权。只用于整合数据，不用于统一设置，如果要给各个账户统一设置，使用CloudFormation StackSets。
+
 **Trusted Advisor**
+
+- 检查和建议。
+- 六个方面：Cost-optimization，Performance，Security，FaultTolerance，ServiceLimits，OperationalExcellence。
+- 但是 Free Plan 只能用很少的一部分比如安全和服务限制的一部分check，如果要 FullSetCheck 和 supportAPI 的使用，要求 Business&Enterprise Support Plan。
 
 **Cost Explorer**
 
+- Resource cost可视化。
+- 基于过去数据预测未来12个月的使用量。
+- Saving Plan
+
 **AWS Cost Anomaly Detection**
+
+- 基于机器学习的异常检测。
+- 只需要激活功能，不需要设置。
+- 流程：Cost-Monitor，通知警报，根源分析。
 
 **CloudFormation**
 
+（一个在各种环节都很重要的服务）
+
+- IaC的所有好处。
+- 优化Cost，比如你晚上destory所有环境早上重建。
+- 可以通过图表自动生成代码。
+- 声明型的代码，因为不需要排序和逻辑。
+- 可以复用文档的代码和网上的模板。不要从0造轮子。
+- 必须用弗吉尼亚北region。
+- 在stack创建界面为CloudFormation赋予角色或者使用user自己的权限。前者更好。
+- iam:PassRole：用户可以赋予CloudFormation各种服务角色而自己不拥有对要创建的服务的权限。（符合最小权限原则）
+- StackPolicy可以设置，在stack更新的时候，允许和禁止哪些资源更新。用以保护资源。这个Policy默认保护所有资源，所以必须显示设置允许更新。
+- 动态索引（DynamicReferences）：
+  - reference-name: ssm/ssm-secure 从SSMParameterStore动态取得加密或非加密的参数
+  - reference-name: secretmanager 从SecretManager取得密码之类的信息。
+  - 格式：{{resolve:service-name:reference-key}}
+- Termination Protection：是一种防止stack被误删除的机制，默认无效，手动开启，防user删除。
+- Drift Detection：检测是否有通过CF之外的资源设置变更。
+- CF-Guard：声明型DSL语言声明你自定义的Policy，然后用内置的testing framework验证你的Policy rules是否*按照预想的方式起作用*。我想这里起作用work是关键。
+
 **Service Catalog**
+
+- 工作方式：
+  - 管理员设置Portfolio：一组预设的product的组合。和Control：user相对于portfolio的IAM权限。
+  - Product：CloudFormation Templates
+  - User就可以根据预设好的ProductList，lanch自己想要的服务了。
+- 方便user在合规和允许的范围内，使用AWSResource。
+
+**EC2 Image Builder**
+
+- 自动构建EC2 AMI，服务本身免费，只需付服务器和AMI存储的费用。
+- 过程：定义EC2比如安装内容和test内容 - build EC2 instance - create new AMI - test EC2 instance - 分发distribute到各个region
+- Run on schedule / when EC2 updated
+- 需要对SSM，ECR，S3等的相对应的访问权限。
 
 **RAM: Resource Access Manager**
 
-### others
+- 防止资源重复。
+- 分享功能：分享资源给其他的账号，可以同组织也可以不同。
+- 每个账号只对自己的账号资源负责。
+- 主要是VPC，subnets。
 
-**CloudShell**
+**AWS Audit Manager**
 
-不能直接访问VPC中的EC2和RDS等资源，是用来方便APIcall的。要连接EC2必须设置instance connect之类的。
+- 检查你的workload是否有风险和合规。
+- 集成多种AWS内部服务，进行连续的证据收集，检查根源，收集报告。
+
+**Well Architected Framework Tool**
+
+- 卓越运营 Operational Excellence
+- 安全 Security
+- 可靠 Reliability
+- 性能效率 Performance Efficiency
+- 成本优化 Cost Opetimization
+- 可持续发展 Sustainability
+
+- 他们是协同合作效果。
+- 有专门的WAF工具TOOL（设置workload，回答各种设置问题）帮助检查构架是否符合。
