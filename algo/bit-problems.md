@@ -105,3 +105,52 @@ def extra_character_index(str1, str2):
 ```
 
 学习笔记：bit运算是计算机的运算，是一种很聪明的运算，所以才会叫bitwise吗，哈哈，时间复杂度只有遍历的线性时间O(n)，空间复杂度只用了一个res额外空间O(1)所以为常数时间。
+
+### 问题2:Complement of Base 10 Number
+
+这道题目是在讨论二进制数的补数（complement）。在计算机科学中，补数是一个很常见的概念，特别是在处理负数时。
+
+什么是二进制数的补数。在二进制中，一个数的补数是另一个数相对于某个固定的位数的表示。常见的补数包括原码、反码和补码。在这里，我们主要讨论的是二进制的补码。
+
+对于一个二进制数，它的补码是通过将该数的每一位取反（0变成1，1变成0），然后再加上1来得到的。举个例子，假设我们有一个4位的二进制数1101，它的补码可以这样计算：
+
+- 将每一位取反：0010
+- 加1：0010 + 1 = 0011
+
+所以，1101的补码是0011。
+
+但是这道题没有这么复杂，只需要每一位取反就可以了。同样的可以用XOR计算，比如101如果和111取XOR就可以得到010。
+
+比如 5 就是"101", 取反为"010", 结果就可以得到2。
+
+```python
+class Solution(object):
+    def bitwiseComplement(self, n):
+        """
+        :type n: int
+        :rtype: int
+        """
+        if n == 0: return 1
+        x = 1
+        # 当x小于n的时候，不断乘以2
+        while x <= n:
+            x <<= 1
+        return (x - 1) ^ n
+```
+
+题解给的答案如下：
+
+```python
+from math import log2, floor
+
+
+def find_bitwise_complement(num):
+    if num == 0:
+        return 1
+
+    bit_count = floor(log2(num)) + 1
+    all_bits_set = (1 << bit_count) - 1
+    return num ^ all_bits_set
+```
+
+学习笔记：题解给出的答案相对比较复杂，但是原则上也是将数字转换为比他更高一位的二进制，然后减去1，使得所有位都为0，最后进行异或运算。这道题的时间复杂度和空间复杂度都是常数。

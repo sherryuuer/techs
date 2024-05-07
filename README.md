@@ -128,7 +128,8 @@
 - [GCP的ID认证服务：WorkloadIdentity是什么，如何让外部ID可以在GCP内作业](cs/workloadidentity.md)
 - [*GithubActions实现workload工作流：自动化GCS部署和notification](cs/ghactions-autodeploy.md)
 - [*网络安全分类：访问控制、身份管理、数据加密与网络防护的清晰分类](cs/network-security-tree.md)
-- [*Git和Github是一种对时间系统的理解](cs/git.md)
+- [Git和Github复习手册](cs/git.md)
+- [网络安全黑客基础-HackerSaveTheWorld](cs/cybersecurity.md)
 
 ## More Fun things
 - [系统设计概念System-Design-concepts](morefun/system-design.md)
