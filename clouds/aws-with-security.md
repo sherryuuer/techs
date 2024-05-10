@@ -86,7 +86,7 @@
 
 ### 1 - Treat detection and Incident response
 
-**Guard Duty**
+#### **Guard Duty**
 
 - 可以利用机器学习和行为分析技术来检测恶意活动和未经授权的行为。
 - GuardDuty 分析对象来自 AWS CloudTrail、Amazon VPC 流量日志和 DNS 日志的数据，S3 data event，EKS logs等。
@@ -99,7 +99,7 @@
 - 可设置白名单，威胁名单，还有抑制规则（比如你不想看到的ip，已知没威胁的）。
 - 注意！GuardDuty对于DNSlogs的解析，只针对default VPC DNS resolver。其他的不出finding结果。
 
-**AWS Security Hub**
+#### **AWS Security Hub**
 
 - 跨多账户，进行自动安全检测。
 - 可集成多种 AWS 服务：Config，GuardDuty，Amazon Inspector，Amazon Macie，IAM access Analyzer，AWS system manager，AWS firewall manager，AWS Health，AWS Partner Network Solutions。

@@ -20,7 +20,7 @@ TensorFlow就是这些技术之一。 TensorFlow 是 Google 的 AI 引擎，也�
 
 超好的官方资源[codelabs](https://codelabs.developers.google.com/)
 
-### 项目PJ和权限IAM
+### 项目-PJ & 权限-IAM
 
 整个GCP层级如下：组织（如果你的账户域名是组织类型比如google workspace账号的话）- 文件夹folder - 项目projects - 资源resource（gmail账号是无组织的）
 
@@ -36,7 +36,7 @@ Cloud Operations：Monitoring，Dashboard，Metrics Explorer，Alerting，通过
 
 ### 计费 Billing
 
-**计费账户**:可以为每个部门单位创建计费账户，或者别的什么单位。可以在项目Project上（三个点）设置它的计费账户。或者可以在新建项目的时候选择收费账户。
+**计费账户**:可以为每个部门单位创建计费账户，或者别的什么单位。可以在项目Project上（三个点）设置它的计费账户。或者可以在新建项目的时候选择收费账户。这样就可以查看每个project的总费用。
 
 操作需要的权限：（Billing Administrator role）或者 （Project Creator and Billing Account User）
 
@@ -49,6 +49,13 @@ Command:`gcloud alpha/beta billing accounts list`
 **BillingExport**：计费输出将费用数据输出到BigQuery。需要激活Bigquery Data transfer API。
 
 如果你是发票结算账户，付款需要联系GCP销售团队，可以电汇或支票结算，每月将收到发票。
+
+### 和谷歌云的交互方式
+
+- 通过控制台交互：Google Cloud Console
+- 通过命令行交互：Cloud SDK and Cloud Shell
+- 通过IOS和Android系统：Cloud Mobile App
+- 通过定制化应用（Custom Applications）交互：REST-based API
 
 ### SDK
 
@@ -454,9 +461,25 @@ codelabs：https://codelabs.developers.google.com/codelabs/cloud-starting-cloudf
 - delivery方式：push / pull
 - 关键词：Capture Streaming data、Pubsub、Decoupled（解藕），Asynchronous application architecture（异步应用构架）
 
+**Dataflow**
+
+是一个完全托管的流数据分析服务,可用于实时处理无限数据流。它基于Apache Beam编程模型,能够在多种执行环境中运行相同的数据处理代码,包括批处理和流式处理。
+
+主要特点:
+
+1. 无服务器 - 完全托管服务,无需预置集群,自动扩展
+2. 统一模型 - 批处理和流式处理使用相同的编程模型
+3. 多语言 - 支持Java,Python,Go等多种语言
+4. 开箱即用 - 提供多种源和接收器连接器与Google产品集成
+5. 可扩展 - 每秒可处理数百万个记录
+6. 容错 - 具备自动重试和重新恢复能力
+7. 监控 - 提供丰富的监控和日志记录能力
+
+Dataflow广泛应用于ETL、实时数据处理、数据集成、数据分析等场景。用户可以在托管集群环境或自己的私有集群上运行Dataflow管道。它与BigQuery、Cloud Storage、Cloud Pub/Sub等GCP产品紧密集成。总的来说,Dataflow提供了一种简单、统一且富有弹性的方式来处理大规模数据。
+
 ### Monitoring and Logging
 
-**Cloud Operations**
+**Cloud Operations suite**
 
 **Monitoring**
 

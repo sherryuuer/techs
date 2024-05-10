@@ -154,3 +154,55 @@ def find_bitwise_complement(num):
 ```
 
 学习笔记：题解给出的答案相对比较复杂，但是原则上也是将数字转换为比他更高一位的二进制，然后减去1，使得所有位都为0，最后进行异或运算。这道题的时间复杂度和空间复杂度都是常数。
+
+### 问题3:Two Single Numbers
+
+描述起来很简单，在一个arr数组中有很多数字，其中有两个数字出现了一次，其他数字出现了两次，返回只出现了一次的数字。
+
+比如[1, 2, 3, 3, 2, 5]其中出现了一次的数字就是 1 和 5，所以结果是[1, 5]。
+
+这道题用hashmap当然可以快速解决，当然重点是bitwise解法。
+
+首先一个hashmap解法：
+
+```python
+def two_single_numbers(nums):
+    num_dict = set()
+    for n in nums:
+        if n not in num_dict:
+            num_dict.add(n)
+        else:
+            num_dict.remove(n)
+    return list(num_dict)
+```
+
+那么bit计算如何解答。如果只有一个数字出现了一次，那么使用XOR就可以直接求出，但是这里有两个数字出现了一次，遍历一次XOR计算后，得到的是两个数字的XOR结果。
+
+步骤如下：
+
+- 计算两个只出现一次的数字的XOR结果
+- 针对该XOR结果，计算一个mask，该mask可以显示XOR中的最右边一位的1的位置，除了最右边为1的位置为1，其他都为0。
+- 使用上面的mask遍历整个nums数组，通过遍历将数组，通过与mask与运算结果为1或0，分为两组。针对其中一组，与0进行xor操作，得到其中一个只出现一次的数字。
+- 最后的结果就是用最初的XOR进行cancel操作，得到第二个数字结果。
+
+```python
+def two_single_numbers(nums):
+    xor = 0
+    for num in nums:
+        xor ^= num
+        
+    mask = xor & -xor
+
+    res = 0
+
+    for num in nums:
+        if num & mask:
+            res ^= num
+    
+    return [res, xor ^ res]
+```
+学习笔记：这道题的关键在于mask，它是通过隔离XOR中最右边的设置位来创建的。该位对应于两个唯一数字的二进制表示形式不同的位置。随后的循环使用此掩码来有效地分离唯一的数字。如果数字 num 与 中的设置位相同 mask，则表示它具有区分唯一数字的位。在这种情况下，将其与first进行异或操作，可得到first中唯一数字之一的异或结果。最后，xor ^ first计算通过抵消操作来检索另一个唯一的数字即可。
+
+时间复杂度是遍历数组的O(n)，空间复杂度为常数O(1)。
+
+学习完了之后真发现这道题真的很巧妙。

@@ -125,7 +125,7 @@ transformed = imp_constant.fit_transform(data)
 
 在大多数行业案例中，这些高级方法并不是必需的，因为数据要么已经完全清洗过，要么缺失值很少。然而，在处理开源数据集时，这些高级方法可能会有用，因为这些数据集往往更不完整。
 
-### 将维：PCA主成分分析提取特征
+### 降维：PCA主成分分析提取特征
 
 ```python
 from sklearn.decomposition import PCA
