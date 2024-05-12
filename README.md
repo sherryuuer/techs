@@ -16,7 +16,7 @@
 - [树结构：树和二分树BST](algo/binarytree.md)
 - [树结构：树映射TreeMap](algo/treemap.md)
 - [树算法：前缀树](algo/trie.md)/[Trie相关问题](algo/trie-problems.md)
-- [树算法：并查集](algo/union-find.md)
+- [树算法：并查集](algo/union-find.md)/[并查集相关问题](algo/union-find-problems.md)
 - [树算法：段树](algo/segmenttree.md)
 - [树算法：迭代深度优先搜索](algo/iterativedfs.md)
 - [堆算法：堆和优先队列的实现](algo/heap.md)
@@ -46,7 +46,8 @@
 - [自定义数据结构：数据结构的调整和组合](algo/custom-ds.md)
 
 ## Machine learning
-- [AI时代提问准则以及PromptEngineering](ml/ai-4-prompt.md)
+- [对大语言模型的简单解释](ml/ai-4-prompt.md)/[日文版](ml/ai-4-prompt-jp-version.md)
+- [Prompt-Engineering-Framework](ml/prompt-engineering.md)
 - [*机器学习以及它的分类总结](ml/mltypes.md)
 - [*机器学习算法之线性回归：特征选择方法，评估方法，非常用回归模型](ml/regression.md)
 - [*机器学习算法之分类问题：逻辑回归，集成算法](ml/classification.md)

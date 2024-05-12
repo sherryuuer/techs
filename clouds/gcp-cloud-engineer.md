@@ -1,6 +1,4 @@
-## GCP云工程师学习笔记
-
-### 概览
+## 概览
 
 云的基础是虚拟化：服务器，存储，网络。服务器是远程计算机的逻辑分区。存储是物理硬盘的逻辑划分。网络则是虚拟私有云。
 
@@ -20,7 +18,7 @@ TensorFlow就是这些技术之一。 TensorFlow 是 Google 的 AI 引擎，也�
 
 超好的官方资源[codelabs](https://codelabs.developers.google.com/)
 
-### 项目-PJ & 权限-IAM
+## 项目-PJ & 权限-IAM
 
 整个GCP层级如下：组织（如果你的账户域名是组织类型比如google workspace账号的话）- 文件夹folder - 项目projects - 资源resource（gmail账号是无组织的）
 
@@ -34,7 +32,7 @@ API Explorer可以轻松从网页尝试调试API（就算没激活都可以试�
 
 Cloud Operations：Monitoring，Dashboard，Metrics Explorer，Alerting，通过group可以整合资源管理，通过setting可以增加pj和account统一管理。其他还有logging，error report，trace服务。
 
-### 计费 Billing
+## 计费 Billing
 
 **计费账户**:可以为每个部门单位创建计费账户，或者别的什么单位。可以在项目Project上（三个点）设置它的计费账户。或者可以在新建项目的时候选择收费账户。这样就可以查看每个project的总费用。
 
@@ -50,74 +48,38 @@ Command:`gcloud alpha/beta billing accounts list`
 
 如果你是发票结算账户，付款需要联系GCP销售团队，可以电汇或支票结算，每月将收到发票。
 
-### 和谷歌云的交互方式
+价格计算服务：**Pricing Calculator**：keyword：updated prices, latest prices, cost estimation
+
+## 和谷歌云的交互方式
 
 - 通过控制台交互：Google Cloud Console
 - 通过命令行交互：Cloud SDK and Cloud Shell
 - 通过IOS和Android系统：Cloud Mobile App
 - 通过定制化应用（Custom Applications）交互：REST-based API
 
-### SDK
-
-三种方法安装，docker，非docker，服务台的CloudShell。
-
-```bash
-# docker install
-docker pull gcr.io/google.com/cloudsdktool/cloud-sdk:latest
-docker run --rm gcr.io/google.com/cloudsdktool/cloud-sdk:latest gcloud version
-# docker config
-docker run -ti --name gcloud-config gcr.io/google.com/cloudsdktool/cloud-sdk gcloud auth login
-docker run --rm --volumes-from gcloud-config gcr.io/google.com/cloudsdktool/cloud-sdk gcloud config list
-# not docker config
-gcloud init
-```
-SDK中所有的组建：使用`gcloud components list`可以列出来。知道了组件甚至可以猜出命令行。组件如下：
-
-- gcloud: The main google cloud component.
-- gcloud alpha: Set of commands used for early testing of new features.
-- gcloud beta: Beta release of new commands.
-- bq: Known as BigQuery component
-- gsutil: Used for Cloud storage operations.
-- core: Shared libraries for all the other components.
-- kubectl: Kubectl is used to control the Kubernetes cluster.
-
-更新命令：`gcloud components update`
-
-安装新的组件的推介方法：`sudo apt-get install google-cloud-sdk-minikube`
-
-命令构成：
-
-`gcloud + release level (optional:alpha/beta) + component + entity + operation + positional args + flags`
-
-For example: `gcloud + compute + instances + create + example-instance-1 + --zone=us-central1-a`
-
-登陆：`gcloud auth login`
-
-配置：使用命令设置默认项目`gcloud config set project <project ID>`
-
-当您登录 gcloud CLI 时，命令`gcloud config list`显示了当前配置，但是，我们可以有多个配置，`gcloud config configurations list`并将列出所有可用的配置。
-
-要创建新配置，请使用`gcloud config configurations create <name>`命令。
-
-撤销当前设置的PJ`gcloud config unset project`
-
-激活默认的配置`gcloud config configurations activate default`
-
-### Compute
+## Compute
 
 从操作量来说（从多到少）：Compute Engine - Kubernetes Engine - (Cloud Run / Cloud Functions / App Engine)
 
 从workload包罗范围来（从多到少）：Compute Engine - (Kubernetes Engine / Cloud Run) - Cloud Function - App Engine
 
-**App Engine**：网络应用，手机后端，特定语言Python，HTTP only，专注快速开发，谷歌托管Docker。
+### App Engine
 
-**Cloud Functions**：事件触发，语言：Javascript，Go，Python，Java，不关心操作系统，时间执行540秒之内。因为它是事件触发所以对于workload（各种计算任务）更有用。
+网络应用，手机后端，特定语言Python，HTTP only，专注快速开发，谷歌托管Docker。
 
-**GKE**：容器化服务，需要定义集群，可移植性，容器为部署单元。
+### Cloud Functions
 
-**Cloud Run**：托管的GKE服务，用法和GKE基本相似除了：集群由谷歌管理，工作负载容器化，docker image，便宜，之需要关心应用的高可用性即可。
+事件触发，语言：Javascript，Go，Python，Java，不关心操作系统，时间执行540秒之内。因为它是事件触发所以对于workload（各种计算任务）更有用。
 
-**Compute Engine**：能力越大责任越大。相当于EC2，没有容器化工作负载。
+### GKE
+
+容器化服务，需要定义集群，可移植性，容器为部署单元。
+
+### Cloud Run
+
+托管的GKE服务，用法和GKE基本相似除了：集群由谷歌管理，工作负载容器化，docker image，便宜，之需要关心应用的高可用性即可。
+
+### Compute Engine
 
 Preemptive VMs：抢占式虚拟机，24小时存活，适合处理批量作用，很像AWS的Spot，在创建regular Engine的时候选择它即可。便宜80%。
 
@@ -131,102 +93,15 @@ Instance:ssh for Linux, RDP protocol for windows.
 
 Startup script：这个相当于AWS的user data，是在启动的时候执行的命令。
 
-gcloud命令：
-
-- 使用默认设置启动一个GCE：`gcloud beta compute --project=[PROJECT_NAME] instances create instance-2 --zone=us-central1-a`
-```bash
-$ gcloud compute instances create myinstance
-Created [...].
-NAME: myinstance
-ZONE: us-central1-f
-MACHINE_TYPE: n1-standard-1
-PREEMPTIBLE:
-INTERNAL_IP: 10.128.X.X
-EXTERNAL_IP: X.X.X.X  # 这里的外部IP可以用于外部的网络访问
-STATUS: RUNNING
-```
-- 列出所有GCE：`gcloud beta compute instances list`
-- 删除GCE：`gcloud beta compute instances delete instance_name --zone zone_name`
-- 设置防火墙80端口
-```bash
-$ gcloud compute firewall-rules create allow-80 --allow tcp:80
-Created [...].
-NAME: allow-80
-NETWORK: default
-DIRECTION: INGRESS
-PRIORITY: 1000
-ALLOW: tcp:80
-DENY:
-DISABLED: False
-```
-- 进行ssh连接：`gcloud compute ssh --zone us-central1-a [username]@[instance_name/host_name]`，另外所有的ssh key都在GCE的metadata页面中。在这个页面可以设置key的pub文件。
-```bash
-$ gcloud compute ssh myinstance
-Waiting for SSH key to propagate.
-Warning: Permanently added 'compute.12345' (ECDSA) to the list of known hosts.
-...
-
-yourusername@myinstance:~#
-```
-- 使用自定义的启动脚本创建GCE
-```bash
-$ gcloud compute instances create nginx \
-         --metadata-from-file startup-script=startup.sh
-```
-- 创建一个服务器集群用于负载均衡的过程：创建一个模板，然后创建目标池，这可以用于之后的负载均衡，然后在池中创建两个目标GCE，最后列出所有服务器，最后创建负载均衡
-```bash
-$ gcloud compute instance-templates create nginx-template \
-         --metadata-from-file startup-script=startup.sh
-$ gcloud compute target-pools create nginx-pool
-$ gcloud compute instance-groups managed create nginx-group \
-         --base-instance-name nginx \
-         --size 2 \
-         --template nginx-template \
-         --target-pool nginx-pool
-$ gcloud compute instances list
-$ gcloud compute forwarding-rules create nginx-lb \
-         --ports 80 \
-         --target-pool nginx-pool
-$ gcloud compute forwarding-rules list
-NAME: nginx-lb
-REGION: us-central1
-IP_ADDRESS: X.X.X.X  # 这个地址可以访问lb地址了
-IP_PROTOCOL: TCP
-TARGET: us-central1/targetPools/nginx-pool
-```
-- 所有的清理命令
-```bash
-$ gcloud compute forwarding-rules delete nginx-lb
-$ gcloud compute instance-groups managed delete nginx-group
-$ gcloud compute target-pools delete nginx-pool
-$ gcloud compute instance-templates delete nginx-template
-$ gcloud compute instances delete nginx
-$ gcloud compute instances delete myinstance
-$ gcloud compute firewall-rules delete allow-80
-```
-- 以上都是来自官方的codelabs，真的很好:https://codelabs.developers.google.com/codelabs/cloud-compute-engine?hl=zh-cn#0
-
-如果是windowsGCE需要用RDP客户端，这对于Linux就是ssh。
-
-**Auto Scaling**：
+### Auto Scaling
 
 - Predictive autoscaling：针对instance group进行预测性的扩展，一般在组创建三天后生效，因为需要预测的base data。
 - Cool down period：从启动到可用的时间。
 - Minimum&Maximum number of instances：和AWS一样，是扩展的范围。
 - Auto healing：健康检查功能，检测如果发现异常，会重建实例的功能，如果不开健康检查功能，那么只有在实例不跑了的时候才会重建。
 - Rolling updata/restart/replace：滚动更新，有助于重新启动或替换组中的实例。可能需要重新启动或类似的维护补丁。策略：maximum surge（最大的更新速率或数量）/maximum unavailable（重启更新时候的最大不可用数量）。
-- gcloud：
-```bash
-gcloud compute instance-groups managed \
-set-autoscaling instance-group-2 \
---max-num-replicas 3 \
---min-num-replicas 1 \
---target-cpu-utilization 0.60 \
---cool-down-period 120 \
---zone=us-central1-a
-```
 
-**Google Kubernetes Engine/Cluster**：
+### Google Kubernetes Engine/Cluster
 
 - 术语：
   - *Pod* 是一个集合，里面可以有多个容器，共享一个PodIP，一个Pod就是一个application的copy。
@@ -248,46 +123,13 @@ set-autoscaling instance-group-2 \
 - Service是attach pod也就是组织pod是，以及整合他们的IP为一个endpoint给用户，并且可以进行load balancer。通过对应用的*expose*进行设置。我认为这是一个设置对外端口的步骤，所以用暴露这个单词。
   - IP组织方式：Load Balancer IP（对外开放的接口）--> Cluster IP --> NodeIP
 
-- 删除cluster：`gcloud container clusters delete [cluster-name] --zone [zone]`
-
-- 命令行合集：
-
-```bash
-# enable api
-gcloud services enable container.googleapis.com
-# create cluster
-gcloud container clusters create fancy-cluster --num-nodes 3
-# create container
-# enable cloud build api
-gcloud services enable cloudbuild.googleapis.com
-# create image
-gcloud builds submit --tag gcr.io/${GOOGLE_CLOUD_PROJECT}/monolith:1.0.0 .
-# deploy container to gke
-kubectl create deployment monolith --image=gcr.io/${GOOGLE_CLOUD_PROJECT}/monolith:1.0.0
-# delete pod
-kubectl delete pod/<POD_NAME>
-# check the status of pod service and deployment
-kubectl get all
-# espose the service
-kubectl expose deployment monolith --type=LoadBalancer --port 80 --target-port 8080
-# get the service info of cluster ip, external ip and ports
-kubectl get service
-# scale the deployment to 3
-kubectl scale deployment monolith --replicas=3
-# rebuild application image with a new version!
-gcloud builds submit --tag gcr.io/${GOOGLE_CLOUD_PROJECT}/monolith:2.0.0 .
-# deploy the new version without downtime
-kubectl set image deployment/monolith monolith=gcr.io/${GOOGLE_CLOUD_PROJECT}/monolith:2.0.0
-```
-codeslabs:https://codelabs.developers.google.com/codelabs/cloud-deploy-website-on-gke#0
-
-**Cloud Run**:
+### Cloud Run
 
 - 事件驱动。web服务restAPI后端。轻量级数据转换。使用webhooks的业务工作流程。
 - image可以来自Container Registry。
 - 部署image后会有一个端口URL，通过requests请求就可以执行在image中部署的代码了。
 
-**APP Engine**：
+### APP Engine
 
 - HTTP/HTTPS应用程序开发平台。web开发和移动后端开发。
 - 每个项目只能有一个APP Engine。
@@ -299,9 +141,9 @@ codeslabs:https://codelabs.developers.google.com/codelabs/cloud-deploy-website-o
 
 codelabs：https://codelabs.developers.google.com/codelabs/cloud-app-engine-python3#0
 
-### Storage
+## Storage
 
-**Google Cloud Storage**：
+### Google Cloud Storage
 
 - 根据使用频率可以分几个classes：
   - Multi-regional - Part of Standard now
@@ -317,31 +159,7 @@ codelabs：https://codelabs.developers.google.com/codelabs/cloud-app-engine-pyth
   - 需要的包：`pip3 install pyopenssl`
   - 创建url：`gsutil signurl -d 10m -u gs://[bucket_name]/demo.txt`
 
-- 文件操作
-
-```bash
-# create
-gsutil mb gs://<bucketname>
-# list
-gsutil ls
-# upload
-gsutil mv ./demo.txt gs://[bucketname]
-gsutil cp ./demo.txt gs://[bucketname]
-# multithread upload
-gsutil -m mv . gs://cloudstoragelab/
-# upload bigfile by chunks
-gsutil -o GSUTIL:parallel_composite_upload_component_size=10M mv [bigfile] gs://[bucketname]
-```
-
-- 文件生命周期设置
-```bash
-# get
-gsutil lifecycle get gs://cloudstoragelab/
-# set rules by json file
-gsutil lifecycle set rules.json gs://[bucket_name]
-```
-
-**Bigtable**：
+### Bigtable
 
 - NoSQL
 - 每行中的单个值都被索引，该值称为行键。
@@ -350,7 +168,7 @@ gsutil lifecycle set rules.json gs://[bucket_name]
 
 codelabs：https://codelabs.developers.google.com/codelabs/cloud-bigtable-intro-java#0
 
-**BigQuery**：
+### BigQuery
 
 - 经济高效的云数据仓库。关键词：分析
 - BigQuery Data Transfer Service支持从 Google SaaS 应用（Google Ads、Cloud Storage）、Amazon S3 和其他数据仓库（Teradata、Redshift）将数据传输到 BigQuery。
@@ -358,43 +176,14 @@ codelabs：https://codelabs.developers.google.com/codelabs/cloud-bigtable-intro-
 - `bq query --use_legacy_sql=false --dry_run 'SELECT * FROM bigquery-public-data.stackoverflow.posts_answers LIMIT 1000'`其中的`dry_run`可以提示计算成本。
 - Partitioning and Clustering（提高查询效率，降低成本）：分区是将数据分割成较小的独立单元，以提高性能和可扩展性，而聚类是将相关数据放在一起以提高查询性能和减少磁盘 I/O 操作。分区通常是水平的，而聚类则是垂直的。水平分区是按行分割数据，减少单个存储单元上的数据量，而垂直分区是按列分割数据，将相关的数据物理上放置在一起。
 
-```sql
-CREATE OR REPLACE TABLE `stackoverflow.questions_2018_clustered`
-PARTITION BY
-  DATE(creation_date)
-CLUSTER BY
-  tags AS
-SELECT
-  id, title, accepted_answer_id, creation_date, answer_count , comment_count , favorite_count, view_count, tags
-FROM
-  `bigquery-public-data.stackoverflow.posts_questions`
-WHERE
-  creation_date BETWEEN '2018-01-01' AND '2019-01-01';
-```
-
-**Cloud SQL**：
+### Cloud SQL
 
 - 对标传统关系型数据库MySQL，PostgreSQL，SQLServer，提供这些数据库的托管服务
 - 使用 CloudSQL 作为 Drupal 或 WordPress 等平台的 CMS（内容管理服务）后端
 - Cloud SQL 非常适合轻松入门或提升和迁移现有 SQL 数据库。
 - 但对于现代云数据库，Cloud SQL 存在一些局限性。诸如水平扩展、区域方面的全球可用性等限制。 GCP 的 Cloud Spanner 服务解决了这些限制，并为解决方案提供了无需停机即可水平扩展的能力。总体而言，CloudSQL 的常见用例是将 SQL 数据库从本地提升并转移到云端。
 
-- 命令行合集：（也可以使用UI）
-
-```bash
-# create sql instance
-gcloud sql instances create [instance-name]
-# create database in the instance
-gcloud sql databases create [database-name] --instance [instance-name]
-# connect to CloudSQL / need activate CloudSQL Admin API
-gcloud sql connect [project name] --user=root --quiet
-# or user mysql client
-mysql -h [IP-of-instance] -u [user] -p
-# delete the instance
-gcloud sql instances delete [instance-name]
-```
-
-**Cloud Spanner**：
+### Cloud Spanner
 
 - Modern cloud-based RDBMS-现代的基于云的关系型数据库。
 - 计算和存储分离，跨区复制的高可用性。（可以一个region多个zone，或者多个region）
@@ -403,13 +192,7 @@ gcloud sql instances delete [instance-name]
 - 高可用性、全球范围内的强一致性、RDBMS和水平扩展。无需管理高可用性副本和只读副本。
 - 命令行合集：
 
-```bash
-gcloud spanner instances list
-gcloud spanner databases list --instance [INSTANCE-ID]
-gcloud spanner instances delete [Instance-ID]
-```
-
-**Cloud Datastore**升级到了**Firestore**：
+### Cloud Firestore
 
 - 自动扩展、高性能和易于应用程序开发而构建的 NoSQL 数据库。
 - Firestore更像是document数据库，collection group适合应用开发后台数据库
@@ -422,14 +205,14 @@ gcloud spanner instances delete [Instance-ID]
   - Key - > Primary key
 - Firebase 存储在幕后使用storage bucket。所以，它是带有移动SDK（移动软件开发工具包）的云存储。
 
-### Networking
+## Networking
 
-**VPC**：
+### VPC
 
 - 谷歌的VPC是全球资源。子网是区域资源。VPC就像是谷歌里的一个大城市，子网就像是街区，里面的instance就像是大楼。
 - VPC设置的IP分配有自动模式和自定义模型。
 
-**Load Balancer**：
+### Load Balancer
 
 - 三种类型：HTTPS Load Balancer，TCP Load Balancer，UDP Load Balancer.
 - 根据流量来源，来决定是内部internal还是外部external的HTTPSLB
@@ -437,31 +220,30 @@ gcloud spanner instances delete [Instance-ID]
   - 要求SSL offload的情况使用SSL Proxy
   - 不要求SSL但是需要全球traffic或者IPv6的情况使用TCP Proxy
 
-**Cloud DNS**：
+### Cloud DNS
 
 - 低延迟，高可用性
 - 域名系统
 - public&private
 
-### Event trigger
+## Event trigger
 
-**Cloud Functions**：
+### Cloud Functions
 
 - 最高memory：4GB
 - 最长执行time：9minites
 - 支持语言：Python，Java，Go，Node.js
 - usecase：文件处理，视频处理，小型微服务移动后端
+- codelabs：https://codelabs.developers.google.com/codelabs/cloud-starting-cloudfunctions#0
 
-codelabs：https://codelabs.developers.google.com/codelabs/cloud-starting-cloudfunctions#0
-
-**Cloud PubSub**：
+### Cloud PubSub
 
 - 可以将 PubSub 视为 Apache Kafka 的替代方案，后者是开源替代方案。
 - Publisher > Topic > Message Storage > Subscription > Subscriber
 - delivery方式：push / pull
 - 关键词：Capture Streaming data、Pubsub、Decoupled（解藕），Asynchronous application architecture（异步应用构架）
 
-**Dataflow**
+### Dataflow
 
 是一个完全托管的流数据分析服务,可用于实时处理无限数据流。它基于Apache Beam编程模型,能够在多种执行环境中运行相同的数据处理代码,包括批处理和流式处理。
 
@@ -477,13 +259,13 @@ codelabs：https://codelabs.developers.google.com/codelabs/cloud-starting-cloudf
 
 Dataflow广泛应用于ETL、实时数据处理、数据集成、数据分析等场景。用户可以在托管集群环境或自己的私有集群上运行Dataflow管道。它与BigQuery、Cloud Storage、Cloud Pub/Sub等GCP产品紧密集成。总的来说,Dataflow提供了一种简单、统一且富有弹性的方式来处理大规模数据。
 
-### Monitoring and Logging
+## Monitoring and Logging
 
-**Cloud Operations suite**
+### Cloud Operations suite
 
-**Monitoring**
+### Monitoring
 
-**Logging**：
+### Logging
 
 - Cloud Operations：Monitoring，Dashboard，Metrics Explorer，Alerting，通过group可以整合资源管理，通过setting可以增加pj和account统一管理。其他还有logging，error report，trace服务。这里讲Logging。
 - 通过Cloud Logging API和Log Router存储和整合。
@@ -492,33 +274,34 @@ Dataflow广泛应用于ETL、实时数据处理、数据集成、数据分析等
 - Logs-based metrics
 - Log Storage：50GB/项目免费配额，审计日志存储在单独的存储桶中，最长保留期为 400 天。对于其余日志，保留期限为 30 天。可以为此创建警报，以便一旦超过 50 GB 就用排除项目删除不必要的日志。
 
-**Trace**：
+### Trace
 
 - 追踪端点延迟
 - codelabs：https://codelabs.developers.google.com/codelabs/cloud-function-logs-traces#6
 
-**Profiler**：
+### Profiler
 
 - Cloud Profiler 是一种统计性、低开销的分析器，可以持续从生产应用程序收集 CPU 使用情况和内存分配信息。
 - 根据不同的编程语言支持不同的分析内容，似乎Go的最多
-- codelabs：https://codelabs.developers.google.com/codelabs/cloud-profiler#0
-  - 这中间有很多模拟程序，很有趣
+- codelabs：https://codelabs.developers.google.com/codelabs/cloud-profiler#0， 这中间有很多模拟程序，很有趣
 
-**Debugger**：实时调试云应用程序，无需重新启动或停止
+### Debugger
 
-**Error Reporting**：自动收集和分析错误和异常
+实时调试云应用程序，无需重新启动或停止
 
-### 其他服务
+### Error Reporting
 
-- 价格计算服务：**Pricing Calculator**：keyword：updated prices, latest prices, cost estimation
+自动收集和分析错误和异常
+
+## 其他服务
+
 - CI/CD：Deployment Manager
   - yaml文件整合资源
   - 一个resource代表一个API resource
   - Manifest文件是当前部署的只读主文件。它包含用户定义的资源和配置，以及由部署管理器创建的附加资源，以支持有用资源的创建。
 - Cloud Marketplace：Google Cloud Platform的一键部署解决方案。您可以从云市场部署任何流行的软件、CMS、工具或 API。 比如WordPress 是一个非常流行的内容管理系统。
 
-
-### 关于网络的一些解释
+## 关于网络的一些解释
 ---
 SSL offload（SSL 卸载）是一种网络安全技术，旨在减轻服务器负载和提高性能。在 SSL offload 中，SSL（安全套接层）和 TLS（传输层安全）的加密和解密操作从服务器转移到专门的硬件设备或者专用的 SSL 加速器中进行处理。
 
@@ -600,3 +383,236 @@ SSL Proxy 和 TCP Proxy 在功能和应用方面有一些重要的区别：
 3. **使用代理协议**：有些代理或负载均衡器支持一些特定的代理协议，这些协议可以在通信中包含客户端的真实 IP 地址。服务端需要根据代理协议来解析客户端的真实 IP 地址。
 
 通过使用 "Preserve Client IP" 技术，服务端就可以获得客户端的真实 IP 地址，从而进行相关的访问控制、日志记录、统计分析等操作，而不是获取到代理或负载均衡器的 IP 地址。这对于需要了解客户端的真实来源和行为的应用场景非常重要。
+## SDK
+
+三种方法安装，docker，非docker，服务台的CloudShell。
+
+```bash
+# docker install
+docker pull gcr.io/google.com/cloudsdktool/cloud-sdk:latest
+docker run --rm gcr.io/google.com/cloudsdktool/cloud-sdk:latest gcloud version
+# docker config
+docker run -ti --name gcloud-config gcr.io/google.com/cloudsdktool/cloud-sdk gcloud auth login
+docker run --rm --volumes-from gcloud-config gcr.io/google.com/cloudsdktool/cloud-sdk gcloud config list
+# not docker config
+gcloud init
+```
+SDK中所有的组建：使用`gcloud components list`可以列出来。知道了组件甚至可以猜出命令行。组件如下：
+
+- gcloud: The main google cloud component.
+- gcloud alpha: Set of commands used for early testing of new features.
+- gcloud beta: Beta release of new commands.
+- bq: Known as BigQuery component
+- gsutil: Used for Cloud storage operations.
+- core: Shared libraries for all the other components.
+- kubectl: Kubectl is used to control the Kubernetes cluster.
+
+更新命令：`gcloud components update`
+
+安装新的组件的推介方法：`sudo apt-get install google-cloud-sdk-minikube`
+
+命令构成：
+
+`gcloud + release level (optional:alpha/beta) + component + entity + operation + positional args + flags`
+
+For example: `gcloud + compute + instances + create + example-instance-1 + --zone=us-central1-a`
+
+登陆：`gcloud auth login`
+
+配置：使用命令设置默认项目`gcloud config set project <project ID>`
+
+当您登录 gcloud CLI 时，命令`gcloud config list`显示了当前配置，但是，我们可以有多个配置，`gcloud config configurations list`并将列出所有可用的配置。
+
+要创建新配置，请使用`gcloud config configurations create <name>`命令。
+
+撤销当前设置的PJ`gcloud config unset project`
+
+激活默认的配置`gcloud config configurations activate default`
+### 附录gcloud
+
+gcloud命令：
+
+- 使用默认设置启动一个GCE：`gcloud beta compute --project=[PROJECT_NAME] instances create instance-2 --zone=us-central1-a`
+```bash
+$ gcloud compute instances create myinstance
+Created [...].
+NAME: myinstance
+ZONE: us-central1-f
+MACHINE_TYPE: n1-standard-1
+PREEMPTIBLE:
+INTERNAL_IP: 10.128.X.X
+EXTERNAL_IP: X.X.X.X  # 这里的外部IP可以用于外部的网络访问
+STATUS: RUNNING
+```
+- 列出所有GCE：`gcloud beta compute instances list`
+- 删除GCE：`gcloud beta compute instances delete instance_name --zone zone_name`
+- 设置防火墙80端口
+```bash
+$ gcloud compute firewall-rules create allow-80 --allow tcp:80
+Created [...].
+NAME: allow-80
+NETWORK: default
+DIRECTION: INGRESS
+PRIORITY: 1000
+ALLOW: tcp:80
+DENY:
+DISABLED: False
+```
+- 进行ssh连接：`gcloud compute ssh --zone us-central1-a [username]@[instance_name/host_name]`，另外所有的ssh key都在GCE的metadata页面中。在这个页面可以设置key的pub文件。
+```bash
+$ gcloud compute ssh myinstance
+Waiting for SSH key to propagate.
+Warning: Permanently added 'compute.12345' (ECDSA) to the list of known hosts.
+...
+
+yourusername@myinstance:~#
+```
+- 使用自定义的启动脚本创建GCE
+```bash
+$ gcloud compute instances create nginx \
+         --metadata-from-file startup-script=startup.sh
+```
+- 创建一个服务器集群用于负载均衡的过程：创建一个模板，然后创建目标池，这可以用于之后的负载均衡，然后在池中创建两个目标GCE，最后列出所有服务器，最后创建负载均衡
+```bash
+$ gcloud compute instance-templates create nginx-template \
+         --metadata-from-file startup-script=startup.sh
+$ gcloud compute target-pools create nginx-pool
+$ gcloud compute instance-groups managed create nginx-group \
+         --base-instance-name nginx \
+         --size 2 \
+         --template nginx-template \
+         --target-pool nginx-pool
+$ gcloud compute instances list
+$ gcloud compute forwarding-rules create nginx-lb \
+         --ports 80 \
+         --target-pool nginx-pool
+$ gcloud compute forwarding-rules list
+NAME: nginx-lb
+REGION: us-central1
+IP_ADDRESS: X.X.X.X  # 这个地址可以访问lb地址了
+IP_PROTOCOL: TCP
+TARGET: us-central1/targetPools/nginx-pool
+```
+- 所有的清理命令
+```bash
+$ gcloud compute forwarding-rules delete nginx-lb
+$ gcloud compute instance-groups managed delete nginx-group
+$ gcloud compute target-pools delete nginx-pool
+$ gcloud compute instance-templates delete nginx-template
+$ gcloud compute instances delete nginx
+$ gcloud compute instances delete myinstance
+$ gcloud compute firewall-rules delete allow-80
+```
+- 以上都是来自官方的codelabs，真的很好:https://codelabs.developers.google.com/codelabs/cloud-compute-engine?hl=zh-cn#0
+
+如果是windowsGCE需要用RDP客户端，这对于Linux就是ssh。
+
+- Cloud SQL 命令行合集：（也可以使用UI）
+
+```bash
+# create sql instance
+gcloud sql instances create [instance-name]
+# create database in the instance
+gcloud sql databases create [database-name] --instance [instance-name]
+# connect to CloudSQL / need activate CloudSQL Admin API
+gcloud sql connect [project name] --user=root --quiet
+# or user mysql client
+mysql -h [IP-of-instance] -u [user] -p
+# delete the instance
+gcloud sql instances delete [instance-name]
+```
+
+- Cloud Spanner
+
+```bash
+gcloud spanner instances list
+gcloud spanner databases list --instance [INSTANCE-ID]
+gcloud spanner instances delete [Instance-ID]
+```
+
+- BQ
+
+```sql
+CREATE OR REPLACE TABLE `stackoverflow.questions_2018_clustered`
+PARTITION BY
+  DATE(creation_date)
+CLUSTER BY
+  tags AS
+SELECT
+  id, title, accepted_answer_id, creation_date, answer_count , comment_count , favorite_count, view_count, tags
+FROM
+  `bigquery-public-data.stackoverflow.posts_questions`
+WHERE
+  creation_date BETWEEN '2018-01-01' AND '2019-01-01';
+```
+
+- GCS
+- 文件操作
+
+```bash
+# create
+gsutil mb gs://<bucketname>
+# list
+gsutil ls
+# upload
+gsutil mv ./demo.txt gs://[bucketname]
+gsutil cp ./demo.txt gs://[bucketname]
+# multithread upload
+gsutil -m mv . gs://cloudstoragelab/
+# upload bigfile by chunks
+gsutil -o GSUTIL:parallel_composite_upload_component_size=10M mv [bigfile] gs://[bucketname]
+```
+
+- 文件生命周期设置
+```bash
+# get
+gsutil lifecycle get gs://cloudstoragelab/
+# set rules by json file
+gsutil lifecycle set rules.json gs://[bucket_name]
+```
+
+- GKE
+- 删除cluster：`gcloud container clusters delete [cluster-name] --zone [zone]`
+
+- 命令行合集：
+
+```bash
+# enable api
+gcloud services enable container.googleapis.com
+# create cluster
+gcloud container clusters create fancy-cluster --num-nodes 3
+# create container
+# enable cloud build api
+gcloud services enable cloudbuild.googleapis.com
+# create image
+gcloud builds submit --tag gcr.io/${GOOGLE_CLOUD_PROJECT}/monolith:1.0.0 .
+# deploy container to gke
+kubectl create deployment monolith --image=gcr.io/${GOOGLE_CLOUD_PROJECT}/monolith:1.0.0
+# delete pod
+kubectl delete pod/<POD_NAME>
+# check the status of pod service and deployment
+kubectl get all
+# espose the service
+kubectl expose deployment monolith --type=LoadBalancer --port 80 --target-port 8080
+# get the service info of cluster ip, external ip and ports
+kubectl get service
+# scale the deployment to 3
+kubectl scale deployment monolith --replicas=3
+# rebuild application image with a new version!
+gcloud builds submit --tag gcr.io/${GOOGLE_CLOUD_PROJECT}/monolith:2.0.0 .
+# deploy the new version without downtime
+kubectl set image deployment/monolith monolith=gcr.io/${GOOGLE_CLOUD_PROJECT}/monolith:2.0.0
+```
+codeslabs:https://codelabs.developers.google.com/codelabs/cloud-deploy-website-on-gke#0
+
+- Auto Scaling
+- gcloud：
+```bash
+gcloud compute instance-groups managed \
+set-autoscaling instance-group-2 \
+--max-num-replicas 3 \
+--min-num-replicas 1 \
+--target-cpu-utilization 0.60 \
+--cool-down-period 120 \
+--zone=us-central1-a
+```
