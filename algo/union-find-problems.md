@@ -96,3 +96,81 @@ class Solution(object):
 因此,O(α(n))被认为是计算复杂性理论中的一个很好的渐进记号,用来表示一个非常优秀、高效的算法,它的运行时间基本上可以认为是一个很小的常数。并查集的时间复杂度就是这个量级。
 
 总之,O(α(n))反映了一种极其高效、接近最优的算法时间复杂度,实际应用意义重大。
+
+### 问题2:Last Day Where You Can Still Cross
+
+困难难度的力扣题。
+
+给定一个由格子组成的二维地图，其中包含了陆地（用0表示）和水（用1表示）。在第一天都是陆地，但是每一天都有一个格子被水淹没。假设你可以在道路上自由移动，但不能斜着走。你从地图的最上方的某个起始位置出发，要前往地图的最下方。问题是在给定的淹水条件下，你哪天是最后能通过格子的。
+
+比如cells = [[1, 1],[2, 1],[1, 2],[2, 2]]，比如该cells给定的就是第index天，淹水的格子。结果应当返回2，这是因为在第三天开始无法通过格子。所以第二天是最后期限（第0天是初始天）。
+
+同样是使用并查集思路：
+
+以下是代码的思路步骤：
+
+- 初始化数据结构：计算总格子数 n。初始化并查集的 root，left 和 right 列表。
+- 填充 left 和 right 列表：遍历每一列和每一行，将每个格子对应的列数填充到 left 和 right 列表中，使其初始值为当前列数。
+- 定义并查集的 find 和 union 函数：find(x) 函数用于找到节点 x 所在连通分量的根节点。union(x, y) 函数用于合并节点 x 和 y 所在的连通分量，并更新合并后连通分量的边界。
+- 初始化其他变量：初始化一个集合 seen 用于存储已经遍历过的格子。定义一个方向数组 dirs，用于表示上、下、左、右、以及四个对角线的移动方向。
+- 遍历每个格子：
+   - 对于每个格子，首先将其添加到 seen 集合中。
+   - 遍历每个格子周围的相邻格子：
+     - 若相邻格子在 seen 集合中，表示当前格子和相邻格子可以合并为一个连通分量，调用 union 函数进行合并。
+     - 合并后，检查合并后连通分量的边界是否满足条件，若满足则返回当前天数。
+   - 若遍历完所有格子都未找到满足条件的天数，则返回格子总数。
+
+整体思路是利用并查集算法来合并连通分量，并通过维护每个连通分量的边界来判断是否满足条件。算法的核心是遍历格子并进行合并操作，以及检查合并后的连通分量的边界是否满足条件。
+
+```python
+class Solution:
+    def latestDayToCross(self, row, col, cells):
+        n = row * col
+        # root是根节点，每个节点都指向自己，left和right是最左和最右边界
+        root, left, right = list(range(n)), [0] * n, [0] * n
+
+        # 使用格子索引更新左右边界的列表，所谓边界是指格子所在位置的col
+        for i in range(col):
+            for j in range(row):
+                # [0, 0, 1, 1]
+                left[i * row + j] = i
+                right[i * row + j] = i
+
+        # find找到根节点
+        def find(x):
+            if x != root[x]:
+                root[x] = find(root[x])
+            return root[x]
+
+        # 合并连通分量，返回左右边界
+        def union(x, y):
+            a, b = find(x), find(y)
+            if a != b:
+                root[a] = b
+            left[b] = min(left[b], left[a])
+            right[b] = max(right[b], right[a])
+
+        # 开始搜索
+        seen = set()
+        dirs = ((1, 0), (0, 1), (-1, 0), (0, -1),
+                (1, 1), (-1, 1), (1, -1), (-1, -1))
+
+        for i, cell in enumerate(cells):
+            cx, cy = cell[0] - 1, cell[1] - 1
+            for dx, dy in dirs:
+                x, y = cx + dx, cy + dy
+                #检查相邻格子的有效性和是否见过
+                if 0 <= x < row and 0 <= y < col and (x, y) in seen:
+                    # union两个格子
+                    union(cy * row + cx, y * row + x)
+                    # 找到合并后的根节点
+                    new = find(y * row + x)
+                    # 检查新的组合是否可以跨越边界
+                    if left[new] == 0 and right[new] == col - 1:
+                        # 为真则返回天数
+                        return i
+            seen.add((cx, cy))
+
+        return n
+```
+学习笔记：时间复杂度和空间复杂度O(mxn)。
