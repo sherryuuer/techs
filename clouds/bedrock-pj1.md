@@ -3,7 +3,7 @@
 ---
 ### Bedrock介绍
 
-Amazon Bedrock 是一项完全托管的服务，可简化生成式人工智能 (Generative AI) 应用程序的开发。它提供以下功能：
+Amazon Bedrock 是一项AWS完全托管的服务，可简化生成式人工智能 (Generative AI) 应用程序的开发。它提供以下功能：
 
 - 来自领先 AI 公司的各种高性能基础模型 (FM)，包括 AI21 Labs、Anthropic、Cohere、Meta、Stability AI 和 Amazon 自己的模型等。
 - 构建生成式 AI 应用程序所需的一系列广泛功能，包括以下内容。
@@ -32,7 +32,7 @@ Top-P 采样（也称为Nucleus采样）是一种与Top-k 采样类似的方法�
 
 Top-P 采样相比于固定的Top-k值，更加灵活，能够根据上下文动态地选择词汇量，因此在一些生成任务中被广泛使用。
 
-### Code generation PJ
+### 代码生成项目
 
 项目构架来说包括如下service：
 
@@ -170,9 +170,9 @@ Integrations 设置中，要进行对 lambda function 的设置。在 target 选
 
 **解决办法：给Lambda function添加新的layer**
 
-第一步，通过以下内容制作一个 zip 包，用于上传 lambda 作为新的 layer。
+第一步，通过以下内容制作一个 zip 包，用于上传到 lambda 作为新的 layer。
 
-```
+```bash
 # create a new directory for the layer
 mkdir boto3_layer
 cd boto3_layer

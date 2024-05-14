@@ -195,3 +195,113 @@ FP-Growth(Frequent Pattern Growth)算法通过构建FP-树来高效发现频繁�
 总的来说，关联规则挖掘算法的关键是高效发现频繁项集，并生成满足约束的有趣规则。企业可以基于这些挖掘结果进行产品购买相关性分析、销售促销策略制定等决策。
 
 这一部分现在我不是很了解，学习资料也没有详细再讲下去，而是作为聚类的一个部分被提起。因此这里只做一个了解吧。
+
+## 降维技术：主成分分析
+
+如同它的文字表述，它的目的是将高维度数据转换为低纬度数据。
+
+换个表述方式就是将大量特征，变为较少的特征量。
+
+因为维数过高会导致模型复杂和难以可视化。
+
+降低维度的好处很多，有助于快速拟合模型，降低复杂度，可视化，消除多重共线性（一些特征彼此相关，提供了很多冗余的信息）问题。
+
+降维技术中最重要的是主成分分析。简写为PCA。
+
+**PCA的步骤拆解：**
+
+*Standardization*
+
+首先对每个特征进行正规化处理，将特征都转换为均值为0，方差为1的数据。这样做的好处是将所有特征进行统一。
+
+计算公式为：x - 均值 / 标准差
+
+具有较大范围值的特征，会比具有较小范围值的特征占据主导地位。
+
+*CovarianceMatrix*
+
+第二步是，根据上面的正规化后的特征，计算协方差矩阵。
+
+协方差矩阵具有对称的性质，它的对角线上是方差，非对角线上是两两特征的协方差。
+
+反应了变量之间的线性相关程度和方向。
+
+*EigenDecomposition*
+
+执行协方差矩阵的特征值分解。
+
+它是将矩阵分解为一组特征值和特征向量的过程。
+
+它在数学上，是将矩阵简化为对角线矩阵和另一个矩阵的乘积。
+
+特征值反映了矩阵沿着哪些方向伸缩，特征值大小对应了伸缩的大小和程度。对应地，特征向量反映了，伸缩的方向。
+
+特征值分解为我们研究矩阵的本质属性、发现隐含模式、降维和压缩提供了强有力的数学工具。
+
+*SortByEigenValues*
+
+主成分被构造为原始特征的线性组合。主成分的构造方式是将原始变量中的大部分信息（最大可能的方差）压缩到第一个成分中，然后挤压到其他成分中，依此类推。
+
+假设总共构建了 n 个主成分其中 n 是数据集的维度总数。我们按照特征值的顺序对主成分进行排序，从最高到最低，也就是重要性进行了排序。
+
+*ChoosePrincipalComponents*
+
+决定保留的主成分数量 k 个，并选择最重要的 k 个主成分，并构建一个向量矩阵，称之为特征向量。
+
+这些是我们最后得到的，在新的较低维度中的特征。
+
+**在Scikit-learn中的实现**：
+
+以鸢尾花数据集为例的PCA实现：
+
+```python
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+
+url = "https://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data"
+df = pd.read_csv(url, names=['sepal length','sepal width','petal length','petal width','target'])
+print("The Iris Dataset before applying PCA is")
+print(df.head().to_string())
+x = df[['sepal length', 'sepal width', 'petal length', 'petal width']].values
+y = df[['target']].values
+x = StandardScaler().fit_transform(x)
+pca = PCA(n_components=2)
+principalComponents = pca.fit_transform(x)
+principalDf = pd.DataFrame(data = principalComponents, columns = ['principal component 1', 'principal component 2'])
+finalDf = pd.concat([principalDf, df[['target']]], axis = 1)
+print("\n")
+print("The Iris Dataset after applying PCA is")
+print(finalDf.head().to_string())
+```
+
+原始数据如下：
+```
+The Iris Dataset before applying PCA is
+   sepal length  sepal width  petal length  petal width       target
+0           5.1          3.5           1.4          0.2  Iris-setosa
+1           4.9          3.0           1.4          0.2  Iris-setosa
+2           4.7          3.2           1.3          0.2  Iris-setosa
+3           4.6          3.1           1.5          0.2  Iris-setosa
+4           5.0          3.6           1.4          0.2  Iris-setosa
+```
+
+中间的进行正规化后的x输出前五行查看：
+```
+[[-0.90068117  1.03205722 -1.3412724  -1.31297673]
+ [-1.14301691 -0.1249576  -1.3412724  -1.31297673]
+ [-1.38535265  0.33784833 -1.39813811 -1.31297673]
+ [-1.50652052  0.10644536 -1.2844067  -1.31297673]
+ [-1.02184904  1.26346019 -1.3412724  -1.31297673]]
+```
+
+最终输出结果：
+```
+The Iris Dataset after applying PCA is
+   principal component 1  principal component 2       target
+0              -2.264542               0.505704  Iris-setosa
+1              -2.086426              -0.655405  Iris-setosa
+2              -2.367950              -0.318477  Iris-setosa
+3              -2.304197              -0.575368  Iris-setosa
+4              -2.388777               0.674767  Iris-setosa
+```
