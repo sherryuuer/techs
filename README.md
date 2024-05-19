@@ -1,3 +1,5 @@
+Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-apps/)❤️
+
 ## Algorithms & data structure
 - [数组结构：静态动态数组和堆栈](algo/arrays.md)/[栈stack相关问题](algo/stack.md)
 - [数组算法：Kadane算法](algo/kadane.md)
@@ -5,34 +7,26 @@
 - [数组算法：双指针](algo/two-pointers.md)
 - [数组算法：前缀和](algo/prefix-sums.md)
 - [数组算法：二分查找](algo/binarysearch.md)
-- [链表结构：单链双链和队列](algo/linkedlist.md)
-- [链表结构：反转单链表及其变体问题](algo/reverse-linkedlist.md)
+- [链表结构：单链双链和队列](algo/linkedlist.md)/[反转单链表及其变体问题](algo/reverse-linkedlist.md)
 - [链表算法：快慢指针](algo/fast-slow-pointers.md)
-- [排序算法：排序全家桶](algo/sort.md)
-- [排序算法：K-way Merge排序融合](algo/kway-merge.md)
-- [排序算法：循环排序CyclicSort](algo/cyclicsort.md)
-- [递归算法：宇宙的开始和终结](algo/recursion.md)
-- [数据结构：矩阵MATRIX](algo/matrix.md)
+- [排序算法：排序全家桶](algo/sort.md)/[K-way Merge排序融合](algo/kway-merge.md)/[循环排序CyclicSort](algo/cyclicsort.md)
+- [递归算法：递归思想和基础问题](algo/recursion.md)
 - [树结构：树和二分树BST](algo/binarytree.md)
 - [树结构：树映射TreeMap](algo/treemap.md)
 - [树算法：前缀树](algo/trie.md)/[Trie相关问题](algo/trie-problems.md)
 - [树算法：并查集](algo/union-find.md)/[并查集相关问题](algo/union-find-problems.md)
 - [树算法：段树](algo/segmenttree.md)
 - [树算法：迭代深度优先搜索](algo/iterativedfs.md)
-- [堆算法：堆和优先队列的实现](algo/heap.md)
-- [堆算法：TopK-Elements](algo/topk-elements.md)
+- [堆算法：堆和优先队列的实现](algo/heap.md)/[TopK-Elements](algo/topk-elements.md)
 - [堆算法：两个堆](algo/two-heaps.md)
 - [回溯算法：树迷宫路径问题](algo/treemaze.md)
 - [回溯算法：子集](algo/subsets.md)/[子集subsets相关练习问题](algo/subsets-problems.md)
 - [回溯算法：Backtracking相关问题](algo/backtracking.md)
 - [回溯算法：排列](algo/combinations.md)
 - [回溯算法：组合](algo/permutations.md)
-- [树图算法：深度优先和广度优先算法](algo/dfsbfs.md)
-- [树图算法：深度优先搜索](algo/dfs.md)
-- [哈希结构：Python代码实现](algo/hash.md)
-- [哈希结构：hashmap的相关问题](algo/hashmap.md)
-- [哈希结构：hashmap_tracking的相关问题](algo/hashmap_tracking.md)
-- [图结构：矩阵和邻接表的DFS和BFS](algo/graphs.md)
+- [哈希结构：代码实现](algo/hash.md)/[hashmap的相关问题](algo/hashmap.md)/[hashmap&tracking的相关问题](algo/hashmap_tracking.md)
+- [树图算法：深度优先和广度优先算法](algo/dfsbfs.md)/[深度优先搜索相关问题](algo/dfs.md)
+- [图结构：矩阵和邻接表的DFS和BFS](algo/graphs.md)/[图结构：矩阵MATRIX](algo/matrix.md)
 - [图算法：最短路径Dijkstra](algo/dijkstra.md)
 - [图算法：最小生成树Prim&Kruskal](algo/prim-kruskal.md)
 - [图算法：拓扑排序](algo/toplogical-sort.md)/[拓扑排序拓展问题](algo/toplogical-sort-problems.md)
@@ -52,6 +46,7 @@
 - [*机器学习算法之线性回归：特征选择方法，评估方法，非常用回归模型](ml/regression.md)
 - [*机器学习算法之分类问题：逻辑回归，集成算法](ml/classification.md)
 - [*机器学习算法之无监督学习：聚类和降维](ml/unsupervised.md)
+- [*图像识别技术：使用Tensorflow和PIL库的ImageRecognition流程](ml/image-recognition.md)
 - [Scikit-learn建模学习:回归，分类，调参，聚类](ml/scikit-learn-data-modeling.md)
 - [数据预处理：ML中最重要的步骤](ml/feature-engineering.md)
 - [防止过拟合的技术：正规化&Dropout&EarlyStopping](ml/overfit.md)
@@ -95,6 +90,7 @@
 - [Python代码单元测试](python/codetest.md)
 - [使用Python调用OpenAI的API](ml/open-ai.md)
 - [Python的break和continue如何影响循环](python/break-continue.md)
+- [面向对象编程设计模式Java&Python的Cheatsheet总结](python/oop-design-pattern.md)
 
 ## Tools
 - [好用的机器学习工具网站](tools/tool-site-for-study.md)
@@ -108,6 +104,7 @@
 - [AWS机器学习系统的构架和服务](clouds/aws-with-ml.md)
 - [*AWS安全专家认证考试相关内容](clouds/aws-with-security.md)
 - [AWSSysOps运维考试内容整理](clouds/aws-with-sysops.md)
+- [*AWS高级网络专家相关内容整理](clouds/aws-with-networking.md)
 - [AWS-Bedrock项目实践1：Code Generation (APIGateway,S3,bedrock)](clouds/bedrock-pj1.md)
 - [*AWS-Bedrock项目实践2-3：Notes Summarisation & Image Generation & 模型评估 & RAG](clouds/bedrock-pj2-3.md)
 - [Google-Gimini-API上手体验和要点总结：目前最爱Gemini](clouds/gemini-api.md)
@@ -133,7 +130,7 @@
 - [Git和Github复习手册](cs/git.md)
 - [网络安全黑客基础-HackerSaveTheWorld](cs/cybersecurity.md)
 
-## More Fun things
+## Connect More
 - [系统设计概念System-Design-concepts](morefun/system-design.md)
 - [G检定深度学习考试相关日语词汇和概念解释](morefun/gtest.md)
 - [*WEB3：初步接触比特币，元宇宙，以太坊，智能合约等概念](morefun/web3.md)
@@ -151,11 +148,11 @@
 ## logbooks
 - [项目过程心得总结-不定期添加](principals/pj-thinking.md)
 - [航海日志：定期思维检修1](principals/checkmind1.md)
+- [航海日志：定期思维检修2](principals/checkmind2.md)
 
 ---
+- 思考和联系是最重要的事，是快乐的源泉。
 - 科技再发展也离不开基础，所有的科技新发展，都是对基础的一种深度挖掘和联结。
 - 加密学，区块链，网络安全，信息论，数学，频谱分析，图论等领域，强化学习，遗传算法。
 - 这是一个充满API的世界，从程序包到云服务，都是API的连接，组合，一体化。
 - 宇宙的编程语言是数学。
-
--> [欢迎访问我的主站](https://sherryuuer.github.io/web-apps/)

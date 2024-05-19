@@ -59,13 +59,23 @@ Command:`gcloud alpha/beta billing accounts list`
 
 ## Compute
 
-从操作量来说（从多到少）：Compute Engine - Kubernetes Engine - (Cloud Run / Cloud Functions / App Engine)
+### Comparsion
 
-从workload包罗范围来（从多到少）：Compute Engine - (Kubernetes Engine / Cloud Run) - Cloud Function - App Engine
+- 从操作量来说（从多到少）：Compute Engine - Kubernetes Engine - (Cloud Run / Cloud Functions / App Engine)
+- 从workload包罗范围来（从多到少）：Compute Engine - (Kubernetes Engine / Cloud Run) - Cloud Function - App Engine
+- IaS：
+  - Compute Engine：完全控制OS系统，无需重写代码，自定义虚拟机
+  - GKE：不依赖特定OS系统，速度和可操作性强，容器化生产环境，分布式系统
+- PaS：
+  - App Engine：专注写代码，开发速度快，最小化操作，*适合*网站，应用，游戏后段，IoT应用
+  - Cloud Run：可扩展，用多少花多少，支持API端点开发，代码迁移（portable）方便*适合*网站构架和微服务
+  - Cloud Functions：事件驱动工作流，可扩展，用多少花多少，*适合*统计分析，图像标签处理，发送消息
+
 
 ### App Engine
 
-网络应用，手机后端，特定语言Python，HTTP only，专注快速开发，谷歌托管Docker。
+- 网络应用，手机后端，特定语言Python，HTTP only，专注快速开发，谷歌托管Docker。
+- 是一个托管代码的平台，Platform as service。不涉及底层系统。
 
 ### Cloud Functions
 
@@ -73,25 +83,25 @@ Command:`gcloud alpha/beta billing accounts list`
 
 ### GKE
 
-容器化服务，需要定义集群，可移植性，容器为部署单元。
+- 容器化服务，需要定义集群，可移植性，容器为部署单元。
+- 容器，所以不涉及底层OS系统。
 
 ### Cloud Run
 
-托管的GKE服务，用法和GKE基本相似除了：集群由谷歌管理，工作负载容器化，docker image，便宜，之需要关心应用的高可用性即可。
+- 托管的GKE服务，用法和GKE基本相似除了：集群由谷歌管理，工作负载容器化，docker image，便宜，之需要关心应用的高可用性即可。
+- 正因为它只是容器，所以不涉及对OS层级的管理。而是交给谷歌管理。
+
 
 ### Compute Engine
 
-Preemptive VMs：抢占式虚拟机，24小时存活，适合处理批量作用，很像AWS的Spot，在创建regular Engine的时候选择它即可。便宜80%。
-
-Predefined VMs：Standard, memory-optimized, compute-optimized
-
-Instance:ssh for Linux, RDP protocol for windows.
-
-要素：Image, Snapshot, Metadata(hostname, instance id, startup&shutdown scripts, custom metadata, service accounts info)
-
-新建一个GCE可以从public image,custom image, snapshot, 或者任何可以启动的disk来创建。可以设置SA账号，并设置该服务器可以access的其他API。还可以设置防火墙firewall（http或者https访问）。
-
-Startup script：这个相当于AWS的user data，是在启动的时候执行的命令。
+- 可以自己*控制OS操作系统*的服务。
+- 创建时候的设置内容：
+  - Preemptive VMs：抢占式虚拟机，24小时存活，适合处理批量作用，很像AWS的Spot，在创建regular Engine的时候选择它即可。便宜80%。
+  - Predefined VMs：Standard, memory-optimized, compute-optimized
+  - Instance:ssh for Linux, RDP protocol for windows.
+  - 要素：Image, Snapshot, Metadata(hostname, instance id, startup&shutdown scripts, custom metadata, service accounts info)
+  - 新建一个GCE可以从public image,custom image, snapshot, 或者任何可以启动的disk来创建。可以设置SA账号，并设置该服务器可以access的其他API。还可以设置防火墙firewall（http或者https访问）。
+  - Startup script：这个相当于AWS的user data，是在启动的时候执行的命令。
 
 ### Auto Scaling
 
@@ -143,14 +153,27 @@ codelabs：https://codelabs.developers.google.com/codelabs/cloud-app-engine-pyth
 
 ## Storage
 
+### Comparsion
+
+- 关系型 SQL
+  - Cloud SQL：适合网络构架，比如商务网站，CMS（内容管理系统）
+  - Cloud Spanner：关系型数据仓库，高可用可扩展性
+- 非关系型 NoSQL
+  - Firestore：document数据库，层级管理，手机，网络，用户profiles，游戏状态数据
+  - Cloud Bigtable：以极低的延迟存储大量单键数据。比如IoT数据，动态实时查询，时间序列，图数据
+- 对象存储 Object
+  - GCS：二进制或对象数据，图像视频，备份，静态服务器
+- 数据仓库
+  - BigQuery：企业级数据仓库，分析和仪表盘
+
 ### Google Cloud Storage
 
 - 根据使用频率可以分几个classes：
   - Multi-regional - Part of Standard now
   - Regional - Part of Standard now
-  - Nearline
-  - Coldline
-  - Archive
+  - Nearline：30天/访问频率
+  - Coldline：90天/访问频率
+  - Archive：一年/访问频率
 
 - 可托管静态网页，和S3一样。
 - 可署名URL
@@ -170,7 +193,7 @@ codelabs：https://codelabs.developers.google.com/codelabs/cloud-bigtable-intro-
 
 ### BigQuery
 
-- 经济高效的云数据仓库。关键词：分析
+- 经济高效的现代数据云仓库。关键词：分析，历史数据，SQL语法
 - BigQuery Data Transfer Service支持从 Google SaaS 应用（Google Ads、Cloud Storage）、Amazon S3 和其他数据仓库（Teradata、Redshift）将数据传输到 BigQuery。
 - 可以使用 Cloud Dataflow pipeline、Cloud Dataproc jobs或直接使用 BigQuery 流提取 API 将流数据（例如日志或 IoT 设备数据）写入 BigQuery。
 - `bq query --use_legacy_sql=false --dry_run 'SELECT * FROM bigquery-public-data.stackoverflow.posts_answers LIMIT 1000'`其中的`dry_run`可以提示计算成本。
@@ -190,7 +213,6 @@ codelabs：https://codelabs.developers.google.com/codelabs/cloud-bigtable-intro-
 - 跨区域复制以提供高可用性。目前最多可对 4 个区域进行复制。
 - 自动分片sharding（水平分割）
 - 高可用性、全球范围内的强一致性、RDBMS和水平扩展。无需管理高可用性副本和只读副本。
-- 命令行合集：
 
 ### Cloud Firestore
 
@@ -214,11 +236,16 @@ codelabs：https://codelabs.developers.google.com/codelabs/cloud-bigtable-intro-
 
 ### Load Balancer
 
-- 三种类型：HTTPS Load Balancer，TCP Load Balancer，UDP Load Balancer.
+- 三种类型：HTTPS Load Balancer（layer7），TCP Load Balancer（layer4），UDP Load Balancer.
 - 根据流量来源，来决定是内部internal还是外部external的HTTPSLB
+  - 外部包括：https，SSL，TCP
+  - 内部包括：TCP/UDP，http(s)，network pass-through（网络直通cool）
+  - http(s)是layer7，其他的都是layer4 of OSI model
 - TCP-LB提供单区域或多区域的LB
   - 要求SSL offload的情况使用SSL Proxy
   - 不要求SSL但是需要全球traffic或者IPv6的情况使用TCP Proxy
+
+![gcp_load_balancer](gcp_lb.png)
 
 ### Cloud DNS
 

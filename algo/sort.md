@@ -105,7 +105,7 @@ def selectionSort(array):
 
 ```python
 def insertionSort(arr):
-    for i range(1, len(arr)):
+    for i in range(1, len(arr)):
         j = i - 1
         while j >= 0 and arr[j + 1] < arr[j]:
             arr[j + 1], arr[j] = arr[j], arr[j + 1]
@@ -167,7 +167,7 @@ def merge(left, right):  # O(n)
         else:
             result.append(right[rightindex])
             rightindex += 1
-    return result + [leftindex:] + [rightindex:]
+    return result + left[leftindex:] + right[rightindex:]
 
 def mergeSort(arr): # O(logn)
     if len(arr) == 1:
@@ -186,7 +186,7 @@ def mergeSort(arr): # O(logn)
 
 基本方法是选择一个基准元素pivot，然后根据每个元素和这个基准元素的大小比较，而分成两个部分，一部分比基准小，一部分比基准大。
 
-然后重复以上步骤，对分开的两个部分，递归的进行同样的操作。
+然后重复以上步骤，对分开的两个部分，*递归的*进行同样的操作。
 
 快速排序是一种高效的算法，很适合大型数据集。
 
