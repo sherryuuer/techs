@@ -118,6 +118,7 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [工程师心得](principals/engineer.md)
 
 ## Computer Science
+- [软件开发和程序员基础知识](cs/programming-base.md)
 - [网络基础-构架，协议栈，应用层，HTTP，DNS](cs/internet-base-app-layer.md)
 - [网络基础-传输层，TCP/UDP](cs/internet-base-transport-layer.md)
 - [使用Python实现的套接字编程](cs/python-sockets-programming.md)
@@ -134,6 +135,7 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [系统设计概念System-Design-concepts](morefun/system-design.md)
 - [G检定深度学习考试相关日语词汇和概念解释](morefun/gtest.md)
 - [*WEB3：初步接触比特币，元宇宙，以太坊，智能合约等概念](morefun/web3.md)
+- [数学和信息论基础思想](morefun/math-infomation-theory.md)
 
 ## Interesting Posts
 - [AlphaGo-Movie:通用人工智能的先驱](https://www.youtube.com/watch?v=WXuK6gekU1Y)
