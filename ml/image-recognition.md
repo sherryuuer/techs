@@ -320,9 +320,17 @@ Dropout是一种正则化技术，目的有两个。
 
 这让人联想到*多头注意力机制*，也是同样的一种方式。
 
+## Logits & Classification
+
+由于是多分类问题，这里同样是输出识别图像的十个分类的对数几率logits。
+
+模型构架结束后就可以进行训练loop。
+
+在输出结果后，得到的是对数几率logits，需要对logits进行softmax方法，转换为我们使用的概率，然后通过计算和真实标签的差异，得到最后的准确度。
+
 ## Final Code
 
-使用上述的各种方法，对MNIST数据集进行建模：
+使用上述的各种方法，对MNIST数据集进行建模和训练：
 
 ```python
 import tensorflow as tf
@@ -378,6 +386,74 @@ class MNISTModel(object):
         dropout = tf.keras.layers.Dropout(
             rate=0.4
         )(dense, training=is_training)
+
+        logits = tf.keras.layers.Dense(
+            self.output_size,
+            name='logits'
+        )(dropout)
+        
+        return logits
+```
+
+Traning Function:
+
+```python
+import tensorflow as tf
+
+def run_model_setup(self, inputs, labels, is_training):
+    """
+    设置模型,计算损失和准确率,进行训练(如果is_training为True)
+    
+    Args:
+        inputs (tf.Tensor): 输入数据
+        labels (tf.Tensor): 标签数据
+        is_training (bool): 是否为训练模式
+        
+    Returns:
+        None
+    """
+    
+    # 通过模型层获取logits
+    logits = self.model_layers(inputs, is_training)
+    
+    # 将logits转换为概率分布
+    probs = tf.nn.softmax(logits, name='probs')
+    
+    # 获取预测标签
+    predictions = tf.math.argmax(probs, axis=-1, name='predictions')
+    
+    # 获取真实标签
+    class_labels = tf.math.argmax(labels, axis=-1)
+    
+    # 计算预测是否正确
+    is_correct = tf.math.equal(predictions, class_labels)
+    is_correct_float = tf.cast(is_correct, tf.float32)
+    
+    # 计算准确率
+    accuracy = tf.math.reduce_mean(is_correct_float)
+    
+    # 保存概率分布和准确率
+    self.probs = probs
+    self.predictions = predictions
+    self.accuracy = accuracy
+    
+    # 如果为训练模式,计算损失并进行训练
+    if is_training:
+        # 将标签转换为float32
+        labels_float = tf.cast(labels, tf.float32)
+        
+        # 计算交叉熵损失
+        cross_entropy = tf.nn.softmax_cross_entropy_with_logits_v2(
+            labels=labels_float, logits=logits)
+        loss = tf.math.reduce_mean(cross_entropy)
+        
+        # 使用Adam优化器进行训练
+        optimizer = tf.compat.v1.train.AdamOptimizer()
+        train_op = optimizer.minimize(loss, global_step=self.global_step)
+        
+        # 保存损失和训练操作
+        self.loss = loss
+        self.train_op = train_op
 ```
 
 

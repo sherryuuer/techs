@@ -40,11 +40,17 @@
 ### VPC Building Blocks
 
 - VPC Region choice
+  - Default VPC是为了方便起见为用户创建的Region级别的VPC，若手动删除，也可以右上角随时恢复，没什么特别的地方
 - VPC CIDR
   - IP也是一种协议，8x4bit数字，8bit代表0～255
   - CIDR是传统的网络类型ABC的替代品，有更高的分配和路由效率，灵活的子网划分，避免了浪费
   - Mask后算出的IP范围是从IP的起始位开始的 2^(32-mask) 个IP数量
   - 0-4和255不可用，是AWS在用：0是网址，1是VPC Router，2映射到Amazon-provided DNS，3是给future预留，255是NetworkBroadcastAddress，因为VPC不支持内部广播功能（计算网址数量的时候，要想到这5个不能用）
+  - IPv4一般是/16或者/28，IPv6一般是是固定/56或者/64
+  - IPv6地址全是Public的并且具有全球唯一性。不可以自己设定子网range，并且不提供Amazon Provided DNS hostname。
+  - IPv6不支持Site2siteVPN，CustomGateway，NatDevice，和VPC Endpoint。只有IPv4支持。
+  - EC2实例的IPv6地址在正常重启的情况下是保持不变的。只有在终止旧实例并启动新实例、手动关联新地址或发生故障迁移等情况下，IPv6地址才可能发生变化。AWS的这种设计提高了IPv6地址的可预测性和持久性。
+  - Dual-stack mode是指具有IPv4和IPv6的地址。
 - Route Tables：可以在VPC级别，也可以在Subnet级别
   - 创建VPC后，默认的RouteTable，默认VPC内的所有IP，服务器相互可以通信，比如Destination:10.10.0.0/16,Target:local
   - 如果将Route Table设置在Subnet级别，就可以控制子网的网络访问，这个时候，子网不会再看默认的路由表，而是使用自己的表
@@ -56,8 +62,22 @@
   - Public Subnet中服务：Web server，Load Balancer，NAT
   - Private Subnet中的服务：DB，App Server，没有Public IP，使用NAT进行网络通信
 - IGW：接入外网
-  - 前提是你的服务器PrivateIP对应有PublicIP
+  - 前提是你的服务器PrivateIP对应有PublicIP（通过AWS的公共IP池分配）
   - 连接网络的条件，一个是IGW的设置，一个是0.0.0.0/0登陆到路由表
+- Elastic IP
+  - 通常我们自己的IP地址在路由器重启等情况会被自动分配IPv4地址，EC2自动分配（Amazon Pool within Region）的IP也是这样，当服务器重启，IP会变动。
+  - 只有当你的ElasticIP和运行中的服务器绑定的时候不需要付费，其他时候，没绑定或者绑定了没有启动服务器，都是要付费的，因为这是浪费IP地址资源的行为。
+  - 可以被attach到server，website，LB上。
 - Security Group：EC2 level
+  - 源可以是Port，可以是IP地址。还可以是另一个Security Group，当你需要接收很多EC2为源的时候，将他们和同一个SG绑定，就可以只设置这个SG为源了，当再添加新的EC2到源SG的时候，就不需要多余设置了。
+  - Statefull
+  - troubleshoting：如果APP（private subnet）显示timeout，可能是SG问题；如果APP显示Connection Refused，那就是APP错误或者还没running。
+  - Default：inbound all blocked，outbound all authrized，可后续更改
+  - 只能设置allow规则，也就是只有白名单
+  - 创建EC2的时候需要设置SG
 - NACL：Subnet level
+  - Stateless
+  - 通过设置端口范围(1024-65535)来允许这类端口的流量通过。同时可以结合其他条件(IP、协议等)来控制流量
+  - 可以设置allow和deny规则，并且按照编号递增评估
+  - 创建EC2的时候不需要设置NACL，因为和Subnet绑定就行了
 - DNS：Route53 Resolver

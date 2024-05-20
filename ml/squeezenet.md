@@ -1,23 +1,23 @@
-## cnn：SqueezeNet
+## SqueezeNet
 
 SqueezeNet是一种轻量级的神经网络架构，专注于在模型大小和计算资源方面的高效性。它由DeepScale公司于2016年提出，旨在减小神经网络的模型大小，同时保持良好的性能。
 
-他的设计思想是通过使用1x1卷积层（也称为逐点卷积或逐元素卷积）来减小网络的参数数量。1x1卷积层的作用是在通道之间进行线性组合，从而降低输入特征图的通道数，减小模型的复杂度。这种结构被称为"Fire Module"，由一个squeeze层和一个expand层组成。
+他的设计思想是通过*使用1x1卷积层*（也称为*逐点卷积或逐元素卷积*）来减小网络的参数数量。1x1卷积层的作用是在通道之间进行线性组合，从而降低输入特征图的通道数，减小模型的复杂度。这种结构被称为"Fire Module"，由一个squeeze层和一个expand层组成。
 
 在SqueezeNet中，作者还采用了一种称为“ bypass”（旁路连接）的方法，将某些层的输入直接传递到输出，以帮助保留更多的信息。这有助于减小模型的损失，同时减小了参数数量。
 
-SqueezeNet相对于一些传统的深度神经网络，如AlexNet（200MB的参数量）和VGG，具有更小的模型大小（Squeeze只有1MB参数量呐！），同时在一些图像分类任务上仍能取得相近的性能。由于其轻量级的特点，SqueezeNet常被用于在资源受限的环境中，如移动设备和嵌入式系统中进行图像分类等任务。
+SqueezeNet相对于一些传统的深度神经网络，如AlexNet（200MB的参数量）和VGG，具有*更小的模型大小*（Squeeze只有1MB参数量呐！），同时在一些图像分类任务上仍能取得相近的性能。由于其轻量级的特点，SqueezeNet常被用于在资源受限的环境中，如移动设备和嵌入式系统中进行图像分类等任务。
 
 **总的来说它的大小只有1M比之前的手写模型更小，但是精度却达到了AlexNet的程度**。
 
 一个卷积网络的**参数量计算方法**是：核高 x 核宽 x 核（filter）数量 x 通道channel数量 + 偏置bias数量（一般是filter数量，因为一个核一个偏置）
 
-
-**重点：减少参数的方法**在于三种，减少核的数量，缩小核尺寸，减少输入通道数量。squeezenet的fire model的减少参数的策略就应用了一些。比如：
+**重点：减少参数的方法**在于三种，减少核的数量，缩小核尺寸，减少输入通道数量。Squeezenet的fire model的减少参数的策略就应用了一些。比如：
 
 1. 核的大小，可以混合使用大的核和小的核。
 2. 加入一个中间层（更小的核和更少的通道）从而将它更小的output重新输入原来的层，达到减少参数的目的。我觉得这个层就相当于一个大型过滤器了。这一层又可以叫做**挤压层**，就是这个net的名字由来吧。
 
+## Fire Module
 
 SqueezeNet中的**Fire Module**是该网络架构的一个核心组成部分，负责提取特征并降低模型参数的数量。Fire Module的设计旨在通过使用1x1卷积层（squeeze层）和3x3卷积层（expand层）来实现这一目标。
 
@@ -29,7 +29,7 @@ Fire Module分为两个阶段：
 
 这两个阶段的压缩比率称为压缩比。
 
-整个Fire Module的计算流程可以用以下步骤表示：
+整个Fire Module的*计算流程*可以用以下步骤表示：
 
 1. 输入通过Squeeze阶段，经过1x1卷积，通道数减小。
 2. Squeeze阶段的输出通过Expand阶段，经过1x1和3x3卷积，通道数再次增加。
@@ -37,11 +37,7 @@ Fire Module分为两个阶段：
 
 Fire Module的设计使得SqueezeNet在保持相对较小的模型尺寸的同时，仍能在一些图像分类任务上保持较好的性能。这种结构在资源受限的环境中，如移动设备和嵌入式系统中，具有较大的应用潜力。
 
-**在理解上的一些难点：什么是通道？？**
-
-我们经常说到通道就以为是颜色通道只有三个，在cnn中，一个卷积核就可以对应一个通道，通道，指的是特征通道，可以将RGB通道也想成颜色特征通道就好理解了。将所有的特征通道堆叠在一起，就是一个张完整的图片。每一个通道都表现了图像了一个方面的特征。红黄蓝来举例，就是一个通道是一个颜色的特征表现。
-
-他的代码是这样的：
+## SqueezeNet Model Code
 
 ```python
 import tensorflow as tf
@@ -56,11 +52,12 @@ class SqueezeNetModel(object):
     # Convolution layer wrapper
     def custom_conv2d(self, inputs, filters, kernel_size, name):
         return tf.keras.layers.Conv2D(
-        filters=filters,
-        kernel_size=kernel_size,
-        padding='same',
-        activation='relu',
-        name=name)(inputs)
+            filters=filters,
+            kernel_size=kernel_size,
+            padding='same',
+            activation='relu',
+            name=name
+        )(inputs)
 
     # SqueezeNet fire module
     def fire_module(self, inputs, squeeze_depth, expand_depth, name):
@@ -83,6 +80,7 @@ class SqueezeNetModel(object):
                 [3, 3],
                 'expand3x3')
             return tf.concat([expand1x1, expand3x3], axis=-1)
+
     # Stacked fire modules: 使用多层挤压，提高性能，原本的ImageNet使用了8层
     def multi_fire_module(self, layer, params_list):
         for params in params_list:
@@ -95,12 +93,9 @@ class SqueezeNetModel(object):
         return layer
 ```
 
-上面的fire-model方法可能会有些费解，一行一行解释的话：
+上面的fire-model方法可能会有些费解，提出来解释一下：
 
 ```python
-# SqueezeNet fire module
-# SqueezeNet的Fire Module实现
-
 def fire_module(self, inputs, squeeze_depth, expand_depth, name):
     # 定义一个 Fire Module 函数，接收输入、压缩通道深度、拓展通道深度和模块名称作为参数
 
@@ -152,16 +147,16 @@ def fire_module(self, inputs, squeeze_depth, expand_depth, name):
 总体而言，这个连接操作有助于提高模型的表示能力，使其能够更好地捕捉和利用输入数据中的信息，从而提高网络性能。这是 SqueezeNet 架构的一种设计选择，旨在在保持模型轻量级的同时，保持较好的性能。
 
 
-### 使用SqueezeNet探索CIFAR10数据集
+## 探索CIFAR10数据集
 
 CIFAR-10(Canadian Institute for Advanced Research) 数据集是用于机器视觉领域的图像分类数据集，它有飞机、汽车、鸟类、猫、鹿、狗、青蛙、马、船和卡车共计10 个类别的60000 张彩色图像，尺寸均为32*32，其包含5个训练集和1个测试集，每个数据集有10000 张图像。
 
 - init：初始化模型类：原始维度，输出大小，处理后维度
 - image_preprocessing：对图像的前置处理，包括数据增强（裁剪，反转0.5prob）以及图像正规化，将0-255变成0-1区间的张量。
 - model_layers：
-1. 常规处理，是在开头有一个正常的卷积层，在最后有一个正常的池化层（我不是说中间的层不正常，我是说他们的处理很骚气）。（延迟下采样（delayed downsampling）是比如把最大池化层放在最后层的行为。而在前期拥有更多的特征，有助于提高精度。）
+1. 常规处理，是在开头有一个正常的卷积层，在最后有一个正常的池化层。（采用延迟下采样（delayed downsampling）是比如把最大池化层放在最后层的行为。而在前期拥有更多的特征，有助于提高精度。）
 2. 常规操作：挤压层加上池化层。
-3. 增加深度的操作：为了提高精度再次加上一个挤压层，这次不需要池化，在输出logit阶段，会使用池化。
+3. 增加深度的操作：为了提高精度再次加上一个挤压层，这次不需要池化，在输出logits阶段，会使用池化。
 4. dropout层：防止过拟合。
 5. AveragePool层：输出logits**使用全局平均池化而不是全连接层有两个主要优势。**
    - **CNN结构的本土性：** 全局平均池化更符合CNN结构，通过通道获得logits而不是将数据转换为平坦向量。这使得CNN能够为每个图像类别获取更准确的logits。
@@ -262,7 +257,7 @@ class SqueezeNetModel(object):
         return self.get_logits(conv_layer)
 ```
 
-### 模型训练部分代码示例
+## 模型训练部分代码示例
 
 ```python
 import tensorflow as tf

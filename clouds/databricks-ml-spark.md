@@ -1,18 +1,12 @@
-## Databricks ML
-
----
-### 1 - Delta Lake 概念
+# 1 - Delta Lake 概念
 
 Delta Lake 是一个开源的存储引擎和事务性处理层，用于在大数据湖中进行高效、可靠和可扩展的数据湖管理。它是由 Databricks 公司推出的，旨在解决大数据湖中数据一致性、可靠性和性能等方面的挑战。
 
 Delta Lake 主要解决了以下几个问题：
 
 1. **数据一致性和事务性**：Delta Lake 支持 ACID（原子性、一致性、隔离性和持久性）事务，可以保证数据的一致性和可靠性。它使用写时复制（copy-on-write）的机制来保证事务的原子性，并提供了事务日志来记录事务的操作历史，以实现数据的回滚和恢复。
-
 2. **数据版本控制**：Delta Lake 支持数据的版本控制功能，可以跟踪数据的历史变化，并允许用户在不同的数据版本之间进行切换和回滚。这使得数据的管理和追溯变得更加简单和可靠。
-
 3. **增量数据处理**：Delta Lake 提供了增量数据处理的功能，可以有效地处理大规模数据湖中的数据更新和变更。它支持基于时间戳的增量更新和合并操作，以及基于条件的更新和删除操作。
-
 4. **数据湖优化**：Delta Lake 提供了一系列优化功能，包括数据索引、数据布局优化、数据统计信息和数据压缩等，可以提高数据湖的查询性能和资源利用率。
 
 总的来说，Delta Lake 是一个用于管理大数据湖的开源存储引擎和事务性处理层，它提供了高效、可靠和可扩展的数据湖管理解决方案，帮助用户更好地管理和分析大规模的数据湖中的数据。
@@ -33,7 +27,7 @@ Databricks数据洞察包含以下组件：
 - Spark Core API
   支持R、SQL、Python、Scala、Java等多种语言。
 
-### 2 - 在Azure的workspace环境中运行笔记本
+# 2 - Azure Databricks 
 
 创建一个分布式的cluster环境后就可以打开笔记本了，整个环境是在一个workspace中的，虽然自己对Azure接触的不多，但是从公司提供的环境看，接入环境，启动环境集成服务器，以及进入笔记本都非常方便。
 
@@ -46,7 +40,472 @@ Databricks数据洞察包含以下组件：
 - 可以进行时间旅行，回溯到上一个版本。
 - 支持所有的 Pyspark 语法
 
-**数据清洗 Data Cleansing**
+以下是对各个关键部分内容的补充和代码示例。
+
+## Section 1: Databricks Machine Learning
+### Databricks ML
+- Identify when a standard cluster is preferred over a single-node cluster and vice versa
+
+在需要高可用性、高吞吐量、可扩展性和数据冗余，需要大规模并行计算，的关键任务场景下，标准集群是更合适的选择。而对于资源有限、非关键任务或开发测试环境，小规模，sklearn任务等，单节点集群则可能更加实用和经济。选择取决于具体的应用需求、资源限制和可用性/复杂度权衡。
+
+- Connect a repo from an external Git provider to Databricks repos.
+
+在workspace，点击创建，即可连接到远程的repo。以下的创建分支，进行commit，pull，push操作都可以在GUI进行。
+
+- Commit changes from a Databricks Repo to an external Git provider.
+- Create a new branch and commit changes to an external Git provider.
+- Pull changes from an external Git provider back to a Databricks workspace.
+- Orchestrate multi-task ML workflows using Databricks jobs.
+
+Databricks中的ML作业也可以像Airflow那样进行task创建和依存关系的建立。使用的是Job cluster，runtime包括Standard（适合ETL）和ML
+
+### Databricks Runtime for Machine Learning
+- Create a cluster with the Databricks Runtime for Machine Learning.
+- Install a Python library to be available to all notebooks that run on a cluster.
+
+!pip install or install libraries in cluster
+
+有两种进行外部库安装的方式，一种是cluster级别的，这样的安装，可以让所有的笔记本共用库，当然也可以像平常那样，在笔记本级别进行pip安装，这样的安装，可能会有限制范围。
+
+### AutoML
+- Identify the steps of the machine learning workflow completed by AutoML.
+
+在GUI左边栏的实验功能。是一种可视化的进行自动机器学习的功能：Experiment
+
+1. 欠损值补全
+2. tuning
+3. 训练
+4. 评价
+5. EDA(探索性数据分析)
+
+生成最好的模型后，需要右上角手动登录到register，然后再deploy
+
+- Identify how to locate the source code for the best model produced by AutoML.
+```python
+from databricks import automl
+
+file_path = f"{DA.paths.datasets}/airbnb/sf-listings/sf-listings-2019-03-06-clean.delta/"
+airbnb_df = spark.read.format("delta").load(file_path)
+train_df, test_df = airbnb_df.randomSplit([.8, .2], seed=42)
+
+summary = automl.regress(train_df, target_col="price", primary_metric="rmse", timeout_minutes=5, max_trials=10)
+```
+- Identify which evaluation metrics AutoML can use for regression problems.
+  - `help(automl.regress)`
+  - https://docs.databricks.com/ja/machine-learning/automl/train-ml-model-automl-api.html
+
+在进行不同类型的机器学习任务时,我们通常使用不同的评估指标来衡量模型的性能。以下是进行回归分析、分类和时间序列预测时常用的一些评估指标:
+
+1. 回归评估指标:
+- 均方根误差 (RMSE):衡量预测值与实际值之间的平均误差。
+- 平均绝对误差 (MAE): 衡量预测值与实际值之间的平均绝对误差。 
+- R-squared (R^2): 解释了模型能够解释数据集中总变化的比例，介于0到1之间，越接近1模型拟合效果越好。
+
+2. 分类评估指标:
+
+- 准确率 (Accuracy): 正确预测的实例数与总实例数的比率。
+- 精确率 (Precision): 对于每个类别，正确预测为正的实例数与所有预测为正的实例数的比率。
+- 召回率 (Recall): 对于每个类别，正确预测为正的实例数与所有实际为正的实例数的比率。 
+- F1分数: 精确率和召回率的调和平均值。
+- ROC曲线和AUC: 绘制真正率和假正率曲线，AUC越接近1模型分类性能越好。
+
+3. 时间序列预测评估指标:
+
+- 均方根误差 (RMSE): 衡量实际值与预测值的均方根差。
+- 平均绝对误差 (MAE):  实际值与预测值绝对差的平均值。
+- 平均绝对百分比误差 (MAPE): 预测误差的绝对值与实际值的比值。
+- R-squared (R^2): 解释了模型能够解释数据集中总变化的比例。
+- 方向准确率: 模型正确预测方向变化的比例。
+
+- Identify the key attributes of the data set using the AutoML data exploration notebook.
+  - 通过查看GUI
+
+### Feature Store
+- Describe the benefits of using Feature Store to store and access features for machine learning pipelines.
+  - It enables feature sharing and discovery across your organization and also ensures that the same feature computation code is used for model training and inference.
+- Create a feature store table.
+```python
+fs = feature_store.FeatureStoreClient()
+
+## select numeric features and exclude target column "price"
+numeric_cols = [x.name for x in airbnb_df.schema.fields if (x.dataType == DoubleType()) and (x.name != "price")]
+numeric_features_df = airbnb_df.select(["index"] + numeric_cols)
+
+# create fs table and insert records
+fs.create_table(
+    name=table_name,
+    primary_keys=["index"],
+    df=numeric_features_df,
+    schema=numeric_features_df.schema,
+    description="Numeric features of airbnb data"
+)
+
+# create and insert
+# create fs table
+fs.create_table(
+    name=table_name,
+    # 主键必须
+    primary_keys=["index"],
+    schema=numeric_features_df.schema,
+    description="Original Airbnb data"
+)
+
+# insert records later
+fs.write_table(
+    name=table_name,
+    df=numeric_features_df,
+    mode="overwrite"
+)
+```
+- Write data to a feature store table.
+```python
+# overwrite
+df_new_feature = numeric_features_df\
+  .filter(F.col('index')< 100)\
+  .withColumn('new_feature', F.lit(999))
+
+fs.write_table(
+    name=table_name,
+    df=df_new_feature,
+    mode="overwrite"
+)
+
+fs.write_table(
+    name=table_name,
+    df=df_new_feature,
+    mode="merge"  # upsert
+)
+
+# get_table()とread_table()の違いは押さえておく
+feature_table_df = fs.read_table(table_name)
+display(feature_table_df)
+```
+
+在 Databricks 中`get_table` 和 `read_table` 都是用于读取 Feature Store 中存储的特征表(Feature Table)的方法，但它们存在一些区别:
+
+- `get_table` 是 `FeatureStoreClient` 对象的一个方法，而 `read_table` 是 `FeatureStoreClient` 对象中的 `data_source` 属性的一个方法。
+- `get_table` 的语法: `FeatureStoreClient.get_table(name)`
+- `read_table` 的语法: `FeatureStoreClient.data_source.read_table(name)`
+- `get_table` 返回一个 `FeatureTable` 对象，而 `read_table` 返回一个 Spark DataFrame。
+- `get_table` 只能用于读取特征表的元数据和基本信息，而 `read_table` 可以读取特征表的数据并返回 DataFrame，以便进行后续的数据处理和模型训练等操作。
+- `get_table` 只需要传入特征表的名称，而 `read_table` 除了传入特征表名称外,还可以传入额外的参数,如 `datetime` 参数来指定读取特定时间戳的特征数据。
+
+```python
+# 读取特征表的元数据
+feature_table = fs.get_table("my_feature_table")
+# 读取特征表的数据
+feature_df = fs.data_source.read_table("my_feature_table", datetime="2023-05-01")
+```
+
+- Train a model with features from a feature store table.
+```python
+with mlflow.start_run() as run:
+    rf = RandomForestRegressor(max_depth=3, n_estimators=20, random_state=42)
+    rf.fit(X_train, y_train)
+    y_pred = rf.predict(X_test)
+
+    mlflow.log_metric("test_mse", mean_squared_error(y_test, y_pred))
+    mlflow.log_metric("test_r2_score", r2_score(y_test, y_pred))
+
+    # loggingにfsモジュールを使う
+    fs.log_model(
+        model=rf,
+        artifact_path="feature-store-model",
+        flavor=mlflow.sklearn,
+        training_set=training_set,
+        registered_model_name=f"feature_store_airbnb_{DA.cleaned_username}",
+        input_example=X_train[:5],
+        # 模型输入输出的签名(Model Signature)是对机器学习模型的输入和输出数据结构的正式描述。
+        signature=infer_signature(X_train, y_train)
+    )
+```
+- Score a model using features from a feature store table.注意这里的score_batch方法。
+```python
+batch_input_df = inference_data_df.drop("price") # Exclude true label
+predictions_df = fs.score_batch(f"models:/feature_store_airbnb_{DA.cleaned_username}/1", 
+                                  batch_input_df, result_type="double")
+display(predictions_df)
+```
+### Managed MLflow
+- Identify the best run using the MLflow Client API.
+```python
+# experiment包括很多run，该代码就可以列出所有的实验中的run的列表，按照顺序排列
+run_id_best = mlflow.search_runs(
+            summary.experiment.experiment_id,
+            order_by = ["metrics.val_rmse"]
+            )["run_id"][0]
+
+model_uri = f'runs:/{run_id_best}/model'
+# PyFuncModelとしてモデルをロード
+loaded_model = mlflow.pyfunc.load_model(model_uri)
+```
+- Manually log metrics, artifacts, and models in an MLflow Run.
+```python
+with mlflow.start_run(run_name="LR-Log-Price") as run:
+    # Take log of price
+    log_train_df = train_df.withColumn("log_price", log(col("price")))
+    log_test_df = test_df.withColumn("log_price", log(col("price")))
+
+    # Log parameter
+    mlflow.log_param("label", "log_price")
+    mlflow.log_param("features", "all_features")
+
+    # Create pipeline
+    #  R 风格的公式表达式，表示将所有特征变量(除了 price 列)用于预测 log_price 目标变量。
+    r_formula = RFormula(
+        formula="log_price ~ . - price",
+        featuresCol="features",
+        labelCol="log_price",
+        # 跳过无效数据
+        handleInvalid="skip",
+    )
+    lr = LinearRegression(labelCol="log_price", predictionCol="log_prediction")
+    pipeline = Pipeline(stages=[r_formula, lr])
+    pipeline_model = pipeline.fit(log_train_df)
+
+    # Log model
+    mlflow.spark.log_model(
+        pipeline_model, "log-model", input_example=log_train_df.limit(5).toPandas()
+    )
+
+    # Make predictions
+    pred_df = pipeline_model.transform(log_test_df)
+    exp_df = pred_df.withColumn("prediction", exp(col("log_prediction")))
+
+    # Evaluate predictions
+    rmse = regression_evaluator.setMetricName("rmse").evaluate(exp_df)
+    r2 = regression_evaluator.setMetricName("r2").evaluate(exp_df)
+
+    # Log metrics
+    mlflow.log_metric("rmse", rmse)
+    mlflow.log_metric("r2", r2)
+
+    # Log artifact
+    plt.clf()
+
+    log_train_df.toPandas().hist(column="log_price", bins=100)
+    fig = plt.gcf()
+    mlflow.log_figure(fig, f"{DA.username}_log_normal.png")
+    plt.show()
+```
+- Create a nested Run for deeper Tracking organization.
+  - 两层start_run，提示nested=True。
+```python
+# Resume the top-level training
+with mlflow.start_run(run_id=run_id) as outer_run:
+   # Small hack for running as a job
+   experiment_id = outer_run.info.experiment_id
+   print(f"Current experiment_id = {experiment_id}")
+
+   # Create a nested run for the specific device
+   with mlflow.start_run(run_name=str(device_id), nested=True, experiment_id=experiment_id) as run:
+      mlflow.sklearn.log_model(rf, str(device_id))
+      mlflow.log_metric("mse", mse)
+      mlflow.set_tag("device", str(device_id))
+
+      artifact_uri = f"runs:/{run.info.run_id}/{device_id}"
+      # Create a return pandas DataFrame that matches the schema above
+      return_df = pd.DataFrame([[device_id, n_used, artifact_uri, mse]], 
+                              columns=["device_id", "n_used", "model_path", "mse"])
+```
+- Locate the time a run was executed in the MLflow UI.
+```python
+# Notebookの場合
+import mlflow
+
+exp_id = ''
+runs = mlflow.search_runs(exp_id)
+df_runs = spark.read.format("mlflow-experiment").load(exp_id)
+display(df_runs)
+```
+- Locate the code that was executed with a run in the MLflow UI
+- Register a model using the MLflow Client API.
+```python
+from mlflow.tracking.client import MlflowClient
+client = MlflowClient()
+
+model_name = f"{DA.cleaned_username}_review"
+model_uri = f"runs:/{run_id_best}/model"
+
+model_details = mlflow.register_model(model_uri=model_uri, name=model_name)
+
+# optional
+client.update_registered_model(
+    name=model_details.name,
+    description="This model forecasts Airbnb housing list prices based on various listing inputs."
+)
+
+client.update_model_version(
+    name=model_details.name,
+    version=model_details.version,
+    description="This model version was built using OLS linear regression with sklearn."
+)
+```
+- Transition a model’s stage using the Model Registry UI page.
+  - `client.search_model_versions(f"name = '{model_name}'")[0].current_stage`
+- Transition a model’s stage using the MLflow Client API.
+  - 使用`transition_model_version_stage`
+```python
+client.transition_model_version_stage(
+    name=model_details.name,
+    version=model_details.version,
+    stage="Production"
+)
+client.search_model_versions(f"name = '{model_name}'")[0].current_stage
+```
+- Request to transition a model’s stage using the ML Registry UI page.
+
+## Section 2: ML Workflows
+### Exploratory Data Analysis
+- Compute summary statistics on a Spark DataFrame using .summary()
+- Compute summary statistics on a Spark DataFrame using dbutils data
+summaries.
+- Remove outliers from a Spark DataFrame that are beyond or less than a
+designated threshold.
+### Feature Engineering
+- Identify why it is important to add indicator variables for missing values that
+have been imputed or replaced.
+- Describe when replacing missing values with the mode value is an
+appropriate way to handle missing values.
+- Compare and contrast imputing missing values with the mean value or
+median value.
+- Impute missing values with the mean or median value.
+- Describe the process of one-hot encoding categorical features.
+- Describe why one-hot encoding categorical features can be inefficient for
+tree-based models.
+### Training
+- Perform random search as a method for tuning hyperparameters.
+- Describe the basics of Bayesian methods for tuning hyperparameters.
+- Describe why parallelizing sequential/iterative models can be difficult.
+- Understand the balance between compute resources and parallelization.
+- Parallelize the tuning of hyperparameters using Hyperopt and SparkTrials.
+- Identify the usage of SparkTrials as the tool that enables parallelization for
+tuning single-node models.
+### Evaluation and Selection
+- Describe cross-validation and the benefits of downsides of using
+cross-validation over a train-validation split.
+- Perform cross-validation as a part of model fitting.
+- Identify the number of models being trained in conjunction with a
+grid-search and cross-validation process.
+- Describe Recall and F1 as evaluation metrics.
+- Identify the need to exponentiate the RMSE when the log of the label variable
+is used.
+- Identify that the RMSE has not been exponentiated when the log of the label
+variable is used
+## Section 3: Spark ML
+### Distributed ML Concepts
+- Describe some of the difficulties associated with distributing machine
+learning models.
+- Identify Spark ML as a key library for distributing traditional machine learning
+work.
+- Identify scikit-learn as a single-node solution relative to Spark ML.
+### Spark ML Modeling APIs
+- Split data using Spark ML.
+- Identify key gotchas when splitting distributed data using Spark ML.
+- Train / evaluate a machine learning model using Spark ML.
+- Describe Spark ML estimator and Spark ML transformer.
+- Develop a Pipeline using Spark ML.
+- Identify key gotchas when developing a Spark ML Pipeline.
+### Hyperopt
+- Identify Hyperopt as a solution for parallelizing the tuning of single-node
+models.
+- Identify Hyperopt as a solution for Bayesian hyperparameter inference for
+distributed models.
+- Parallelize the tuning of hyperparameters for Spark ML models using
+Hyperopt and Trials.
+- Identify the relationship between the number of trials and model accuracy.
+### Pandas API on Spark
+- Describe key differences between Spark DataFrames and Pandas on Spark DataFrames.
+
+**Dataframe有以下三种类型**
+- 1: pandas dataframe
+  - 在数据科学家中最常见
+  - 可变（可修改），即时执行，保留行的顺序
+  - 优点：在数据集较小的情况下性能非常高
+  - 缺点：假设在单个节点上运行，数据集较大时会发生内存溢出（OOME）
+  - 通常，数据科学家用pandas创建数据，工程师为了实际运行会重构成spark
+- 2: spark dataframe
+  - 分布式，延迟计算，不可变，不保留行的顺序
+  - 优点：在大规模数据情况下性能非常高
+  - 缺点：与pandas的方法不兼容
+- 3: pandas API on spark
+  - 性能接近spark（严格来说，spark > pandas API on spark），操作方式接近pandas，兼具两者的优点
+
+- Identify the usage of an InternalFrame making Pandas API on Spark not quite as fast as native Spark.
+
+**Pandas api on spark在后台管理internal frame（Spark dataframe和元数据）。**
+
+- 仅更新元数据的情况
+  - 当指定列为索引时，不需要更新后台的spark dataframe，只需更新元数据即可。
+  - 在这种情况下，只更新internal frame的元数据状态。
+- 更新spark dataframe的情况
+  - 当添加列时（例如，psdf['x2'] = psdf.x * psdf.x），需要同时更新元数据和数据。
+  - 在这种情况下，需要更新internal frame的元数据状态和dataframe本身。
+  - 以inplace方式更新时，不返回新的dataframe，而是更新内部数据的状态。
+
+- Identify Pandas API on Spark as a solution for scaling data pipelines without much refactoring.
+pandasのお作法と似ているため、ソースコードの修正は最小限で分散処理の恩恵を受けることができる
+
+- Identify how to import and use the Pandas on Spark APIs
+- Convert data between a PySpark DataFrame and a Pandas on Spark DataFrame.
+```python
+# 読み込み方法
+# spark df
+spark_df = spark.read.parquet(f"{DA.paths.datasets}/airbnb/sf-listings/sf-listings-2019-03-06-clean.parquet/")
+
+# pandas df
+import pandas as pd
+pandas_df = pd.read_parquet(f"{DA.paths.datasets.replace('dbfs:/', '/dbfs/')}/airbnb/sf-listings/sf-listings-2019-03-06-clean.parquet/")
+
+# pandas api on spark
+import pyspark.pandas as ps
+psdf = ps.read_parquet(f"{DA.paths.datasets}/airbnb/sf-listings/sf-listings-2019-03-06-clean.parquet/")
+
+
+# 変換方法
+# spark df => pandas df
+pandas_df = spark_df.toPandas()
+print(f'spark df => pandas df: {type(pandas_df)}')
+
+# spark df <= pandas df
+spark_df = spark.createDataFrame(pandas_df)
+print(f'spark df <= pandas df: {type(spark_df)}')
+
+# spark df => pandas api on spark
+psdf = spark_df.to_pandas_on_spark()
+psdf = ps.DataFrame(spark_df)
+print(f'spark df => pandas api on spark: {type(psdf)}')
+
+# spark df <= pandas api on spark
+spark_df = psdf.to_spark()
+print(f'spark df <= pandas api on spark: {type(spark_df)}')
+
+# pandas df => pandas api on spark
+from pyspark.pandas import from_pandas
+psdf = from_pandas(pandas_df)
+print(f'pandas df => pandas api on spark: {type(psdf)}')
+
+# pandas df <= pandas api on spark
+pandas_df = psdf.to_pandas()
+print(f'pandas df <= pandas api on spark: {type(pandas_df)}')
+```
+### Pandas UDFs/Function APIs
+- Identify Apache Arrow as the key to Pandas <-> Spark conversions.
+- Describe why iterator UDFs are preferred for large data.
+- Apply a model in parallel using a Pandas UDF.
+- Identify that pandas code can be used inside of a UDF function.
+- Train / apply group-specific models using the Pandas Function API.
+## Section 4: Scaling ML Models
+### Model Distribution
+- Describe how Spark scales linear regression.
+- Describe how Spark scales decision trees.
+### Ensembling Distribution
+- Describe the basic concepts of ensemble learning.
+- Compare and contrast bagging, boosting, and stacking
+
+## 学习笔记本补充参考内容
+
+#### **数据清洗 Data Cleansing**
 
 - `df.describe()` 和 `df.summary()` 是对spark dataframe的统计描述，`summary()` 比 `describe()` 增加了四分位数的描述。
 - `dbutils.data.summarize(df)` 可以对数据进行更详细的统计分析，最后一列是一个可视化图表，非常耳目一新。
@@ -58,8 +517,8 @@ for c in impute_cols:
     doubles_df = doubles_df.withColumn(c + "_na", when(col(c).isNull(), 1.0).otherwise(0.0))
 ```
 
-- Transformers 是一类用于将数据集进行转换的对象。它们接受一个 DataFrame 作为输入，并生成一个新的 DataFrame 作为输出。常见的转换操作包括特征处理（如特征提取、特征转换、特征选择等）、数据清洗、数据规范化等。主要通过 `transform()` 方法来进行转换操作。（注意，它的变换不是基于学习，而是基于规则。）
-- Estimators 是一类用于训练模型的对象。它们接受一个 DataFrame 作为输入，并返回一个模型（Model）对象。通常，Estimators 是通过对输入数据进行学习（即训练）来生成模型的。Estimators 主要通过 `fit()` 方法来进行训练操作。
+- *Transformers* 是一类用于将数据集进行转换的对象。它们接受一个 DataFrame 作为输入，并生成一个新的 DataFrame 作为输出。常见的转换操作包括特征处理（如特征提取、特征转换、特征选择等）、数据清洗、数据规范化等。主要通过 `transform()` 方法来进行转换操作。（注意，它的变换不是基于学习，而是基于规则。）
+- *Estimators* 是一类用于训练模型的对象。它们接受一个 DataFrame 作为输入，并返回一个模型（Model）对象。通常，Estimators 是通过对输入数据进行学习（即训练）来生成模型的。Estimators 主要通过 `fit()` 方法来进行训练操作。
 - 在 Spark MLlib 中，Transformers 和 Estimators 通常被组合使用，构建成一个数据处理和建模的流水线（Pipeline）。这种流水线的设计使得用户可以将数据处理和建模过程整合在一起，并且可以很方便地将不同的数据处理步骤和建模步骤组合起来，形成一个完整的数据处理和建模流程。
 
 ```python
@@ -71,9 +530,9 @@ imputed_df = imputer_model.transform(doubles_df)
 imputed_df.write.format("delta").mode("overwrite").save(f"{DA.paths.working_dir}/imputed_results")
 ```
 
-**线性回归 Linear Regression**
+#### **线性回归 Linear Regression**
 
-- 独特的数据分割方法，对训练集和测试集进行分区并进行分割。（传统我们用的都是sklearn的 `model_selection` 的 `train_test_split`），下面是分区的代码：
+- 独特的数据分割方法，对训练集和测试集进行*分区*并进行*分割*。（传统我们用的都是sklearn的 `model_selection` 的 `train_test_split`），下面是代码：
 ```python
 train_repartition_df, test_repartition_df = (airbnb_df
                                              .repartition(24)
@@ -95,7 +554,7 @@ regression_evaluator = RegressionEvaluator(
 rmse = regression_evaluator.evaluate(pred_df)
 print(f"RMSE is {rmse}")
 ```
-- categorical 数据类型的处理：这里需要进行两次转换，从字符串到索引，再从索引到独热编码。
+- categorical 数据类型的处理：这里需要进行两次转换，*从字符串到索引，再从索引到独热编码*。
 
 ```python
 from pyspark.ml.feature import OneHotEncoder, StringIndexer
@@ -126,7 +585,7 @@ ohe_encoder = OneHotEncoder(inputCols=index_output_cols, outputCols=ohe_output_c
 |  5|  6|[5.0,6.0]|
 +---+---+---------+
 ```
-学习notebook的代码如下：
+notebook的代码如下：
 
 ```python
 from pyspark.ml.feature import VectorAssembler
@@ -160,7 +619,7 @@ print(f"RMSE is {rmse}")
 print(f"R2 is {r2}")
 ```
 
-**MLFlow**
+#### **MLFlow**
 
 - 主要是解决实验追踪困难，代码再现困难，模型打包和部署没有标准化的问题。
 - 使用`mlflow.set_experiment()`设置实验。一组`experiment`可以管理多个`run`单位。每一个`run`可以保存参数，代码，指标，输出文件，日志等内容。
@@ -207,7 +666,7 @@ client.list_experiments()
 ```
 - 使用`search_runs`可以检索到所有的run实验对象。`run`本身是一个输出结果的list，`run.info`,`run[index].info`,`run[index].data`都可以输出实验结果。
 
-**MLflow Model Registry**
+#### **MLflow Model Registry**
 
 - 是MLflow的一个组件，用于管理机器学习模型的生命周期。它提供了一种集中式的方式来跟踪、共享、审核和部署机器学习模型，以便团队中的不同成员可以协作管理模型的版本、权限和部署。
 - 版本控制功能：轻松跟踪模型的演进和改进。
@@ -225,7 +684,7 @@ client.list_experiments()
 - 使用载入的模型进行预测：`model_version_1.predict(X_test)`。
 - 删除模型：`delete_model_version()`，删除全体模型`delete_registered_model()`。
 
-**Single Decision Trees**
+#### **Single Decision Trees**
 
 - 决策树算法中不需要对字符串特征进行OHE操作。
 - 决策树算法特征重要度：`dt_model.featureImportances`。是对打包前的特征量的重要度一览，但是重要度为0的特征会不显示。使用以下代码 Pandas 将其变成可读的 dataframe。
@@ -235,7 +694,7 @@ features_df = pd.DataFrame(list(zip(vec_assembler.getInputCols(), dt_model.featu
 - 以上可以得出大部分特征重要度为 0 ，是因为参数 maxDepth 默认设置为5了，只有 5 个特征量被使用了。
 - 决策树具有尺度不变性（scale invariant），就算改变数据的尺度，对决策也不会有很大影响。（见概念补充部分）
 
-**Random Forests and Hyperparameter Tuning**
+#### **Random Forests and Hyperparameter Tuning**
 
 - 为随机森林进行超参调优设置网格搜索的代码。
 ```python
@@ -283,7 +742,7 @@ pipeline = Pipeline(stages=stages_with_cv)
 pipeline_model = pipeline.fit(train_df)
 ```
 
-**Hyperopt**
+#### **Hyperopt**
 
 Hyperopt 是一个用于超参数优化的 Python 库，旨在帮助用户自动地搜索最佳的超参数组合，以优化机器学习模型的性能。Hyperopt 提供了多种优化算法和搜索空间定义方式，能够有效地探索超参数空间，并发现最优的超参数配置。
 
@@ -346,7 +805,7 @@ best_params = fmin(objective, space, algo=tpe.suggest, max_evals=100, trials=tri
 print("Best Parameters:", best_params)
 ```
 
-**AutoML**
+#### **AutoML**
 
 - 简化整个机器学习流程的服务，可以对模型进行自动训练和调优，可以在UI环境执行和查看，还可以对实验结果进行解释。
 ```python
@@ -374,7 +833,7 @@ summary = automl.regress(train_df, target_col="price", primary_metric="rmse", ti
 print(summary.best_trial)
 ```
 
-**Feature Store**
+#### **Feature Store**
 
 - 是一个存储特征的仓库，字面意思。通过以下代码也可以进行定义。
 ```python
@@ -403,9 +862,11 @@ fs.get_table(table_name).description
 
 除此之外还有可以更新特征和记录日志。以及可视化表示。
 
-**XGBoost**：可以使用第三方的库进行训练。`from xgboost.spark import SparkXGBRegressor`，然后作为pipeline的一部分进行训练。
+#### **XGBoost**
 
-**Inference with Pandas UDFs**
+可以使用第三方的库进行训练。`from xgboost.spark import SparkXGBRegressor`，然后作为pipeline的一部分进行训练。
+
+#### **Inference with Pandas UDFs**
 
 PandasUDF（Pandas User Defined Function）是 Apache Spark 中的一种用户自定义函数，用于在 PySpark 中执行基于 Pandas 的操作。PandasUDF 允许用户编写自定义函数，这些函数以 Pandas 数据帧（DataFrame）作为输入，并返回 Pandas 数据帧作为输出。在执行过程中，Spark 会自动将数据分割为多个分区，并在每个分区上执行自定义函数，最后将结果合并起来。
 
@@ -417,7 +878,7 @@ Arrow 提供了一种内存布局格式，以最大程度地减少数据传输�
 
 Apache Arrow 提供了统一的数据格式和接口，使得不同系统和应用程序之间可以轻松地共享和交换数据。它可以与多种开源工具和项目集成，如 Apache Spark、Pandas、NumPy 等。
 
-### 3 - Pyspark 学习笔记
+# 3 - Pyspark 学习笔记
 
 打印schema：
 ```python
@@ -492,7 +953,7 @@ predictions.select("prediction", "label", "features").show(5)
 
 repo地址：machine-learning-lab/Pyspark/Spark_for_Machine_Learning/Tree_Methods/Tree_Methods_Consulting_Project.ipynb
 
-### 4 - 知识概念补充
+# 4 - 知识概念补充
 
 **优化参数方法 TPE**
 
@@ -639,28 +1100,10 @@ Scala 和 Apache Spark 之间有着密切的关系，Scala 是 Spark 的首选�
 
 为了解决这些问题，可以采取一些方法，如剪枝（Pruning）、集成学习（Ensemble Learning，如随机森林）、调整超参数、特征选择、数据增强等。这些方法有助于提高决策树模型的泛化能力和性能。
 
----
-
-### 4 - Azure Databricks 的领域内容
-
-- Databricks机器学习 – 29% (13/45)
-考察了Databricks独有功能（Cluster、Repos、Workflow、AutoML、Feature Store、MLflow）的规范问题。
-关于MLflow的问题出现较多。至少需要理解与Scalable Machine Learning with Apache Spark笔记本中的MLflow相关的代码和UI使用方法。
-
-- ML工作流程 – 29% (13/45)
-利用Databricks，考察了ML工作流程中的各个步骤（探索性数据分析、特征工程、调整、模型评估）的方法论问题。
-特征工程和调整方面的问题较多，关于特征工程主要涉及到缺失值替换/OneHot编码，关于调整主要涉及到ParamGrid/CrossValidator/Hyperopt等。
-关于模型评估，还涉及了常用评估指标的使用场景等通用机器学习问题。
-
-- Spark ML – 33% (15/45)
-涉及了Spark ML、Pandas API、Pandas UDF、Pandas Function API等分布式学习机制和API使用方法的问题。
-基本上只要掌握了Scalable Machine Learning with Apache Spark中涵盖的内容，就不会有问题。
-
-- 扩展机器学习模型 – 9% (4/45)
-考察了决策树算法中maxBins以及矩阵分解等大规模数据机器学习处理的并行化方面的一些较高级的问题。
-
-### 5 - 参考内容
-
-阿里巴巴的[文档](https://help.aliyun.com/document_detail/167619.html?spm=a2c4g.167618.0.nextDoc.78563233WGEoGL)也不错。
+# 5 - 参考内容
 
 [官方教程](https://spark.apache.org/docs/latest/api/python/index.html)和[documentation](https://spark.apache.org/docs/latest)是最好的学习资料。
+
+[Documentation](https://docs.databricks.com/en/machine-learning/index.html)
+
+[Full Code](https://github.com/sherryuuer/machine-learning-lab/tree/main/Databricks)

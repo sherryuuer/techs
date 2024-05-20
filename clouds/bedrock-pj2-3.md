@@ -3,13 +3,11 @@
 ---
 ### 项目介绍
 
-关于 Bedrock 的介绍和讲解以及注意事项，还有参数设置，都在第一个项目的篇头。
+关于 Bedrock 的介绍和讲解以及注意事项，还有参数设置的讲解，都在上一篇第一个项目的篇头。
 
 关于这两个项目，一个是文本总结的项目，代码生成项目是通过 prompt 的短序列生成代码长序列，这里的项目就是一个长序列生成短序列的过程，不仅如此，还可以针对提供的文本进行提问，生成自己的文本库，本质上来说，有点微调的感觉。另一个是图像生成项目，构架大同小异。
 
-后面的 RAG 很值得一学。
-
-### Notes Summarisation
+### Notes Summarisation 文本总结项目
 
 项目构架来说包括如下service：
 
@@ -19,7 +17,7 @@
 
 **Lambda：**
 
-在权限设置部分依然是测试环境，所以暂且不做拘泥，设置 timeout 为5分钟之类的就可以，然后编写使用的代码。
+在权限设置部分依然是测试环境，所以暂且不做拘泥，设置 timeout 为5分钟就可以，然后编写使用的代码。
 
 ```python
 import boto3
@@ -122,7 +120,7 @@ def lambda_handler(event,context):
 
 和第一个项目相同，这里也需要最新的boto3的layer，所以点击 *add layer*，将之前的项目创建的 layer 加入到现在的 function 上去。（layer之需要 create 一次，就可以在 add 在之后的各种 function 上了。 
 
-**S3：**如上代码中的 bedrock-bucket 为bucket的名字，和代码统一就好。
+**S3：**如上代码中的 bedrock-bucket 为bucket的名字，和代码统一。
 
 **API Gateway：**
 
@@ -148,9 +146,9 @@ Integrations 设置中，要进行对 lambda function 的设置。在 target 选
 
 可以使用 postman 等API 测试工具，对端点 POST 前半段链接省略/dev/meeting-summary 发送一个文件对象。
 
-### Image Generation
+### Image Generation 图像生成
 
-这个项目构架差不多一样，主要留下代码，和一些不同点。
+这个项目构架差不多一样，主要关注代码，和一些不同点。
 
 **Lambda：**
 
@@ -208,7 +206,7 @@ deploy 的 stage 使用 dev。dev在做第一个项目的时候 create 过了可
 - 大体上所有的 debug 都可以在 CW 中进行。
 - 通过 API 可以呼出 bedrock 模型进行使用。
 
-### 其他：Bedrock 模型评估功能
+### 其他一些资料：Bedrock 模型评估功能
 
 在服务的左侧tag，又一个可以进行LLM模型评估的功能。
 
@@ -224,9 +222,7 @@ deploy 的 stage 使用 dev。dev在做第一个项目的时候 create 过了可
 
 https://docs.aws.amazon.com/zh_cn/bedrock/latest/userguide/what-is-bedrock.html
 
-### Konwledge base & RAG
-
-说白了是一个使用 RAG 功能的服务。
+### Konwledge base & RAG 知识库和RAG项目
 
 RAG（Retrieval-Augmented Generation）是一种用于自然语言处理的模型架构，它结合了检索（retrieval）和生成（generation）两种技术，旨在提高文本生成任务的性能和效果。RAG 的主要组件包括：
 
