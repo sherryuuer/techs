@@ -165,6 +165,10 @@ Few Shot是给出两个以上的例子，这已经相当于给出了一组新的
 
 那么Zero-Shot的时候该怎么进行思考链的提示呢？
 
+魔法语句：**Let's think step by step**！实验证明，相当有效。
+
+![career-coach](career-coach-prompt.png)
+
 ### Token Management
 
 ### Hyperparameters -> Temperatures, Top-p
@@ -175,7 +179,38 @@ Few Shot是给出两个以上的例子，这已经相当于给出了一组新的
 
 ### Format
 
+比如：
+
+- 写一个大纲，使用Markdown格式，并写入一个code block。
+- 使用Json格式，作为你的所有输出，不需要别的格式。
+- 用Excel格式输出预算表。模型可能会提供一段Python代码供输出，也可能提供下载链接，根据模型能力有所不同。
+- 输出一个流程图用Mermaid格式。然后就可以去draw.io等可视化网站，通过导入mermaid文件，制作可视化流程图。
+  - 是一种基于JavaScript的简单标记语言，用于生成各种图表和流程图，可以嵌入在网页或者markdown文件中。它可以生成序列图(sequence diagrams)、流程图(flowcharts)、甘特图(gantt charts)、类图(class diagrams)、状态图(state diagrams)、实体关系图(ER diagrams)等多种可视化图形。
+  - Mermaid不仅可以直接在markdown文件中使用，也可以通过JavaScript API在网页中动态生成图表。它提供了多种配置选项和主题，可以满足不同的可视化需求。
+
+mermaid格式：
+```mermaid
+graph TD
+    A[Christmas] -->|Get money| B(Go shopping)
+    B --> C{Let me think}
+    C -->|One| D[Laptop]
+    C -->|Two| E[iPhone]
+    C -->|Three| F[fa:fa-car Car]
+```
+
+**Jailbreak**是一种让AI模型突破原有的限制和约束，获得一些它原本不被允许的行为能力。
+
+越狱大佬的[推特](https://twitter.com/elder_plinius)。
+
+**Prompt Injection**指的是一种针对使用命令行界面(CLI)的应用程序的攻击技术。攻击者通过注入恶意的命令或代码，试图欺骗应用程序执行非预期的操作，从而获取数据、访问权限或控制目标系统。
+
+原本这是一种安全领域的攻击手段，但是在模型提示中，也可以用类似的方法，改变模型的输出。
+
 ### Length & Detail
+
+只有在使用*API*的时候，或者是playground，可以通过hyperparameter控制token数量。这时候，也许对话会不完整，但是系统一定会控制输出在token设置的范围内。
+
+在对话框无法通过对话精确控制输出的word数量。但是可以通过指导，让模型一步一步输出想要的内容。
 
 ### Additional Restrictions
 

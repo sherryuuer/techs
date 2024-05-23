@@ -79,7 +79,8 @@ Command:`gcloud alpha/beta billing accounts list`
 
 ### Cloud Functions
 
-事件触发，语言：Javascript，Go，Python，Java，不关心操作系统，时间执行540秒之内。因为它是事件触发所以对于workload（各种计算任务）更有用。
+- 事件触发，语言：Javascript，Go，Python，Java，不关心操作系统，时间执行540秒之内。因为它是事件触发所以对于workload（各种计算任务）更有用。
+- --trigger-event google.storage.object.finalize：Finalize（敲定）event trigger when a write to Cloud Storage is complete
 
 ### GKE
 
@@ -90,6 +91,8 @@ Command:`gcloud alpha/beta billing accounts list`
 
 - 托管的GKE服务，用法和GKE基本相似除了：集群由谷歌管理，工作负载容器化，docker image，便宜，之需要关心应用的高可用性即可。
 - 正因为它只是容器，所以不涉及对OS层级的管理。而是交给谷歌管理。
+- 根据requests进行scaling
+- 可以有长达一小时的timeout请求
 
 
 ### Compute Engine
@@ -102,6 +105,8 @@ Command:`gcloud alpha/beta billing accounts list`
   - 要素：Image, Snapshot, Metadata(hostname, instance id, startup&shutdown scripts, custom metadata, service accounts info)
   - 新建一个GCE可以从public image,custom image, snapshot, 或者任何可以启动的disk来创建。可以设置SA账号，并设置该服务器可以access的其他API。还可以设置防火墙firewall（http或者https访问）。
   - Startup script：这个相当于AWS的user data，是在启动的时候执行的命令。
+- N2 is a balanced machine type, which is recommended for medium-large databases. 
+- 管理Instance集群，创建template，进行更新操作，使用PROACTIVE模式可以进行一次一个instance的rolling更新。
 
 ### Auto Scaling
 
@@ -127,6 +132,8 @@ Command:`gcloud alpha/beta billing accounts list`
   - 如果我们需要用Service暴露实例，每次更新实例，服务的endpoint都会映射到新的podIP。
 
 - 创建GKE的三个部分是：Cluster basics, Node pools, Cluster（automation, networking, security（可以设置SA）, metadata, features）
+- GKE mode: GKE has to modes to choose from: autopilot mode and standard mode. Autopilot is fully-provisioned and managed. *Autopilot* clusters are regional managed at the pod level. You are charged according to the resources pods use as you deploy and replicate them based on the pod spec. *Standard* mode provides you flexibility to define and manage the cluster structure yourself. *Standard* clusters can be zonal.
+- Nodes run containers. Nodes are VMs (in GKE they're Compute Engine instances). 
 
 - 对于Workload可以进行设置和deploy。设置内容：application name, namespace, labels, cluster。这里namespace很重要，他是区分不同code的方式，比如一个node可以有很多版本的code，这里就是通过namespace区分的。
 
@@ -181,12 +188,13 @@ codelabs：https://codelabs.developers.google.com/codelabs/cloud-app-engine-pyth
   - `gcloud auth activate-service-account --key-file [path/to/key_file.json]`
   - 需要的包：`pip3 install pyopenssl`
   - 创建url：`gsutil signurl -d 10m -u gs://[bucket_name]/demo.txt`
+- 创建bucket的时候不指定location，就会默认美国区使用。
 
 ### Bigtable
 
 - NoSQL
 - 每行中的单个值都被索引，该值称为行键。
-- Cloud Bigtable 非常适合以极低的延迟存储大量单键数据。比如IoT数据，动态实时查询，时间序列，图数据。
+- Cloud Bigtable 非常适合以极低的延迟存储大量单键数据。比如*IoT*数据，动态实时查询，时间序列，图数据。
 - 它支持低延迟的高读写吞吐量，是MapReduce操作的理想数据源。
 
 codelabs：https://codelabs.developers.google.com/codelabs/cloud-bigtable-intro-java#0
@@ -198,12 +206,20 @@ codelabs：https://codelabs.developers.google.com/codelabs/cloud-bigtable-intro-
 - 可以使用 Cloud Dataflow pipeline、Cloud Dataproc jobs或直接使用 BigQuery 流提取 API 将流数据（例如日志或 IoT 设备数据）写入 BigQuery。
 - `bq query --use_legacy_sql=false --dry_run 'SELECT * FROM bigquery-public-data.stackoverflow.posts_answers LIMIT 1000'`其中的`dry_run`可以提示计算成本。
 - Partitioning and Clustering（提高查询效率，降低成本）：分区是将数据分割成较小的独立单元，以提高性能和可扩展性，而聚类是将相关数据放在一起以提高查询性能和减少磁盘 I/O 操作。分区通常是水平的，而聚类则是垂直的。水平分区是按行分割数据，减少单个存储单元上的数据量，而垂直分区是按列分割数据，将相关的数据物理上放置在一起。
+- Load data to BQ 的方式：
+  - Data transfer是一种最简单的方式。
+  - bq command and cron it
+  - BigQuery connectors for big data products such as Spark or Hadoop
+  - Cloud Composer, a Google Cloud managed version of Apache Airflow
+  - Real-time use cases you can stream data into BigQuery using the Streaming API
+  - Dataflow and [Apache Beam](https://www.cnblogs.com/zlslch/p/7609417.html)：A possible use-case for this is to trigger a Cloud Function when an event happens. The Cloud Function could contain the logic to start an Apache Beam pipeline using a Dataflow runner that would execute transformations required and then save your data into BigQuery when it is done. 
 
 ### Cloud SQL
 
 - 对标传统关系型数据库MySQL，PostgreSQL，SQLServer，提供这些数据库的托管服务
 - 使用 CloudSQL 作为 Drupal 或 WordPress 等平台的 CMS（内容管理服务）后端
 - Cloud SQL 非常适合轻松入门或提升和迁移现有 SQL 数据库。
+- 不支持user-defined functions。
 - 但对于现代云数据库，Cloud SQL 存在一些局限性。诸如水平扩展、区域方面的全球可用性等限制。 GCP 的 Cloud Spanner 服务解决了这些限制，并为解决方案提供了无需停机即可水平扩展的能力。总体而言，CloudSQL 的常见用例是将 SQL 数据库从本地提升并转移到云端。
 
 ### Cloud Spanner
@@ -233,6 +249,8 @@ codelabs：https://codelabs.developers.google.com/codelabs/cloud-bigtable-intro-
 
 - 谷歌的VPC是全球资源。子网是区域资源。VPC就像是谷歌里的一个大城市，子网就像是街区，里面的instance就像是大楼。
 - VPC设置的IP分配有自动模式和自定义模型。
+- mode：auto & custom：auto是预定义了一个region一个subnet，预定义了IP range。新的region增加，会自动增加新的subnet。
+- 可以implement Cloud VPN tunnels 来和本地通信。
 
 ### Load Balancer
 

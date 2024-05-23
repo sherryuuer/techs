@@ -72,7 +72,7 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [CNN：Pytorch图像预处理ImageFolder解析](ml/pytorch-imagefolder.md)
 - [CNN：AlexNet-VGG-GoogleNet构架](ml/cnn-3net.md)
 - [*CNN：SqueezeNet和CIFAR10数据集](ml/squeezenet.md)
-- [CNN：ResNet和ImageNet超大数据集](ml/resnet.md)
+- [*CNN：ResNet和ImageNet超大数据集](ml/resnet.md)
 - [RNN：循环神经网络RNN&LSTM代码实现](ml/rnn.md)
 - [生成式AI：概览和项目搭建代码](ml/generativeai.md)
 - [生成式AI：模型原理，自动编码器和变分自编码器](ml/autoencoders.md)
@@ -129,7 +129,8 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [*GithubActions实现workload工作流：自动化GCS部署和notification](cs/ghactions-autodeploy.md)
 - [*网络安全分类：访问控制、身份管理、数据加密与网络防护的清晰分类](cs/network-security-tree.md)
 - [Git和Github复习手册](cs/git.md)
-- [网络安全黑客基础-HackerSaveTheWorld](cs/cybersecurity.md)
+- [网络安全基础-HackerSaveTheWorld](cs/cybersecurity.md)
+- [道德黑客：EthicalHackingTechnology](cs/ethical-hacking.md)
 
 ## Connect More
 - [系统设计概念System-Design-concepts](morefun/system-design.md)

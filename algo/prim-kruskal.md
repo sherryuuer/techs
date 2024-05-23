@@ -1,9 +1,9 @@
 ## 图算法：Prim&Kruskal-最小生成树算法
 
 ---
-### 概念引导
+### Prim
 
-Prim算法是一种用于求解最小生成树（Minimum Spanning Tree）的贪心算法。最小生成树是一个无环的连通子图，它包含了图中的所有顶点，但只包含足够的边，以确保图是连通的，且没有形成环路。
+Prim算法是一种用于求解最小生成树（Minimum Spanning Tree）的贪心算法。最小生成树是一个*无环的连通子图*，它包含了图中的所有顶点，但*只包含足够的边，以确保图是连通的，且没有形成环路*。
 
 Prim算法的基本思想是从一个起始顶点开始，逐步选择与当前生成树相邻的边中权重最小的边，将其加入到生成树中，然后将新加入的顶点标记为已访问。这个过程一直持续，直到生成树包含了图中的所有顶点。
 
@@ -21,7 +21,9 @@ Prim算法的时间复杂度取决于实现方式，可以通过使用最小堆�
 
 总体而言，Prim算法是一种简单而有效的求解最小生成树问题的算法，特别适用于稠密图。
 
-代码示例：求得到的最小生成树的总权重的题解。
+代码示例：
+
+以下求得到的最小生成树的*总权重*的题解。
 
 ```python
 import heapq
@@ -51,7 +53,7 @@ def minimumSpanningTree(edges, n):
     return res if len(visit) == n else -1
 ```
 
-求最小生成树的所有的边的解题：初始化不同的结果上面是res这里是最小生成树mst列表。while循环的条件也不同。
+以下求最小生成树的*所有的边（或者可以说最小生成树本身）*的解题：初始化不同的结果上面是res这里是最小生成树mst列表。while循环的条件也不同。
 
 ```python
 import heapq
@@ -88,6 +90,10 @@ def minimumSpanningTree(edges, n):
                 heapq.heappush(minHeap, [weight, n2, neighbor])
     return mst
 ```
+
+和Dijkstra算法的不同，在于Prim不需要管已经访问过的节点，关注的是整个图的重量。
+
+### Kruskal
 
 Kruskal算法是一种用于解决最小生成树（Minimum Spanning Tree，MST）问题的贪婪算法。最小生成树是连接图中所有节点，并且总权重最小的树。
 

@@ -39,6 +39,7 @@
 
 ### VPC Building Blocks
 
+- 当要创建构架的时候画一个构架图总是好的
 - VPC Region choice
   - Default VPC是为了方便起见为用户创建的Region级别的VPC，若手动删除，也可以右上角随时恢复，没什么特别的地方
 - VPC CIDR
@@ -46,7 +47,7 @@
   - CIDR是传统的网络类型ABC的替代品，有更高的分配和路由效率，灵活的子网划分，避免了浪费
   - Mask后算出的IP范围是从IP的起始位开始的 2^(32-mask) 个IP数量
   - 0-4和255不可用，是AWS在用：0是网址，1是VPC Router，2映射到Amazon-provided DNS，3是给future预留，255是NetworkBroadcastAddress，因为VPC不支持内部广播功能（计算网址数量的时候，要想到这5个不能用）
-  - IPv4一般是/16或者/28，IPv6一般是是固定/56或者/64
+  - IPv4一般是/16（max）或者/28（min），IPv6一般是是固定/56或者/64
   - IPv6地址全是Public的并且具有全球唯一性。不可以自己设定子网range，并且不提供Amazon Provided DNS hostname。
   - IPv6不支持Site2siteVPN，CustomGateway，NatDevice，和VPC Endpoint。只有IPv4支持。
   - EC2实例的IPv6地址在正常重启的情况下是保持不变的。只有在终止旧实例并启动新实例、手动关联新地址或发生故障迁移等情况下，IPv6地址才可能发生变化。AWS的这种设计提高了IPv6地址的可预测性和持久性。
@@ -78,6 +79,61 @@
 - NACL：Subnet level
   - Stateless
   - 通过设置端口范围(1024-65535)来允许这类端口的流量通过。同时可以结合其他条件(IP、协议等)来控制流量
-  - 可以设置allow和deny规则，并且按照编号递增评估
+  - 可以设置allow和deny规则，黑白名单，并且按照编号递增评估
   - 创建EC2的时候不需要设置NACL，因为和Subnet绑定就行了
+- NAT：
+  - NATGateway
+    - Managed by AWS，5GB带宽可以scalingUpto100GB
+    - 高可用性：AWS的NAT高可用性功能通过在指定的可用区内使用冗余实例来实现高可用性。如果发生故障，AWS会自动重新分配 NAT 网关资源。只需在创建时启用该功能。
+    - 设置在PublicSubnet，在PrivateSubnet的路由表中路由到该nat
+    - AZ level，使用EIP
+    - 支持协议TCP，UDP，ICMP
+    - 1024-65535 port用于outbound connection
+    - NAT本身就设置在公有子网，只要公有子网的路由可以接IGW，NAT就可以接，并且NAT被分配了EIP，天生就是向外连接的
+  - NATInstance
+    - 放在PublicSubnet，有效化公有IP，option：设置EIP
+    - 需要用AWS的NAT AMIs
+    - Disable Source/Destination Check：NAT实例的作用是将发自私有子网的流量进行源网络地址转换(SNAT)，使用自身的公有IP地址访问互联网，同时将互联网响应流量进行目标网络地址转换(DNAT)，发回发起请求的私有实例。源/目标检查是EC2实例的默认安全机制，它要求实例只能发送/接收使用自身IP地址作为源/目标的流量。但是对于充当NAT角色的实例，它需要转换流量的源IP和目标IP，这与源/目标检查机制相矛盾，所以要关闭。
+    - PrivateSubnet的路由要路由到NatInstance的EIP，或者这个instance的ID本身（没有EIP的情况）
+    - 因为它是一个EC2所以它有自己的好处，可能比较便宜，并且可以有自己的SG，可以设置portforward，或者bastion
 - DNS：Route53 Resolver
+
+### Advanced Topics（CIDR，ENI，BYOIP）
+
+- 拓展VPC地址空间，增加第二个CIDRs（上限5个）
+  - 不能和现存（包括peering）的地址空间CIDRs有重叠
+  - 如果你的主CIDR是RFC1918的一个range，那你的第二个CIDR不可以是另一个RFC1918的不同range，*因为不同的range不能构成一个子网*。
+    - RFC 1918是一份互联网标准文件，定义了专门保留用于私有网络使用的IP地址范围。这些私有IP地址范围包括:
+      1. 10.0.0.0 - 10.255.255.255 (10.0.0.0/8前缀)
+      2. 100.64.0.0 - 10.127.255.255  (100.64.0.0/10前缀)作为RFC 6598新增的共享地址空间，扩充了可用作本地网络和地址共享的IPv4地址池，是对RFC 1918的一个补充。
+      3. 172.16.0.0 - 172.31.255.255 (172.16.0.0/12前缀) 
+      4. 192.168.0.0 - 192.168.255.255 (192.168.0.0/16前缀)
+      这些IP地址范围被*专门预留，用于构建私有的本地网络*，如家庭或企业内部网络。私有IP地址在互联网上是不可路由的，因此不会与公网上的IP地址冲突。
+    - 扩展的时候必须是同一种range，比如主是10.0.0.0/16，增加第二个是10.1.0.0/16就可以
+  - 如果你VPC的RouteTable中有某个CIDR（比如10.2.0.0/16）是destination，那么也不能设置和那个CIDR相同或者比他大的第二CIDR，可以设置比他小的CIDR（比如10.2.0.0/25）。
+
+- **ENI弹性网卡**（*重新认识到了它的强大，哆啦A梦的传送门*）
+  - 虚拟网卡的逻辑组件，基本相当于IP本身，一个主机可以有多个网卡（如ifconfig命令的结果所示）
+  - 和EC2一样是AZlevel的
+  - 可以包括以下属性：
+    - 一个primary私有IPv4，一个主IPv6（6不需要私有）
+    - 每个私有IPv4有一个ElasticIP
+    - 一个或多个secondary pravite IPv4
+    - 一个公有IPv4
+    - 一个或多个IPv6
+    - 一个或多个SG（安全组是和网卡绑定的）
+    - 一个MAC地址（涉及使用的软件的license的时候经常是和MAC绑定的，所以将网卡带走就可以继续用软件）
+    - 一个source/destination check flog（源/目标检查也是和网卡绑定的）
+  - 一个EC2可以绑定多个ENI，但是Primary的ENI不能detach，可以将第二个之后的ENI进行detach，然后atach到其他的EC2上
+  - 一个EC2可以拥有的IPv4地址上限是由，EC2的instance type，和ENI数量上限决定的
+  - 不支持NIC Teaming（是一种将多个网络接口卡(NIC)绑定在一起作为一个虚拟接口使用的技术。主要目的是提高网络吞吐量和冗余性。），因为EC2的带宽上限是在创建时候决定好的
+  - 如果对一个EC2附加来自同一个subnet的*两个ENI*可能会引起*非对称路由(Asymmetric Routing)*等网络问题，所以最好是一个EC2一个ENI，附加多个IP地址。路由表可能会基于不同的路由策略(如成本最优)选择不同的出站ENI，入站流量则倾向于沿原路径返回，与出站路径不同，形成非对称。
+  - Use Cases：
+    - *Requester Managed ENI*：是指在 AWS 云环境中，由客户(requester)自行管理和配置弹性网络接口(Elastic Network Interface, ENI)的一种模式。它让AWS的很多服务和网卡分离，实现用户对资源的（通过SG）管理。例如：
+      - RDS创建仔AWS管理的VPC中，但是它的ENI创建在客户的VPC中，被用户控制。（lambda等其他服务也是）
+      - EKS的Control-Plane master nodes创建在AWS管理的VPC中，但是它的ENI创建在客户的VPC中，就可以和worker nodes（是由客户在自己的 VPC 中创建的 EC2 实例）进行通信。
+      - AWS Workspace和Appstream2.0的底层host是创建在AWS管理的VPC中，但是ENI创建在客户的VPC中，实现和客户的资源通信。
+    - 创建Management network/Dual-homed instance（是指在AWS的虚拟私有云(VPC)环境中,一个EC2实例同时连接到两个不同的子网的配置，使得一个EC2可以同时访问两个子网的资源，或者实现不同的功能）
+    - High Availability solution：只用一个ENI作为IP端口，当后面的EC2不可用，不删除ENI，而将该ENI atach到新的hot-standby的EC2上，实现高可用性，而不需要变更DNS等网络配置。如果对网络延迟不是很在意的小的APP可以进行这样的设计。
+    - *Secondary IPs for PODs in EKS*
+- BYOIP（Bring your own IP）

@@ -1,6 +1,6 @@
 ## SqueezeNet
 
-SqueezeNet是一种轻量级的神经网络架构，专注于在模型大小和计算资源方面的高效性。它由DeepScale公司于2016年提出，旨在减小神经网络的模型大小，同时保持良好的性能。
+SqueezeNet是一种轻量级（在内存上效率很高）的神经网络架构，专注于在模型大小和计算资源方面的高效性。它由DeepScale公司于2016年提出，旨在减小神经网络的模型大小，同时保持良好的性能。
 
 他的设计思想是通过*使用1x1卷积层*（也称为*逐点卷积或逐元素卷积*）来减小网络的参数数量。1x1卷积层的作用是在通道之间进行线性组合，从而降低输入特征图的通道数，减小模型的复杂度。这种结构被称为"Fire Module"，由一个squeeze层和一个expand层组成。
 
@@ -10,7 +10,15 @@ SqueezeNet相对于一些传统的深度神经网络，如AlexNet（200MB的参�
 
 **总的来说它的大小只有1M比之前的手写模型更小，但是精度却达到了AlexNet的程度**。
 
-一个卷积网络的**参数量计算方法**是：核高 x 核宽 x 核（filter）数量 x 通道channel数量 + 偏置bias数量（一般是filter数量，因为一个核一个偏置）
+一个卷积网络的**参数量计算方法**是：核高 x 核宽 x 核（filter）数量（*也就是层数*） x 通道channel数量 + 偏置bias数量（一般是filter数量，因为一个核一个偏置）
+
+```text
+input      kernel0    kernel1    output
+channel0   channel0   channel0   kernel0_output
+channel1   channel1   channel1   kernel1_output
+channel2   channel2   channel2
+           bias0      bias1
+```
 
 **重点：减少参数的方法**在于三种，减少核的数量，缩小核尺寸，减少输入通道数量。Squeezenet的fire model的减少参数的策略就应用了一些。比如：
 
@@ -19,15 +27,15 @@ SqueezeNet相对于一些传统的深度神经网络，如AlexNet（200MB的参�
 
 ## Fire Module
 
-SqueezeNet中的**Fire Module**是该网络架构的一个核心组成部分，负责提取特征并降低模型参数的数量。Fire Module的设计旨在通过使用1x1卷积层（squeeze层）和3x3卷积层（expand层）来实现这一目标。
+SqueezeNet中的**Fire Module**是该网络架构的一个*核心*组成部分，负责提取特征并降低模型参数的数量。Fire Module的设计旨在通过使用1x1卷积层（squeeze层）和3x3卷积层（expand层）来实现这一目标。
 
 Fire Module分为两个阶段：
 
-1. **Squeeze阶段（squeeze layer）：** 在这一阶段，使用1x1卷积核对输入进行通道压缩。1x1卷积的作用是在通道间进行线性组合，减小输入特征图的通道数，从而减少模型参数。这有助于保留输入的主要特征。
+1. **Squeeze阶段（squeeze layer）：** 在这一阶段，使用1x1卷积核对输入进行*通道压缩*。1x1卷积的作用是在通道间进行线性组合，减小输入特征图的通道数，从而减少模型参数。这有助于保留输入的主要特征。这里的关键就在于通道压缩！
 
-2. **Expand阶段（expand layer）：** 在这一阶段，使用两组卷积核，分别是1x1和3x3卷积核，对Squeeze阶段的输出进行通道扩展。1x1卷积核负责将通道数扩展回来，而3x3卷积核则负责捕捉更复杂的特征。这种结构允许网络保持一定的复杂性，同时仍然保持相对较少的参数。
+2. **Expand阶段（expand layer）：** 在降维后的特征图上进行特征扩展，在这一阶段，使用两组卷积核，分别是1x1和3x3卷积核，对Squeeze阶段的输出进行通道扩展。*1x1卷积核负责将通道数扩展回来，而3x3卷积核则负责捕捉更复杂的特征。*这种结构允许网络保持一定的复杂性，同时仍然保持相对较少的参数。
 
-这两个阶段的压缩比率称为压缩比。
+Squeeze层和Expand层的比例通常设置为1:4。即Expand层中1x1卷积核的通道数是squeeze层输出通道数的4倍，而3x3卷积核的通道数是squeeze层输出的1.67倍。
 
 整个Fire Module的*计算流程*可以用以下步骤表示：
 
@@ -35,7 +43,13 @@ Fire Module分为两个阶段：
 2. Squeeze阶段的输出通过Expand阶段，经过1x1和3x3卷积，通道数再次增加。
 3. 最终的输出被用作下一层的输入，传递到整个网络中。
 
+最后通常会进行stack操作，也就是将很多个Fire Module堆叠起来。一般来说当处理复杂任务的时候，模型中的主要构架会被重复。
+
 Fire Module的设计使得SqueezeNet在保持相对较小的模型尺寸的同时，仍能在一些图像分类任务上保持较好的性能。这种结构在资源受限的环境中，如移动设备和嵌入式系统中，具有较大的应用潜力。
+
+Fire模块的设计思想影响了后续几乎所有的高效卷积神经网络的设计，如MobileNet、ShuffleNet等。
+
+注意，学习目的，这里的构架只用了原来构架的一半，4个。初始卷积核也从边长7降低到3。最大池化层也缩小了一个单位。
 
 ## SqueezeNet Model Code
 
@@ -46,6 +60,7 @@ class SqueezeNetModel(object):
     # Model Initialization
     def __init__(self, original_dim, resize_dim, output_size):
         self.original_dim = original_dim
+        # for applying a random crop when training and testing
         self.resize_dim = resize_dim
         self.output_size = output_size
     
@@ -146,7 +161,6 @@ def fire_module(self, inputs, squeeze_depth, expand_depth, name):
 
 总体而言，这个连接操作有助于提高模型的表示能力，使其能够更好地捕捉和利用输入数据中的信息，从而提高网络性能。这是 SqueezeNet 架构的一种设计选择，旨在在保持模型轻量级的同时，保持较好的性能。
 
-
 ## 探索CIFAR10数据集
 
 CIFAR-10(Canadian Institute for Advanced Research) 数据集是用于机器视觉领域的图像分类数据集，它有飞机、汽车、鸟类、猫、鹿、狗、青蛙、马、船和卡车共计10 个类别的60000 张彩色图像，尺寸均为32*32，其包含5个训练集和1个测试集，每个数据集有10000 张图像。
@@ -154,7 +168,7 @@ CIFAR-10(Canadian Institute for Advanced Research) 数据集是用于机器视�
 - init：初始化模型类：原始维度，输出大小，处理后维度
 - image_preprocessing：对图像的前置处理，包括数据增强（裁剪，反转0.5prob）以及图像正规化，将0-255变成0-1区间的张量。
 - model_layers：
-1. 常规处理，是在开头有一个正常的卷积层，在最后有一个正常的池化层。（采用延迟下采样（delayed downsampling）是比如把最大池化层放在最后层的行为。而在前期拥有更多的特征，有助于提高精度。）
+1. 常规处理，是在开头有一个正常的卷积层，在最后有一个正常的池化层。（采用**延迟下采样**（delayed downsampling）是比如把最大池化层放在最后层的行为。而*在前期拥有更多的特征*，有助于提高精度。）
 2. 常规操作：挤压层加上池化层。
 3. 增加深度的操作：为了提高精度再次加上一个挤压层，这次不需要池化，在输出logits阶段，会使用池化。
 4. dropout层：防止过拟合。
@@ -177,20 +191,22 @@ class SqueezeNetModel(object):
     # Random crop and flip
     def random_crop_and_flip(self, float_image):
         crop_image = tf.compat.v1.random_crop(float_image, [self.resize_dim, self.resize_dim, 3])
+        # 0.5的概率进行左右翻转
         updated_image = tf.image.random_flip_left_right(crop_image)
         return updated_image
     
     # Data Augmentation
     def image_preprocessing(self, data, is_training):
         reshaped_image = tf.reshape(data, [3, self.original_dim, self.original_dim])
-        transposed_image = tf.transpose(reshaped_image, [1, 2, 0])
+        transposed_image = tf.transpose(reshaped_image, [1, 2, 0]) # HWC in tensorflow
         float_image = tf.cast(transposed_image, tf.float32)
         # 训练模式下进行数据增强（大小调整和flip翻转）
         if is_training:
             updated_image = self.random_crop_and_flip(float_image)
-        # 除此之外，进行图像大小调整
+        # 除此之外，进行图像大小调整，注意这里不是crop而是大小调整
         else:
             updated_image = tf.image.resize_image_with_crop_or_pad(float_image, self.resize_dim, self.resize_dim)
+        # 进行图像正规化处理，使得均值为0方差为1
         standardized_image = tf.image.per_image_standardization(updated_image)
         return standardized_image
 
@@ -205,18 +221,20 @@ class SqueezeNetModel(object):
     # Convolution layer wrapper
     def custom_conv2d(self, inputs, filters, kernel_size, name):
         return tf.keras.layers.Conv2D(
-        filters=filters,
-        kernel_size=kernel_size,
-        padding='same',
-        activation='relu',
-        name=name)(inputs)
+            filters=filters,
+            kernel_size=kernel_size,
+            padding='same',
+            activation='relu',
+            name=name
+        )(inputs)
 
     # Max pooling layer wrapper
     def custom_max_pooling2d(self, inputs, name):
         return tf.keras.layers.MaxPool2D(
-        pool_size=[2, 2],
-        strides=2,
-        name=name)(inputs)
+            pool_size=[2, 2],
+            strides=2,
+            name=name
+        )(inputs)
     
     # Model Layers
     def model_layers(self, inputs, is_training):
@@ -224,10 +242,12 @@ class SqueezeNetModel(object):
             inputs,
             64,
             [3, 3],
-            'conv1')
+            'conv1'
+        )
         pool1 = self.custom_max_pooling2d(
             conv1,
-            'pool1')
+            'pool1'
+        )
         # add fire model
         fire_params1 = [
             (32, 64, 'fire1'),
@@ -235,10 +255,12 @@ class SqueezeNetModel(object):
         ]
         multi_fire1 = self.multi_fire_module(
             pool1,
-            fire_params1)
+            fire_params1
+        )
         pool2 = self.custom_max_pooling2d(
             multi_fire1,
-            'pool2')
+            'pool2'
+        )
         # add fire model (add depth)
         fire_params2 = [
             (32, 128, 'fire3'),
@@ -246,14 +268,16 @@ class SqueezeNetModel(object):
         ]
         multi_fire2 = self.multi_fire_module(
             pool2,
-            fire_params2)
+            fire_params2
+        )
         # dropout to prevent overfitting
         dropout1 = tf.keras.layers.Dropout(rate=0.5)(multi_fire2, training=is_training)
         conv_layer = self.custom_conv2d(
             dropout1,
             self.output_size,
             [1, 1],
-            'final_conv')
+            'final_conv'
+        )
         return self.get_logits(conv_layer)
 ```
 

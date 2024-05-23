@@ -391,7 +391,7 @@ AWS安全服务一共包括六个板块：
 - **LambdaFunction**的网络工作原理：
   - 如何在VPC内设置Lambda：设置VPCID，subnet和SG，在引擎下，Lambda会自动create ENI（需要相应的权限:CreateNetworkInterface on EC2:ENIManagementAccess Policy），就是上面说的interface。这样它才能工作。
   - 那么在VPC中的Lambda中可以接公网吗？？⬇️
-  - 一个在PublicSubnet中的lambda无法像里面的EC2那样访问公共网络或者有公共IP。
+  - 一个在PublicSubnet中的lambda无法像里面的EC2那样访问公共网络或者有公共IP。（因为Lambda是无状态的，无服务器的，所以不分配固定IP公有地址，建议通过NAT和外网通信，或者以负载均衡器LB作为接口）
   - 那如何让他有公共访问：放入PrivateSubnet然后设置NatGateway。（这是唯一的方法）。然后在私有子网中和其他内部资源一起工作。
   - 如何访问DynamoDB：通过上面设置的Nat通过InternetGateway在公网访问DynamoDB，或者不用Nat而是通过VPCEndpointGateway访问。（因为你VPC中的所有资源都可以这么访问S3和DynamoDB）
 

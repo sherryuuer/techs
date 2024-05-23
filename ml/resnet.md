@@ -34,7 +34,7 @@ ImageNet是一个超大型图片网络，使用许多许多层的神经网络进
 
 机器学习中层数不短增加，比如几百几百层，当超过50层后，RN（resnet，后面都这样简称）就会开始加一个瓶颈层，然后引入残差网络。
 
-和之前SqueezeNet一样，RN也是使用black类将所有的残差处理打包，然后堆叠block实现多个残差处理。
+和之前SqueezeNet一样，RN也是使用block类将所有的残差处理打包，然后堆叠block实现多个残差处理。
 
 ### 初始化残差网络
 
@@ -70,18 +70,20 @@ class ResNetModel(object):
 
 ```python
 def custom_padding(self, inputs, kernel_size):
-        pad_total = kernel_size - 1
-        pad_before = pad_total // 2
-        pad_after = pad_total - pad_before
-        if self.data_format == 'channels_first':
-            padded_inputs = tf.pad(
-                inputs,
-                [[0, 0], [0, 0], [pad_before, pad_after], [pad_before, pad_after]])
-        else:
-            padded_inputs = tf.pad(
-                inputs,
-                [[0, 0], [pad_before, pad_after], [pad_before, pad_after], [0, 0]])
-        return padded_inputs
+    pad_total = kernel_size - 1
+    pad_before = pad_total // 2
+    pad_after = pad_total - pad_before
+    if self.data_format == 'channels_first':
+        padded_inputs = tf.pad(
+            inputs,
+            [[0, 0], [0, 0], [pad_before, pad_after], [pad_before, pad_after]]
+        )
+    else:
+        padded_inputs = tf.pad(
+            inputs,
+            [[0, 0], [pad_before, pad_after], [pad_before, pad_after], [0, 0]]
+        )
+    return padded_inputs
 ```
 
 ### 预激活

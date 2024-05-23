@@ -358,21 +358,32 @@ client.search_model_versions(f"name = '{model_name}'")[0].current_stage
 ## Section 2: ML Workflows
 ### Exploratory Data Analysis
 - Compute summary statistics on a Spark DataFrame using .summary()
-- Compute summary statistics on a Spark DataFrame using dbutils data
-summaries.
-- Remove outliers from a Spark DataFrame that are beyond or less than a
-designated threshold.
+  - `display(df.summary())`
+- Compute summary statistics on a Spark DataFrame using dbutils data summaries.
+  - `dbutils.data.summarize(fixed_price_df)`
+- Remove outliers from a Spark DataFrame that are beyond or less than a designated threshold.
+  - `display(fixed_price_df.filter(col("price") > threshhold))`
 ### Feature Engineering
-- Identify why it is important to add indicator variables for missing values that
-have been imputed or replaced.
-- Describe when replacing missing values with the mode value is an
-appropriate way to handle missing values.
-- Compare and contrast imputing missing values with the mean value or
-median value.
+- Identify why it is important to add indicator variables for missing values that have been imputed or replaced.
+  - 如果你对分类/数值特征进行任何插补技术，你必须包含一个额外的字段，指定该字段已被插补
+  - 即使进行了缺失值插补，添加指示变量也是一种数据预处理的最佳实践，可以最大程度地保留信息、减少偏差、提高模型性能
+- Describe when replacing missing values with the mode value is an appropriate way to handle missing values.
+  - 使用众数(mode)进行缺失值插补最适合处理类别型特征(categorical features)的缺失值
+  - 可以保留数据分布，无需创建新的类别
+- Compare and contrast imputing missing values with the mean value or median value.
+  - 对于包含大量异常值或离群值的数据集，使用中位数插补会比均值插补更加稳健
+  - 如果保留数据分布形状是最重要的，那么均值和中位数插补都是不错的选择,只是中位数插补可能更优
 - Impute missing values with the mean or median value.
+```python
+for c in impute_cols:
+    doubles_df = doubles_df.withColumn(c + "_na", when(col(c).isNull(), 1.0).otherwise(0.0))
+imputer = Imputer(strategy="median", inputCols=impute_cols, outputCols=impute_cols)
+imputer_model = imputer.fit(doubles_df)
+# 保留了缺失指示列信息c_na列，并对其他的列进行了变换
+imputed_df = imputer_model.transform(doubles_df)
+```
 - Describe the process of one-hot encoding categorical features.
-- Describe why one-hot encoding categorical features can be inefficient for
-tree-based models.
+- Describe why one-hot encoding categorical features can be inefficient for tree-based models.
 ### Training
 - Perform random search as a method for tuning hyperparameters.
 - Describe the basics of Bayesian methods for tuning hyperparameters.
