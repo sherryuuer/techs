@@ -108,9 +108,9 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [AWS-Bedrock项目实践1：Code Generation (APIGateway,S3,bedrock)](clouds/bedrock-pj1.md)
 - [AWS-Bedrock项目实践2-3：Notes Summarisation & Image Generation & 模型评估 & RAG](clouds/bedrock-pj2-3.md)
 - [Google-Gimini-API上手体验和要点总结：目前最爱Gemini](clouds/gemini-api.md)
+- [GCP的ID认证服务：WorkloadIdentity是什么，如何让外部ID可以在GCP内作业](cs/workloadidentity.md)
 - [关于云上的CI/CD服务，以及IaC服务的总结](clouds/cloud-cicd-tools.md)
 - [GCP-cloud-Engineer学习笔记](clouds/gcp-cloud-engineer.md)
-- [关于云服务构架，系统设计等的上层思考](clouds/high-level-thinking.md)
 
 ## Principal
 - [程序员原则](principals/whats-not-change.md)
@@ -118,24 +118,25 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [工程师心得](principals/engineer.md)
 
 ## Computer Science
-- [软件开发和程序员基础知识](cs/programming-base.md)
-- [网络基础-构架，协议栈，应用层，HTTP，DNS](cs/internet-base-app-layer.md)
-- [网络基础-传输层，TCP/UDP](cs/internet-base-transport-layer.md)
-- [使用Python实现的套接字编程](cs/python-sockets-programming.md)
-- [网络基础-网络层，IP，ARP，DHCP，ICMP，firewall，nat](cs/internet-base-network-layer.md)
-- [网络基础-链路层，以太网，MAC地址](cs/internet-base-link-layer.md)
-- [网络限流(throttling)，指数退避(ExponentialBackoff)和Python的代码实现](cs/exponential-backoff.md)
-- [GCP的ID认证服务：WorkloadIdentity是什么，如何让外部ID可以在GCP内作业](cs/workloadidentity.md)
+- [软件开发和程序员基础知识/基础情报技术](cs/programming-base.md)
 - [*GithubActions实现workload工作流：自动化GCS部署和notification](cs/ghactions-autodeploy.md)
-- [*网络安全分类：访问控制、身份管理、数据加密与网络防护的清晰分类](cs/network-security-tree.md)
 - [Git和Github复习手册](cs/git.md)
-- [网络安全基础-HackerSaveTheWorld](cs/cybersecurity.md)
-- [道德黑客：EthicalHackingTechnology](cs/ethical-hacking.md)
+- [数据库]()
+- [网络基础：构架，协议栈，应用层，HTTP，DNS](cs/internet-base-app-layer.md)
+- [网络基础：传输层，TCP/UDP](cs/internet-base-transport-layer.md)
+- [网络基础：使用Python实现的套接字编程](cs/python-sockets-programming.md)
+- [网络基础：网络层，IP，ARP，DHCP，ICMP，firewall，nat](cs/internet-base-network-layer.md)
+- [网络基础：链路层，以太网，MAC地址](cs/internet-base-link-layer.md)
+- [网络限流(throttling)，指数退避(ExponentialBackoff)和Python的代码实现](cs/exponential-backoff.md)
+- [网络安全：Cyber Security foundation](cs/cybersecurity.md)
+- [道德黑客：Ethical Hacking Technology](cs/ethical-hacking.md)
 
-## Connect More
+## Link More
+- [关于云服务构架，系统设计等的上层思考](clouds/high-level-thinking.md)
 - [系统设计概念System-Design-concepts](morefun/system-design.md)
 - [G检定深度学习考试相关日语词汇和概念解释](morefun/gtest.md)
 - [*WEB3：初步接触比特币，元宇宙，以太坊，智能合约等概念](morefun/web3.md)
+- [*网络安全分类：访问控制、身份管理、数据加密与网络防护的清晰分类](cs/network-security-tree.md)
 - [数学和信息论基础思想](morefun/math-infomation-theory.md)
 
 ## Interesting Posts

@@ -122,6 +122,15 @@ Linux对虚拟化技术有良好的支持，如KVM、Docker等，方便在单机
   9. 对于较新的Linux发行版，Guest Additions通常在安装系统时就自动集成安装了，无需再次手动安装。
   10. 注意，每次升级VirtualBox版本时，也需要重新安装对应版本的Guest Additions来获取最新功能和修复。正确安装增强功能可以极大提高虚拟机与主机的融合度。
 
+- Kali系统已经预先安装了Python3，很方便进行代码执行。
+- Device-Drag&Drop-双向Bidirectional：该选项可以让本地和Kali的文件随意拖拽传送。
+
+### 常用网络命令
+
+- ifconfig：网络接口信息。*mac地址告诉你你是谁，ip地址告诉你你在哪。*
+- sudo：sudo加命令会以root用户身份执行，如果你要执行很多命令，使用`sudo su`就会转换为root用户，退出使用exit命令。最高用户。
+
+
 ### 网络设置
 
 NAT方式或者桥接网络方式。
@@ -192,6 +201,40 @@ NAT(Network Address Translation，网络地址转换)和NAT Network在VirtualBox
 整个过程的目的是全面评估系统面临的真实威胁，了解网络防御的薄弱环节，并为系统加固提供依据，以提高整体网络安全性。当然，渗透测试需要事先获得明确授权，并遵守相关法律法规。
 
 ## Reconnaissance/Infermation gathering
+
+### 信息收集命令
+
+- 信息收集是渗透测试的初始阶段，旨在获取目标系统的相关数据。收集内容包括域名、IP地址、开放端口、操作系统版本、网络拓扑结构、员工信息等。
+- *Active主动信息收集*涉及直接与目标系统交互，如扫描端口或发送探测包；*Passive被动信息收集*则利用公开可用的信息源，不直接与目标系统交互，如查询DNS记录、搜索引擎或社交媒体。
+- Ping命令是一种网络工具，用于测试主机之间的连接状态，同时它的信息中是*包含目标ip地址的*。它通过发送ICMP（Internet Control Message Protocol）回显请求消息到目标主机，并等待目标主机返回响应，从而确定主机之间的通信是否正常。`ping google.com`
+- Nslookup是一种网络工具，用于查询域名系统（DNS）记录。通过Nslookup，用户可以查找特定域名对应的IP地址，或者反向查询一个IP地址对应的域名。`nslookup google.com`
+- Whois工具是一种用于查询域名注册信息的网络工具。通过Whois工具，用户可以查找到域名的注册者、注册日期、过期日期、域名服务器等信息。这些信息来自，域名注册数据库。`whois google.com`
+- 如果你在做渗透测试，那么你发现了一些特殊的信息，最好记下来。
+
+### Whatweb Stealthy Scan（隐秘扫描）
+
+- Whatweb Stealthy Scan（隐秘扫描）是一种Web应用程序扫描技术，旨在以隐蔽的方式探测目标网站的特征和漏洞。相比于常规扫描，Stealthy Scan更注重隐蔽性，以减少对目标系统的影响和发现漏洞的风险。
+- Whatweb工具通常有两种模式：普通模式（aggression level）和隐蔽模式（stealthy level）。在普通模式下，Whatweb会以较为直接的方式对目标网站进行扫描，可能会留下一些日志或者引起目标系统的警觉。而在隐蔽模式下，Whatweb会尽可能减少对目标系统的干扰和被探测的风险，以更隐蔽的方式进行扫描。
+- 通常情况下，*渗透测试中会使用普通模式进行扫描*。因为在渗透测试中，主要目的是全面评估目标系统的安全性，包括发现可能存在的漏洞和弱点，普通模式可以更快速地发现目标系统的漏洞和特征，以便进行后续的攻击和渗透测试活动。
+- `whatweb --help`: get help information
+- `whatweb arh.bg.ac.rs -v`: get information, `-v` or `--verbose` make the output readable and get more information about plugin
+- `whatweb 192.168.1.1-192.168.1.255 --aggression 3 -v`:使用普通模式进行本地range的扫描，使用`--no-errors`可以将没有信息的ip错误过滤。`--log-verbose=filename`可以将输出内容保存到指定文件。
+
+### 邮件信息收集工具
+
+- theHarvester是一种信息收集工具，用于收集目标域名相关的电子邮件地址、子域名、虚拟主机、IP地址等信息。它通过查询公开可用的信息源，如搜索引擎、DNS记录等，来获取目标域名的相关信息，帮助渗透测试人员和安全研究人员获取更全面的目标信息。
+- `theHarvester --help`: get help information
+- `theHarvester -d mas.bg.ac.rs -b all`: `-b` means the domain, `-d` means the source, where you want to search the emails, `-l` will limit the result num, default is 500.
+- 有时候同一个命令，在不同的时间或者，多次执行后，会得到不同的结果。
+- Hunter.io网站，是一款用于电子邮件地址搜索和验证的工具。它可以帮助用户查找特定公司或网站的电子邮件地址，并提供验证功能以确认电子邮件地址的有效性。Hunter.io还提供了Chrome插件和API，方便用户在不同的工作流程中使用。
+- 和别人的工具相比，自己用python写的更好。Hacker精神。自我创造。*创造性才是hacker的灵魂。*在repo的code-lab的Ehacker-tools文件夹中有工具Email Scraper。
+
+### Github是最大的工具箱
+
+- 自行谷歌，关键词+Github，比如[information gathering tools Github](https://github.com/topics/information-gathering)
+- 使用`git clone link`
+- 有时候你得到一个好的工具之前可能需要测试掉好几个不能用的。
+- 比如使用[sherlock](https://github.com/sherlock-project/sherlock)工具，查查自己的username在哪些网站出现。`python3 sherlock.py sherryuuer`
 
 ## Scanning
 

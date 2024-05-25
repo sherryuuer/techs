@@ -52,7 +52,7 @@ def bruteForce(nums):
     return maxSum
 ```
 
-Kadane算法中心思想是，当curSum出现负数的时候，直接放弃前面所有的元素，重新开始累加。
+Kadane算法中心思想是，*当curSum出现负数*的时候，直接放弃前面所有的元素，重新开始累加。
 
 ```python
 # Kadane's Algorithm: O(n)

@@ -46,7 +46,7 @@
   - IP也是一种协议，8x4bit数字，8bit代表0～255
   - CIDR是传统的网络类型ABC的替代品，有更高的分配和路由效率，灵活的子网划分，避免了浪费
   - Mask后算出的IP范围是从IP的起始位开始的 2^(32-mask) 个IP数量
-  - 0-4和255不可用，是AWS在用：0是网址，1是VPC Router，2映射到Amazon-provided DNS，3是给future预留，255是NetworkBroadcastAddress，因为VPC不支持内部广播功能（计算网址数量的时候，要想到这5个不能用）
+  - 0-4和255不可用，是AWS在用：0是网址，1是VPC Router，2映射到Amazon-provided DNS（Route53 DNS Resolver），3是给future预留，255是NetworkBroadcastAddress，因为VPC不支持内部广播功能（计算网址数量的时候，要想到这5个不能用）
   - IPv4一般是/16（max）或者/28（min），IPv6一般是是固定/56或者/64
   - IPv6地址全是Public的并且具有全球唯一性。不可以自己设定子网range，并且不提供Amazon Provided DNS hostname。
   - IPv6不支持Site2siteVPN，CustomGateway，NatDevice，和VPC Endpoint。只有IPv4支持。
@@ -136,4 +136,58 @@
     - 创建Management network/Dual-homed instance（是指在AWS的虚拟私有云(VPC)环境中,一个EC2实例同时连接到两个不同的子网的配置，使得一个EC2可以同时访问两个子网的资源，或者实现不同的功能）
     - High Availability solution：只用一个ENI作为IP端口，当后面的EC2不可用，不删除ENI，而将该ENI atach到新的hot-standby的EC2上，实现高可用性，而不需要变更DNS等网络配置。如果对网络延迟不是很在意的小的APP可以进行这样的设计。
     - *Secondary IPs for PODs in EKS*
+
 - BYOIP（Bring your own IP）
+  - 迁移已有的公共IPv4或者IPv6路由到AWS（目的是为了继续使用自己的IP，比如该IP已经被客户使用，或者有自己的reputation，所以不想改变，或者可以*将AWS作为一个hot standby*之类的原因）
+  - YourIP必须是在RIR注册过的。区域互联网注册管理机构 (RIR) 是负责特定地区内IP地址和自治系统号码（ASN）分配与管理的组织，确保网络资源的公平分配和互联网的稳定运行。支持三个：ARIN是美国，APNIC是亚太，RIPE是中东和欧洲。
+  - YourIP必须历史干净，不然AWS有权拒绝你的IP迁移。
+  - YourIPv4-range最多可以到/24，不能超过24（不能是25，可以是23）
+  - YourIPv6-range最多可以到/48，但是如果你不想公开或者是在内部DirectConnect则最多可以到/56
+  - 每个区域最多迁移5个IP range（包括4和6）
+  - 授权：使用资源公共密钥基础设施（RPKI）创建一个路由原始授权（ROA：RouteOriginAuthorization）以授权AWS的自治系统号码ASN（16509和14618）来广播你的IP地址。
+    - 这是为了确保你的IP地址只能通过指定的ASN进行广播，从而防止IP地址劫持和其他安全问题。
+    - 通过创建和发布这个ROA，你告诉全球的路由器，只有AWS的指定ASN被授权广播你的IP地址前缀，从而提高网络安全性。
+    - 简化的过程示例：1-登录RPKI管理平台：进入你所属RIR的管理界面。2-创建新ROA：填写你的IP前缀和AWS的ASN。3-确认和发布：确认信息无误并发布ROA。自治系统号码（ASN）通过边界网关协议（BGP）来广播其路由信息。BGP是一种用于在不同自治系统（AS）之间交换路由信息的标准协议。
+
+## VPC DNS & DHCP
+
+### VPC DNS Server（Route53 Resolver）
+
+- **这部分内容专注于从VPC内部进行DNS解决。Route53的部分有更大的Scope。**
+- 功能是：解决VPC内部资源（EC2）的DNS问题。
+- 创建VPC就会被自动创建一个内部的DNS server，IP地址是VPCbaseIP+2，就是上面提到的AWS预用5个IP之一。或者IP地址也可以是一个虚拟IP：169.254.169.253(这个只能从VPC内部连)
+- 通过以下方式解决request：这三者是*有顺序的*，按照顺序，自上而下进行DNS解决
+  - *Route53 Private Hosted Zone*
+  - *VPC internal DNS* 
+  - Forwards other requests to *Public DNS*（including Route53 Public Hosted Zone，提到公共的就是指公共的互联网上的DNS服务）
+
+- Route53 Private Hosted Zone（Route53的一项功能）
+  - Private Hosted Zone 允许你在 Amazon VPC 中创建自定义的 DNS 命名空间，从而可以在私有网络内解析 DNS 名称。这些域名不会在公共互联网 DNS 服务器上可见，因此它们只在你指定的 VPC 内部有效。
+  - 首先需要创建 Private Hosted Zone：
+    - 在 AWS 管理控制台中，进入 Route 53 服务，选择“Hosted Zones”，然后创建一个新的“Private Hosted Zone”。
+    - 为你的私有域名指定一个 DNS 名称（例如 example.internal）。
+    - 选择一个或多个 VPC 与这个 Hosted Zone 关联。只有关联的 VPC 中的资源才能解析这个私有域名。
+  - 然后配置资源记录：
+    - 在 Hosted Zone 中，创建资源记录集（例如 A 记录、CNAME 记录），这些记录将指向你 VPC 内的资源（如 EC2 实例的私有 IP 地址）。
+    - 例如一个 A 记录 webserver.example.internal 指向某个 EC2 实例的私有 IP 地址 10.0.0.5。
+  - 进行 DNS 解析：
+    - 当 VPC 内的资源（如 EC2 实例）发出对 webserver.example.internal 的 DNS 查询时，Route 53 使用 Private Hosted Zone 中的配置解析这个域名，并返回相应的 IP 地址。
+    - 这保证了域名解析请求不会离开 AWS 网络，增强了安全性和性能。
+  - 权限控制：
+    - 通过关联特定的 VPC，确保只有这些 VPC 内的资源才能访问和解析 Private Hosted Zone 中的域名。你也可以使用 IAM 策略控制对 Hosted Zone 配置的访问权限。
+
+- VPC（internal）DNS
+  - 负责解析在VPC中的资源（如EC2实例、RDS实例等）的域名，确保它们能够通过内网进行通信。
+  - 当你创建一个EC2的时候勾选为他分配DNS网址，会自动分配一个类似`ip-<ip address>.region.compute.internal`这样的地址，就可以使用内部的VPC DNS进行解决。
+  - 但是相比这个不如用自己定义的域名，也就是在 Private Hosted Zone 中定义自己的域名。
+
+- *Public DNS*（including Route53 Public Hosted Zone）
+  - 在外网中递归地查询域名。
+  - 这部分在Route53中更细致。
+  - 这个部分的resolution和上面的不同之处在于，它*需要通过一个网关和互联网连接*，而上面两个不需要，是内部的resolution。
+
+### DHCP Option sets
+
+- 上一个部分的内部DNS解决可以达成，那么*EC2是如何知道要去2号IP找到这个VPC DNS的*，就是通过DHCP的设置。
+- 默认DHCP Option Sets：
+  - 在VPC创建的时候会生成一个默认的DHCP Option sets：包含Domain-name={ip.region.internal}，name-servers=AmazonProvidedDNS，这样的设置。
