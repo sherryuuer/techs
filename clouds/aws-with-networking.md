@@ -161,7 +161,7 @@
   - *VPC internal DNS* 
   - Forwards other requests to *Public DNS*（including Route53 Public Hosted Zone，提到公共的就是指公共的互联网上的DNS服务）
 
-- Route53 Private Hosted Zone（Route53的一项功能）
+- Route53 Private Hosted Zone（Route53的一项功能）*目的就是自定义自己VPC内的私有域名：域名：私有ip地址*
   - Private Hosted Zone 允许你在 Amazon VPC 中创建自定义的 DNS 命名空间，从而可以在私有网络内解析 DNS 名称。这些域名不会在公共互联网 DNS 服务器上可见，因此它们只在你指定的 VPC 内部有效。
   - 首先需要创建 Private Hosted Zone：
     - 在 AWS 管理控制台中，进入 Route 53 服务，选择“Hosted Zones”，然后创建一个新的“Private Hosted Zone”。
@@ -186,8 +186,37 @@
   - 这部分在Route53中更细致。
   - 这个部分的resolution和上面的不同之处在于，它*需要通过一个网关和互联网连接*，而上面两个不需要，是内部的resolution。
 
+- Route53 Resolver Endpoint
+  - 用于在VPC和本地on-premise网络之间进行DNS解析
+  - 将DNS端点*ENI*配置在VPC中的subnet中，通过ENI进行request转发，实现解析
+  - ENI包括Inbound和Outbound：Inbound是DNS在AWSVPC中，本地request到ENI，然后被转发到Route53Resolver解析。Outbound是DNS在本地服务器中，当VPC中的服务器请求解析时，如果内部无法解决，会根据条件通过ENI转发request到本地数据中心的DNS进行解析。
+
 ### DHCP Option sets
 
+- **DHCP**（Dynamic Host Configuration Protocol）是一种网络管理协议，用于自动分配IP地址和其他网络配置参数给客户端设备，以便它们可以在网络上通信。DHCP简化了网络管理，不需要手动为每个设备配置网络设置。
+- 工作原理如下：
+  - 发现（Discover）：新设备（客户端）连接到网络时，会广播一个DHCP Discover消息，寻找可用的DHCP服务器。
+  - 提供（Offer）：DHCP服务器收到Discover消息后，会返回一个DHCP Offer消息，提供一个可用的IP地址和其他网络配置信息（如子网掩码、网关地址、DNS服务器）。
+  - 请求（Request）：客户端收到Offer后，选择一个DHCP服务器，并广播一个DHCP Request消息，表明它接受所提供的IP地址。
+  - 确认（Acknowledge）：选定的DHCP服务器收到Request消息后，确认并发送一个DHCP Acknowledgment（ACK）消息，正式分配IP地址给客户端，同时提供其他必要的网络配置信息。
+  - 租约lease管理：分配的IP地址有一个租约期限。在租约到期前，客户端需要向DHCP服务器请求续租，以继续使用该IP地址。
+
 - 上一个部分的内部DNS解决可以达成，那么*EC2是如何知道要去2号IP找到这个VPC DNS的*，就是通过DHCP的设置。
-- 默认DHCP Option Sets：
-  - 在VPC创建的时候会生成一个默认的DHCP Option sets：包含Domain-name={ip.region.internal}，name-servers=AmazonProvidedDNS，这样的设置。
+- DHCP Option Sets：
+  - 包括Domain Name，DNS设置，NTP服务器，和NetBIOS node type。
+  - NTP（Network Time Protocol）是一种网络协议，用于同步计算机系统之间的时钟，以确保它们的时间一致。
+  - NetBIOS（Network Basic Input/Output System）是一种用于局域网（LAN）中的通信协议，提供网络基本输入/输出服务。它允许应用程序在网络上的计算机之间进行通信，包括名称解析（将计算机名称转换为IP地址）、会话管理（建立和管理连接）、和数据传输。NetBIOS常用于早期的Windows网络环境，但在现代网络中，许多功能已被其他协议（如DNS和TCP/IP）所取代。
+- 在VPC中创建的时候会生成一个默认的DHCP Option sets：
+  - Domain-name={region}.compute.internal
+  - name-servers=AmazonProvidedDNS
+  - 它会为新创建的EC2创建内部hostname：<ip-ip-address>.<region>.compute.internal（美国东部US-east-1是<ip-ip-address>.ec2.internal），和`/etc/resolv.conf`，记载nameserver服务器的地址，和域名后缀<region>.compute.internal，这意味着你可以直接ping <ip-ip-address>也可以成功。
+  - 它会为有publicIP的EC2创建外部hostname：ec2-<ip-address>.<region>.amazonaws.com（美国东部US-east-1是ec2-<ip-address>.compute-1.amazonaws.com）
+  - 如果要给一个在public subnet中的EC2分配public ip，需要Enable DNS hostname。
+  - 从内部的EC2进行ping Private EC2的时候，会返回私有ip，从外部进行ping的时候会返回公有ip。
+- 无法对已有的DHCP进行更改，只能*创建一个新的DHCP*，然后attach到VPC中，以此*创建自己的内部域名（使用新创建的Private Hosted Zone）*，或者*不使用AmazonProvidedDNS，而是指向自己定义的DNS服务器*。设置后，需要等待内部租约lease更新，或者使用command（sudo dhclient -r eth0）进行手动更新。（一个VPC只能绑定一个DHCP option sets）
+  - 自己的DNS服务器，需要UDP53端口进行通信。
+- VPC DNS Attributes：
+  - enableDnsSupport（DNS Resolution setting）是 AWS 中用于配置 VPC 的一个功能，它允许 VPC 中的实例使用默认的 DNS 解析服务来解析公共 DNS 域名，从而能够与互联网上的资源进行通信。默认启用，但是关闭了也可以自己设置Custom DNS Server。
+  - enableDnsHostname（DNS Hostname setting）是 AWS VPC 中的一个配置选项，它允许 VPC 内的实例分配具有公开可解析主机名的 DNS 记录，从而使其他网络中的资源可以通过主机名来访问 VPC 中的实例。新VPC默认是禁用的。前置条件是 enableDnsSupport 为 True。
+  - 使用Private Hosted Zone的前提是这两种属性都设置为True。
+

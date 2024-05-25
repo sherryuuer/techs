@@ -121,7 +121,7 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [软件开发和程序员基础知识/基础情报技术](cs/programming-base.md)
 - [*GithubActions实现workload工作流：自动化GCS部署和notification](cs/ghactions-autodeploy.md)
 - [Git和Github复习手册](cs/git.md)
-- [数据库]()
+- [数据库：SQLAtoZ](cs/db-sql.md)
 - [网络基础：构架，协议栈，应用层，HTTP，DNS](cs/internet-base-app-layer.md)
 - [网络基础：传输层，TCP/UDP](cs/internet-base-transport-layer.md)
 - [网络基础：使用Python实现的套接字编程](cs/python-sockets-programming.md)
