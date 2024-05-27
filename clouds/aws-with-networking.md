@@ -202,7 +202,7 @@
   - 租约lease管理：分配的IP地址有一个租约期限。在租约到期前，客户端需要向DHCP服务器请求续租，以继续使用该IP地址。
 
 - 上一个部分的内部DNS解决可以达成，那么*EC2是如何知道要去2号IP找到这个VPC DNS的*，就是通过DHCP的设置。
-- DHCP Option Sets：
+- **DHCP Option Sets**：
   - 包括Domain Name，DNS设置，NTP服务器，和NetBIOS node type。
   - NTP（Network Time Protocol）是一种网络协议，用于同步计算机系统之间的时钟，以确保它们的时间一致。
   - NetBIOS（Network Basic Input/Output System）是一种用于局域网（LAN）中的通信协议，提供网络基本输入/输出服务。它允许应用程序在网络上的计算机之间进行通信，包括名称解析（将计算机名称转换为IP地址）、会话管理（建立和管理连接）、和数据传输。NetBIOS常用于早期的Windows网络环境，但在现代网络中，许多功能已被其他协议（如DNS和TCP/IP）所取代。
@@ -220,3 +220,126 @@
   - enableDnsHostname（DNS Hostname setting）是 AWS VPC 中的一个配置选项，它允许 VPC 内的实例分配具有公开可解析主机名的 DNS 记录，从而使其他网络中的资源可以通过主机名来访问 VPC 中的实例。新VPC默认是禁用的。前置条件是 enableDnsSupport 为 True。
   - 使用Private Hosted Zone的前提是这两种属性都设置为True。
 
+## Network Performance & Optimization
+
+### Network Performance基础
+
+**基础概念**
+
+- *Bandwidth*带宽是指，在数据通信过程中，在单位时间从网络中的某一点能够通过的最大数据量。bit为单位。（byte是字节是8bit）
+- *Latency*（延迟）是指数据从源发送到目的地所需的时间延迟，通常以毫秒(ms)为单位测量。它反映了网络传输的速度和响应时间，延迟越低，网络性能越好。
+- hop是指数据包在传输过程中经过的一个*中间设备*（如路由器或网关）。每经过一个设备就算作一个hop，hop数越多，通常意味着数据包的路径越长，可能增加延迟。
+- *Jitter*是指在网络中，数据包传输延迟的变化或波动，通常是指连续数据包之间到达时间的变动。高jitter会导致实时应用（如视频会议和在线游戏）的质量下降，因为数据包到达时间不一致会影响*流畅性*。
+- *Throughput*是指在网络中单位时间内成功传输的数据量，通常以比特bit每秒（bps）、千比特每秒（kbps）或兆比特每秒（Mbps）等单位表示。它衡量网络传输效率和容量，throughput越高，网络能够处理的数据量就越大。受到带宽，延迟等的影响。
+- PPS（Packets Per Second）是指网络设备每秒钟*处理的数据包数量*。它是衡量网络设备（如路由器、交换机）性能的一个重要指标，PPS越高，*设备处理数据包的能力*越强。
+- *MTU*（Maximum Transmission Unit）是指网络中单个数据包的最大字节大小。MTU值*决定了数据包的最大尺寸*，设置合适的MTU可以优化网络性能，避免数据包分片，提高传输效率。
+  - "Don't Fragment"是IP数据包中的一个标志位，指示网络设备不要对该数据包进行分片。如果数据包超过路径中的MTU值且设置了“Don't Fragment”标志（DF=1代表不允许分片），数据包将被丢弃并返回一个ICMP（*MTU path discovery*中，该协议必须被允许）错误消息，而不是被分片传输。
+  - 受到错误消息后，client就会传输几个较小的数据包，重新传输。
+  - 在EC2的设置，依赖于instance type是否支持
+  - 在*ENI level*定义
+  - check path MTU: tracepath amazon.com
+  - check the MTU on your interface: ip link show eth0
+  - set MTU value on Linux: sudo ip link set dev etho mtu 9001
+- *Jumbo Frame*是指超过标准MTU（通常为1500字节）的以太网帧，通常大小在9000字节左右，几乎是MTU的六倍。使用Jumbo Frame可以*减少数据包数量*，从而降低CPU负载和提高网络效率，但需要所有网络设备都支持Jumbo Frame才能发挥其优势。
+  - AWS的*内部*默认支持JumboFrame
+    - 注意：如果通过IGW或Peering出去了就不支持了，降低为1500，所以*这里的使用要非常小心*，最好在可以使用的scope使用
+    - 在*EC2集群放置组*（EC2 Cluster Placement Group）内使用JumboFrame，可以最大化throughput。（EC2集群放置组是一种用于容纳具有特定亲和性或亲缘性的EC2实例的逻辑分组。也许他们放置在同一个物理主机上。它可以提供更低的网络延迟和更高的网络吞吐量，适用于需要在集群中的实例之间进行低延迟和高吞吐量通信的应用程序。
+    - *VPC Endpoint*：支持MTU 8500 bytes
+    - *Internet Gateway*：出界进入互联网MTU变为1500 bytes
+    - *Intra Region VPC peering*：区域内部，MTU 9001 bytes
+    - *inter Region VPC peering*：区域之间的peering，MTU 1500 bytes
+  - On-premise的情况
+    - 使用VGW的VPN：MTU 1500 bytes
+    - 通过Transit Gateway的VPN：Site2siteVPN：MTU 1500 bytes
+    - 使用*AWS Direct Connect*，那么VPC之间和VPC与on-premise之间也支持JumboFrame
+    - 通过Transit Gateway的Direct Connect：MTU 8500 bytes（VPC -> TransitGateway -> DX -> on-premise）
+
+### EC2 Network performance Optimization
+
+**这部分的加速，都是在传输距离，网卡专用，绕过系统，绕过中介上做功夫。**
+
+- **Cluster Placement Group**
+  - 逻辑组，同一个AZ内
+  - 满足分布式应用，低延迟需求，比如HPC（高性能计算机，使用大规模的并行计算系统，以高速处理复杂的数学模型和大规模的数据集。）
+- **EBS Optimized Instance**
+  - EBS是一种网络存储drive，通过网络和instance通信，所以是有延迟的
+  - EBS和instance之间通过ENI通信，那么和其他通信内容共享就会有较低的带宽
+  - Optimized的版本，是IO接口是dedicated专有接口，以此优化EBS的通信性能，不需要和其他traffic进行竞争
+
+- **Enhanced Networking**
+  - Enhanced Networking是一种技术，旨在提高云计算环境（如AWS EC2实例）中的网络性能。通过使用特定的网络接口（如Elastic Network Adapter, ENA）和网络虚拟化技术，Enhanced Networking提供更高的带宽、更低的延迟和更低的抖动（jitter），适用于对网络性能要求较高的应用程序，如高性能计算（HPC）、大数据分析和实时应用。
+  - 意味着PPS可能超过1M（每秒要传输100万数据包），目的是降低instance之间的传输延迟
+    - 我的理解就是*EC2的通信可以直接绕过虚拟层，而是通过物理主机的网卡进行通信（通过ixgbevf或ENA），以降低延迟。*
+    - SR-IOV（Single Root I/O Virtualization）是一种技术，用于提高虚拟化环境中网络和存储设备的性能和效率。它允许物理网络适配器（如以太网卡）在多个虚拟机之间直接共享，而不是通过主机操作系统进行中介。
+    - PCI（Peripheral Component Interconnect 周边组件互联）是一种计算机总线标准，用于连接各种外部设备（如网卡、显卡、存储控制器等）到计算机的主板。PCI设备可以是物理设备，也可以是虚拟设备，SR-IOV则是针对虚拟化环境中PCI设备的一种技术扩展。PCI允许你的**VM和物理NIC网卡直接通信**，这里的VM就是EC2，也就是让EC2，和它所在的物理服务器的NIC进行通信。以此实现*低延迟，高传输*。
+  - 支持Enhanced Networking的可用的Instance type：
+    - *VirtualFunction（VF）uses ixgbevf driver*（up to 10GGbps）`ethtool -i eth0`输出driver:ixgbevf
+    - *Elastic Network Adapter（ENA）*（up to 100Gbps）`ethtool -i eht0`输出driver:ena
+    - ixgbevf驱动程序是Intel开发的一种用于虚拟功能设备的网络驱动程序，特别针对Intel 10 Gigabit Ethernet硬件。它支持SR-IOV技术，允许虚拟机直接访问物理网络适配器的虚拟功能（Virtual Function），从而提高网络性能和效率，减少延迟和CPU开销。
+    - Elastic Network Adapter（ENA）是AWS提供的一种高性能网络接口，用于EC2实例。ENA支持高达100 Gbps的网络吞吐量，提供低延迟和高数据包处理能力。
+  - 除此之外，也必须是支持Enhanced Networking的操作系统AMI
+
+- **DPDK**
+  - DPDK，全称为Data Plane Development Kit，它主要用于*加速网络数据包处理*，通常应用于网络设备和服务器上。DPDK通过*绕过bypass操作系统的内核网络栈*，直接在用户态进行数据包处理，从而大大提高数据包处理的速度和效率。所以它的目的是加速**操作系统内的包处理**。（SR-IOV是*加速instance和hypervisor之间的*包处理，这个还要经过一下操作系统再去网卡呢，DPDK直接操作系统都直接绕过了），算法很cool。
+
+- **EFA**
+  - 是ENA的一种类型，只能用于Linux系统，才能发挥它的功能，如果你放在Windows上，它就只是一个ENA了。
+  - EFA，全称为Elastic Fabric Adapter，是亚马逊AWS提供的一种高性能网络接口。EFA旨在加速HPC（高性能计算）和机器学习应用中的网络通信。使得HPC内部使用MPI（Message Passing Interface，是一种用于编写*并行程序*的标准通信协议和编程模型），绕过bypass OS内核，直接和EFA进行包通信。总之，EFA通过支持RDMA（Remote Direct Memory Access）和OS Bypass，允许应用程序直接访问*网络硬件*（这里就是EFA），从而减少了通信延迟和CPU开销。
+
+### Bandwidth limits（inside & outside VPC）
+
+- 这部分的基础概念：**Network Flow 5 - tuple**
+  - 在网络流量分析和网络流识别中，"5-tuple" 是指用于唯一标识网络流的一组五个参数。这五个参数是：
+    * 源IP地址（Source IP Address）：数据包的发送方IP地址。
+    * 目的IP地址（Destination IP Address）：数据包的接收方IP地址。
+    * 源端口号（Source Port Number）：发送方应用程序的端口号。
+    * 目的端口号（Destination Port Number）：接收方应用程序的端口号。
+    * 协议（Protocol）：传输层协议，如TCP（传输控制协议）或UDP（用户数据报协议）。
+  - 这五个参数组合起来可以唯一标识一个网络流，区分不同的通信会话。
+  - 每个flow都有带宽限制，所以增加带宽，可以通过*Multiple-Flows*实现。这部分的内容，基本都是通过多个Flows的叠加来提升带宽。
+
+- VPC的带宽限制包括：Internet Gateway，NAT Gateway，VPC Peering
+  - No VPC specific limits
+  - No limit for any Internet Gateway
+  - No limit for VPC Peering
+  - NAT Gateway每个带宽都是45Gbps，可以使用多个NAT Gateway来增加带宽到45Gbps以上。但是要注意不要跨到别的AZ去，那会另外付数据传输费。
+
+- EC2的带宽限制
+  - 受到instance本身的instance family，vCPU，传输目的地的影响
+  - 在*region内传输*可以利用最大带宽
+  - 通过Internet Gateway或者DX*传输到其他region*，最大可以利用*50%带宽*，并且需要是*Current Generation instance with 32vCPUs*，*32vCPUs以下*的实例只能限制在*5Gbps内*。
+  - 通过VF提升单Flows带宽到5Gbps，集合带宽到10Gbps
+  - 通过ENA提升
+    - 单Flows带宽到*5Gbps*（outside placement group），*10Gbps*（inside placement group）
+    - 集合Flows带宽到*100Gbps*，通过Multiple-Flows（在同VPC内 / VPC-peering / 通过VPC-endpoint到同区域的S3）
+  - 一个特例AWS的 P4d instance，集群超级计算机可以有400Gbps的带宽
+
+- VPN Connection & Direct Connect & Transit Gateway
+  - VPG（*Virtual Private Gateway*）到On-premise之间的带宽限制是*1.25Gbps*。由于单个VPC不支持ECMP（Equal-Cost Multi-Path）功能，所以上限就是1.25Gbps了。
+  - 通往*同一个VPG的VPN聚合*的带宽上限也是*1.25Gbps*
+  - *DX*的带宽通过Port Speed限制
+  - DX通往VPG的带宽也取决于Port的speed限制
+  - 总之**涉及到DX就是取决于它自己的Port Speed，而关于VPC自身的VPN连接则上限为1.25Gbps。**
+  - *TransitGateway*则支持ECMP，所以可以多路径提升聚合带宽。单个VPN带宽1.25Gbps上限，聚合带宽上限为*50Gbps*。
+
+（**上面的数字会变化，会进化，但是底层原理是不变的，理解为什么很重要。**）
+
+### Network I/O Credits
+
+在AWS EC2中，Network I/O Credit是一种用于衡量和管理实例网络性能的机制，类似于EC2的CPU Credit系统。它主要用于突发型实例（如T3和T4g实例），帮助这些实例在需要时能够临时获得更高的网络带宽。以下是有关Network I/O Credit的详细解释：
+
+1. **突发型实例**：
+   - AWS的突发型实例（T3、T4g，R4等）设计用于处理偶尔的高负载工作，但通常在较低的基线性能下运行。
+   - 这些实例在低负载时期会积累网络I/O Credit，当需要更高的网络带宽时，可以使用这些积累的Credit来提升网络性能。
+2. **网络I/O Credit机制**：
+   - 每个突发型实例在较低负载时会以一定速率积累Network I/O Credit。
+   - 当实例需要更高的网络带宽（例如数据传输量突然增加）时，可以使用积累的Network I/O Credit来实现临时的网络性能提升。
+3. **基线性能和突发性能**：
+   - 突发型实例有一个基线baseline网络带宽限制，在这个限制内实例能够持续传输数据而不会消耗Network I/O Credit。
+   - 如果实例需要超过基线带宽，系统会检查是否有足够的Network I/O Credit。如果有，实例可以短时间内使用更高的带宽。
+4. **适用场景**：
+   - 突发型实例适用于大多数时间网络需求较低，但偶尔需要较高网络带宽的工作负载。
+   - 例如，开发和测试环境、小型网站和博客、突发性流量的应用等。
+5. **监控和管理**：
+   - AWS提供了工具和指标来监控Network I/O Credit的使用情况，如CloudWatch中的指标，可以帮助用户了解实例的网络性能和Credit使用情况。
+通过使用Network I/O Credit，AWS突发型实例能够在需要时提供高网络性能，同时在大多数时间保持低成本。这种机制确保了灵活性和成本效益，适合处理不均衡的网络流量需求。

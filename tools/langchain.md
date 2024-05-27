@@ -1,6 +1,4 @@
-## LangChain大模型框架应用
-
----
+[官方LangChain大模型框架应用](https://github.com/langchain-ai/langchain)
 
 ### 五大模块
 
@@ -26,7 +24,7 @@ Langchain可以定义三种信息给模型：系统信息（system message），
 
 3. **Cache answer**：可以使用cache将回复结果进行缓存，因为每次执行代码都会花费token的金额。
 
-4. **Prompt Template**：提供了一种提示的模板，方便将prompt的各个部分作为变量，提供给接口。因为在构建大型的系统的时候你不能一条一条写信息吧。
+4. **Prompt Template**：提供了一种提示的模板，方便将prompt的各个部分作为变量，提供给接口。因为在构建大型的系统的时候你不能一条一条写信息。
 
 **Few shot prompt template**: 中文叫少量用例，加入两个模板，给出input和output的示例，传送给chat_prompt。一开始看的不是很明白，说白了应该就是，你教AI用什么样的方式进行回答固定模式的问题。
 

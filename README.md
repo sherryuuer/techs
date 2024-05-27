@@ -42,6 +42,7 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 ## Machine learning
 - [对大语言模型的简单解释](ml/ai-4-prompt.md)/[日文版](ml/ai-4-prompt-jp-version.md)
 - [Prompt-Engineering-Framework](ml/prompt-engineering.md)
+- [LangChain大模型框架](tools/langchain.md)
 - [*机器学习以及它的分类总结](ml/mltypes.md)
 - [*机器学习算法之线性回归：特征选择方法，评估方法，非常用回归模型](ml/regression.md)
 - [*机器学习算法之分类问题：逻辑回归，集成算法](ml/classification.md)
@@ -87,15 +88,17 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 ## Python and Math
 - [编程的历史和分类：声明式和命令式](python/programing-lang.md)
 - [用Python进行统计分析](python/statistics-with-python.md)
+- [网络基础：使用Python实现的套接字编程](cs/python-sockets-programming.md)
 - [Python代码单元测试](python/codetest.md)
 - [使用Python调用OpenAI的API](ml/open-ai.md)
 - [Python的break和continue如何影响循环](python/break-continue.md)
 - [面向对象编程设计模式Java&Python的Cheatsheet总结](python/oop-design-pattern.md)
+- [*Python自动化Automation](python/python-automation.md)
 
 ## Tools
+- [Fake RestAPI](https://jsonplaceholder.typicode.com/)
 - [好用的机器学习工具网站](tools/tool-site-for-study.md)
 - [Pandas工具代码](tools/pandas.md)
-- [LangChain大模型框架](tools/langchain.md)
 - [机器学习工具函数helper_functions](tools/ml-helper-functions.md)
 - [数据处理框架Scikit-learnAPI](tools/feature-selection-sklearn.md)
 
@@ -121,10 +124,9 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [软件开发和程序员基础知识/基础情报技术](cs/programming-base.md)
 - [*GithubActions实现workload工作流：自动化GCS部署和notification](cs/ghactions-autodeploy.md)
 - [Git和Github复习手册](cs/git.md)
-- [数据库：SQLAtoZ](cs/db-sql.md)
+- [数据库：Database&SQL-AtoZ](cs/db-sql.md)
 - [网络基础：构架，协议栈，应用层，HTTP，DNS](cs/internet-base-app-layer.md)
 - [网络基础：传输层，TCP/UDP](cs/internet-base-transport-layer.md)
-- [网络基础：使用Python实现的套接字编程](cs/python-sockets-programming.md)
 - [网络基础：网络层，IP，ARP，DHCP，ICMP，firewall，nat](cs/internet-base-network-layer.md)
 - [网络基础：链路层，以太网，MAC地址](cs/internet-base-link-layer.md)
 - [网络限流(throttling)，指数退避(ExponentialBackoff)和Python的代码实现](cs/exponential-backoff.md)
@@ -140,6 +142,7 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [数学和信息论基础思想](morefun/math-infomation-theory.md)
 
 ## Interesting Posts
+- [软件工程师能力模型探讨](https://www.cnblogs.com/wintersun/p/17367384.html)
 - [AlphaGo-Movie:通用人工智能的先驱](https://www.youtube.com/watch?v=WXuK6gekU1Y)
 - [关于DataEnginner-如何成为一个数据工程师-数据处理中重要的事情](https://zerotomastery.io/blog/how-to-become-a-data-engineer/?utm_content=%5BCommunity%5D+-+May+2024+-+Academy&utm_medium=email_action&utm_source=customer.io#Step-3-Learn-Data-Engineering-concepts)
 - [太空冒险在线网页游戏项目-它使用Threejs创建了一个不一样的世界太酷了](https://equinox.space/)
@@ -159,4 +162,4 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - 科技再发展也离不开基础，所有的科技新发展，都是对基础的一种深度挖掘和联结。
 - 加密学，区块链，网络安全，信息论，数学，频谱分析，图论等领域，强化学习，遗传算法。
 - 这是一个充满API的世界，从程序包到云服务，都是API的连接，组合，一体化。
-- 宇宙的编程语言是数学。
+- 宇宙的编程语言是数学，基础学科永远重要，是知识base的base，是根。

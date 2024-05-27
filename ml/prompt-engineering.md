@@ -222,14 +222,6 @@ graph TD
     C -->|Three| F[fa:fa-car Car]
 ```
 
-**Jailbreak**是一种让AI模型突破原有的限制和约束，获得一些它原本不被允许的行为能力。
-
-越狱大佬的[推特](https://twitter.com/elder_plinius)。
-
-**Prompt Injection**指的是一种针对使用命令行界面(CLI)的应用程序的攻击技术。攻击者通过注入恶意的命令或代码，试图欺骗应用程序执行非预期的操作，从而获取数据、访问权限或控制目标系统。
-
-原本这是一种安全领域的攻击手段，但是在模型提示中，也可以用类似的方法，改变模型的输出。
-
 ### Length & Detail
 
 只有在使用*API*的时候，或者是playground，可以通过hyperparameter控制token数量。这时候，也许对话会不完整，但是系统一定会控制输出在token设置的范围内。
@@ -238,19 +230,49 @@ graph TD
 
 ### Additional Restrictions
 
+**Jailbreak**是一种让AI模型突破原有的限制和约束，获得一些它原本不被允许的行为能力。
+
+越狱大佬的[推特](https://twitter.com/elder_plinius)。
+
+**Prompt Injection**指的是一种针对使用命令行界面(CLI)的应用程序的攻击技术。攻击者通过注入恶意的命令或代码，试图欺骗应用程序执行非预期的操作，从而获取数据、访问权限或控制目标系统。
+
+原本这是一种安全领域的攻击手段，但是在模型提示中，也可以用类似的方法，改变模型的输出。
+
 ## The Evaluation
-
 ### Assess Vulnerablities -> Hallucinations, Bias, Sources, Math
-
 ### Testing
-
 ### The Most Powerful Prompt
-
 ### Iterate, Iterate, Iterate!
 
+## Advanced Prompts Tool
 
+- [ChatGPT-AutoExpert](https://github.com/spdustin/ChatGPT-AutoExpert/tree/main)
+- [Chain of Density Prompting](https://docs.google.com/document/d/1Qi3bLWUY_YQc5XJBsWXR5hniZAl-gA6fpG8p4X0TRHs/edit)
+
+Chain of Density Prompting(密度链式提示)是一种针对大型语言模型进行指令微调的技术。它的主要思想是使用一系列相关但渐进改变的提示示例,从而指导模型逐步改进其对任务的理解和生成能力。
+
+这个过程包括以下几个步骤:
+
+1. **起始提示(Initial Prompt)**: 使用一个相对简单、直白的提示示例开始微调,引导模型对任务有初步理解。
+
+2. **密度提示(Dense Prompts)**: 随后使用一系列更复杂、更贴近真实任务场景的提示示例继续微调。这些提示示例逐渐增加难度,覆盖更多边缘案例,帮助模型深入理解任务。
+
+3. **密度提示的选择**: 密度提示的选择很关键,需要人工标注和构造。通常从模型在初始阶段的生成结果中挑选一些有代表性的错误案例,构建相应的密度提示。
+
+4. **迭代微调**: 重复上述密度提示的过程,直到模型在评估集上的性能不再有明显提升为止。
+
+Chain of Density Prompting的优点是能够充分利用人工示例,更高效地指导模型习得复杂任务。它模拟了人类逐步学习的过程,使模型的学习更加渐进、高效。该方法已被应用于诸如任务式对话、问答等多种场景,显示出不错的效果。
 
 ## resources links
 
 - [Anthropic prompt library](https://docs.anthropic.com/claude/prompt-library)
 - [Framework](https://www.canva.com/design/DAFnPkKRNds/UG4PAiQyep7zLCBU4HGRtA/edit)
+- [HandBook](https://half-money-bd8.notion.site/Course-Handbook-Prompt-Engineering-Working-With-LLMs-Zero-to-Mastery-6234be19ffcd4e02991fa7c5227d21b3)
+
+## Open Source LLM
+
+可以实现自己电脑拥有LLM，好处在于信息隐私，以及没有规则限制。
+
+[ChatBot Arena Leaderboard](https://chat.lmsys.org/?leaderboard)，是一个模型leaderboard，在他的[竞技场页面](https://chat.lmsys.org/?arena)可以进行模型决斗battle。
+
+- 访问[MetaLLM](https://lmstudio.ai/)

@@ -206,7 +206,7 @@ NAT(Network Address Translation，网络地址转换)和NAT Network在VirtualBox
 
 - 信息收集是渗透测试的初始阶段，旨在获取目标系统的相关数据。收集内容包括域名、IP地址、开放端口、操作系统版本、网络拓扑结构、员工信息等。
 - *Active主动信息收集*涉及直接与目标系统交互，如扫描端口或发送探测包；*Passive被动信息收集*则利用公开可用的信息源，不直接与目标系统交互，如查询DNS记录、搜索引擎或社交媒体。
-- Ping命令是一种网络工具，用于测试主机之间的连接状态，同时它的信息中是*包含目标ip地址的*。它通过发送ICMP（Internet Control Message Protocol）回显请求消息到目标主机，并等待目标主机返回响应，从而确定主机之间的通信是否正常。`ping google.com`
+- `ping`命令是一种网络工具，用于测试主机之间的连接状态，同时它的信息中是*包含目标ip地址的*。它通过发送ICMP（Internet Control Message Protocol）回显请求消息到目标主机，并等待目标主机返回响应，从而确定主机之间的通信是否正常。`ping google.com`
 - Nslookup是一种网络工具，用于查询域名系统（DNS）记录。通过Nslookup，用户可以查找特定域名对应的IP地址，或者反向查询一个IP地址对应的域名。`nslookup google.com`
 - Whois工具是一种用于查询域名注册信息的网络工具。通过Whois工具，用户可以查找到域名的注册者、注册日期、过期日期、域名服务器等信息。这些信息来自，域名注册数据库。`whois google.com`
 - 如果你在做渗透测试，那么你发现了一些特殊的信息，最好记下来。
@@ -237,6 +237,37 @@ NAT(Network Address Translation，网络地址转换)和NAT Network在VirtualBox
 - 比如使用[sherlock](https://github.com/sherlock-project/sherlock)工具，查查自己的username在哪些网站出现。`python3 sherlock.py sherryuuer`
 
 ## Scanning
+
+在渗透测试中，扫描是一个重要的步骤。
+
+1. **扫描目的**
+   - 识别目标系统/网络中存在的主机、服务和端口
+   - 获取目标系统的细节信息，如操作系统、服务版本、开放端口等
+   - 发现潜在的漏洞和薄弱点
+   - 收集足够信息为后续攻击做准备
+
+2. **扫描手段**
+   - 端口扫描：使用如Nmap等工具扫描开放端口和服务
+   - 漏洞扫描：使用Nessus、OpenVAS等工具扫描常见漏洞
+   - Web扫描：使用类似于Burp Suite、ZAP等工具扫描Web应用程序漏洞
+   - 网络扫描：使用Angry IP Scanner、Unicornscan等工具探测网段中存活主机
+   - SNMP扫描：使用SnmpWalk等工具枚举SNMP服务器收集信息
+   - DNS扫描：使用dig、dnsenum等工具获取DNS相关信息
+
+过度扫描或者不当扫描可能会引起目标系统的警报，被视为攻击行为。因此需要遵守相关法规，获得足够授权，并采取适当的技术手段，避免给目标系统带来过多干扰。
+
+扫描阶段收集到的信息对于接下来的渗透测试行动至关重要，如勒索、数据窃取、权限提升等，都需要依赖前期充分的信息收集和扫描工作。
+
+### Netdiscover命令
+
+- `arp`命令：--help，-a发现host。但是有时候扫不出来，必须先通信才出现。
+- `netdiscover`是一个网络侦察工具，用于在本地网络中发现活动设备及其相关信息。它通过ARP请求扫描网络，能够快速列出网络中所有在线的设备，包括它们的IP地址、MAC地址以及可能的主机名。适合在小型到中型网络中快速获取设备信息。
+- `netdiscover`：默认模式扫描本地子网。
+- `netdiscover -r <IP范围>`：扫描指定的IP范围，例如 `netdiscover -r 192.168.1.0/24`。
+- `netdiscover -i <接口>`：指定网络接口，例如 `netdiscover -i eth0`。
+
+- `netstat -nr`显示网络路由表的内容。一般是子网的第一个IP。
+
 
 ## Vulnerability Analysis
 

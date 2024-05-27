@@ -67,3 +67,48 @@ public class BuilderPatternExample {
 Builder Pattern 是一种创建复杂对象的有效方法，特别适用于那些具有多个可选参数的对象。通过将对象的构建过程与其表示分离，Builder Pattern 提高了代码的可读性和可维护性，同时增加了对象创建的灵活性。
 
 ### Prototype Pattern
+
+Prototype（原型）是原型范式（Prototype Paradigm）的一部分，主要与基于原型的编程（Prototype-based Programming）有关。这种编程范式特别常见于面向对象编程（OOP）的一种实现方式，与传统的基于类的面向对象编程不同。
+
+1. **对象而非类**:
+    - 在原型范式中，编程的基本单位是对象而不是类。对象是具体实例，而类在这种范式中并不显式存在。
+
+2. **对象复制**:
+    - 新的对象通过复制现有的对象（即原型）来创建，而不是通过类的实例化。这种方式允许灵活地创建和修改对象。
+
+3. **动态行为修改**:
+    - 对象可以动态地修改其结构和行为。你可以在运行时向对象添加属性和方法，或改变它们的属性和方法。
+
+4. **继承机制**:
+    - 继承是通过委托（delegation）机制实现的。一个对象可以指向另一个对象作为其原型，从而继承其属性和方法。
+
+原型范式的一个典型示例是 JavaScript。在 JavaScript 中，每个对象都有一个内部链接指向另一个对象（即其原型）。当试图访问一个对象的属性时，如果该对象自身没有这个属性，JavaScript 会沿着原型链向上查找，直到找到该属性或者到达原型链的末端。
+
+```javascript
+// 创建一个原型对象
+let person = {
+    type: 'human',
+    sayHello: function() {
+        console.log(`Hello, I am a ${this.type}`);
+    }
+};
+
+// 通过复制原型对象创建一个新对象
+let john = Object.create(person);
+john.type = 'developer'; // 修改新对象的属性
+john.sayHello(); // 输出: Hello, I am a developer
+
+// 创建另一个对象
+let jane = Object.create(person);
+jane.type = 'designer';
+jane.sayHello(); // 输出: Hello, I am a designer
+```
+
+在这个例子中，`person` 是一个原型对象。`john` 和 `jane` 是通过 `Object.create(person)` 创建的新对象，并继承了 `person` 的属性和方法。
+
+
+- **Prototype（原型）** 是 **原型范式**（Prototype Paradigm）的核心概念。
+- 原型范式强调对象的直接使用和**深度复制**，而不是依赖类的定义和实例化。
+- 通过对象的复制和动态修改，原型范式提供了灵活的对象创建和继承机制。
+
+原型范式提供了一种不同于基于类的面向对象编程的方法，更加灵活和动态，适合某些特定的编程需求和环境。
