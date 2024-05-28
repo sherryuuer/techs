@@ -348,6 +348,14 @@ class EmbeddingModel(object):
 
 ## 使用K邻近算法找到最相近的k个词汇
 
+计算出了一个词和整个词矩阵的所有词的余弦相似度，然后使用K邻近算法，找到k个最高相似度的词，并返回。
+
+K近邻算法是一种简单而直观的非参数方法，用于分类和回归任务。在寻找相似度最高的词时，KNN的应用同样直观：找到距离（相似度）最近的K个词。
+
+在自然语言处理（NLP）中，单词通常表示为高维向量（如词嵌入）。KNN算法在高维空间中有效地工作，通过计算向量之间的距离（例如余弦相似度）找到最近的邻居。
+
+KNN是一种惰性学习算法，不需要在训练阶段进行复杂的模型拟合。只需在推断阶段计算相似度并排序，这使得它非常适合在线计算和实时应用。
+
 ```python
 import tensorflow as tf
 
@@ -358,30 +366,6 @@ class EmbeddingModel(object):
         self.vocab_size = vocab_size
         self.embedding_dim = embedding_dim
         self.tokenizer = tf.keras.preprocessing.text.Tokenizer(num_words=self.vocab_size)
-
-    # Forward run of the embedding model to retrieve embeddings
-    def forward(self, target_ids):
-        initial_bounds = 0.5 / self.embedding_dim
-        initializer = tf.random.uniform(
-            [self.vocab_size, self.embedding_dim],
-            minval=-initial_bounds,
-            maxval=initial_bounds)
-        self.embedding_matrix = tf.compat.v1.get_variable('embedding_matrix',
-            initializer=initializer)
-        embeddings = tf.compat.v1.nn.embedding_lookup(self.embedding_matrix, target_ids)
-        return embeddings
-    
-    # Compute cosine similarites between the word's embedding
-    # and all other embeddings for each vocabulary word
-    def compute_cos_sims(self, word, training_texts):
-        self.tokenizer.fit_on_texts(training_texts)
-        word_id = self.tokenizer.word_index[word]
-        word_embedding = self.forward([word_id])
-        normalized_embedding = tf.math.l2_normalize(word_embedding)
-        normalized_matrix = tf.math.l2_normalize(self.embedding_matrix, axis=1)
-        cos_sims = tf.linalg.matmul(normalized_embedding, normalized_matrix,
-            transpose_b=True)
-        return cos_sims
     
     # Compute K-nearest neighbors for input word
     def k_nearest_neighbors(self, word, k, training_texts):

@@ -343,3 +343,81 @@
 5. **监控和管理**：
    - AWS提供了工具和指标来监控Network I/O Credit的使用情况，如CloudWatch中的指标，可以帮助用户了解实例的网络性能和Credit使用情况。
 通过使用Network I/O Credit，AWS突发型实例能够在需要时提供高网络性能，同时在大多数时间保持低成本。这种机制确保了灵活性和成本效益，适合处理不均衡的网络流量需求。
+
+## VPC traffic Monitoring & Troubleshooting & Analysis
+
+**网卡NIC才是网络世界的核心：Network Interface Card / Elastic Network Interface**
+
+### VPC flow logs
+
+- 捕获in/out *ENIs* 的IP traffic信息，因此它可以帮助troubleshooting连接问题
+- 这些ENI包括：ELB，RDS，ElastiCache，Redshift，workspaces，NATGateway，TransitGateway等，这些服务会在你的EC2中创建ENI，因此也会被捕获
+- VPC level / subnet level / ENI level
+- 存储目的地：S3（用Athena分析）/ CWlogs（用insights分析）/ KinesisDataFirehose（送至其他服务数据库）
+- 需要创建IAM Role，拥有相应的写入log的权限
+- 收集这些信息不会对你的ENI造成inpect影响
+- Log信息有固定的格式（@timestamp/@message），并且可以自定义custom的fields（在VPC页面点击创建VPCflowlogs处可以定义）
+- SG和NACL的troubleshooting，主要记住SG是statefull而NACL是stateless的就ok
+- 一些高级的内置既存traffic不会被捕获，比如非自定义的DNS服务器流量，DHCP（动态主机IP配置）流量，EC2元数据网址（196.254.196.254）流量，TimeSync（169.254.169.123），Windows license activation server，Mirrored traffic等。
+- 传统的网络监控工具：
+  - packet capture：wireshark / tcpdump
+  - traceroute：网络诊断工具，用于追踪数据包从源计算机到目的计算机所经过的路径，以及沿途每一跳的响应时间。
+  - telnet：打开与指定IP地址（或主机名）的Telnet会话，允许用户进行远程管理。
+  - nslookup：查询域名系统（DNS）记录
+  - ping：需要SG打开ICMP协议（专为网络诊断和错误报告设计。它用于发送控制消息和错误报告，帮助检测和解决网络问题。）
+
+### VPC Traffic Mirroring
+
+- 将EC2的ENI的流量进行copy，将流量重定向到目标存储位置以进行后续分析。
+- VPC中的创建方法：
+  - Create the mirror target：可以是EC2或者是ELB/NLB（UDP-4789） -> 之后就可以接一个或者一组Traffic Analyzer
+  - Define the traffic filter：过滤内容：
+    - Direction：inbound/outbound
+    - Action：Accept/Reject
+    - Protocol：Layer4
+    - Source Port Range/Destination Port Range
+    - Source CIDR block/Destination CIDR block
+  - Create the mirror session
+- VPC传输（Source-Target）*范围限制*：
+  - 同一个VPC内
+  - 或者同一个Region中的不同VPC（通过Peering或者TransitGateway连接起来的VPC）
+  - 不同Region无法设置
+  - Source和Target还可以是不同的AWS account
+
+### VPC Network Analysis
+
+- *Reachability Analyzer* （在Network Manager中是monitoring和troubleshooting工具）
+  - 点（hop）到点的连接是否可行的分析工具，比如EC2到EC2，workspace到EC2等
+    - 支持的Source/Destination（还在增加）：Instance, Internet Gateway, Network Interface, Transit Gateway, VPC Endpoint, VPC peering, VPN Gateway
+    - 中间的组件支持：ALB，NLB，NAT Gateway，TGW，VPC peering
+  - 范围限制：同VPC，同Region不同VPC（通过Peering或者TGW连接），不同AWSAccount（和Mirroring一样的限制范围）
+  - 中间经过的SG，NACL，ELB，Peering，等防火墙和连接是否有问题，会给出细节
+  - 会指出block了通信的组件是什么
+  - 原理：不是通过send packets，而是使用*network configurations*来找到原因。因此use case主要是找到因为设置问题，出现的网络不通问题。
+  - *怀疑它内部用的是Infra的code进行分析的
+  - 所以当你是Iac的CI/CD集成构架时，就可将该功能加入CI/CD流程，保证你的设置按预期设定
+  - 暂时只支持IPv4
+
+- *Network Access Analyzer* （在Network Manger中是Security和Governance工具）
+  - 分析从一个点到另一个点的各种path，审查这些path是否合规：比如你的一个EC2直接通外网了，那么你可以用该工具检测，判定不合规，并修复
+  - UseCase：信任网络路径，信任连接检测，隔离网络区域检测等
+  - 需要设置一个NNetwork Access Scope，有AWS预设的也可以自定义，定义后实质是一个json格式定义
+
+## Pravite Coneection
+
+- 包括VPC Peering，VPC Gateway Endpoint，VPC Interface Endpoint，PrivateLink
+- TransitGateway可以实现，私有和公有的混合构架
+- 私有连接的目的：
+  - 外网连接不安全，所以我们需要TCP传输层连接，应用层连接则需要HTTPS等安全连接
+  - 外网连接的带宽和延迟限制，会影响服务体验
+  - NAT连接会产生额外的Cost
+  - 数据库和应用服务器等不应该暴露在外网的部分需要私有连接
+
+## VPC Peering
+
+- 是AWS Network管理的组件
+- 现在可以同region也可以跨region
+- 可以跨账户
+- CIDR不能有overlapping
+- 必须更新*每个VPC的subnet*的*route table*，以确保双方允许通信
+- 需要一个请求方VPC和一个接受方VPC授权连接

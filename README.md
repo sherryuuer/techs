@@ -62,8 +62,8 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [Tensorflow解决数据分类问题](ml/tensorflow-classification.md)
 - [Tensorflow计算机视觉问题](ml/tensorflow-cv.md)
 - [Tensorflow自然语言处理和文本分类：使用kaggle的入门级项目进行文本分类的学习](ml/tensorflow-nlp.md)
-- [NLP：词嵌入WordEmbeddings](ml/wordembeddings.md)
-- [NLP：LSTM语言模型构架](ml/lstm-llm.md)
+- [*NLP：词嵌入WordEmbeddings](ml/wordembeddings.md)
+- [*NLP：LSTM语言模型构架](ml/lstm-llm.md)
 - [NLP：文本分类的原理和实现](ml/text-classification.md)
 - [Pytorch初见就有点爱](ml/pytorch-firsttime.md)
 - [Pytorch框架模板](ml/pytorch-template.md)
@@ -84,6 +84,7 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [Transformers编码器构架各个模块的代码实践](ml/transformers-encoder.md)
 - [*GNN：图基础和图论的数学-Graph-Neural-Networks](ml/gnn.md)，
 - [*GCN图卷积神经网络和它的实现-Graph-Convolutional-Networks](ml/gcn.md)
+- [Databricks-ML-spark](clouds/databricks-ml-spark.md)
 
 ## Python and Math
 - [编程的历史和分类：声明式和命令式](python/programing-lang.md)
@@ -95,15 +96,8 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [面向对象编程设计模式Java&Python的Cheatsheet总结](python/oop-design-pattern.md)
 - [*Python自动化Automation](python/python-automation.md)
 
-## Tools
-- [Fake RestAPI](https://jsonplaceholder.typicode.com/)
-- [好用的机器学习工具网站](tools/tool-site-for-study.md)
-- [Pandas工具代码](tools/pandas.md)
-- [机器学习工具函数helper_functions](tools/ml-helper-functions.md)
-- [数据处理框架Scikit-learnAPI](tools/feature-selection-sklearn.md)
-
 ## Clouds
-- [Databricks-ML-spark](clouds/databricks-ml-spark.md)
+- [关于云服务构架，系统设计等的上层思考](clouds/high-level-thinking.md)
 - [AWS机器学习系统的构架和服务](clouds/aws-with-ml.md)
 - [*AWS安全专家认证考试相关内容](clouds/aws-with-security.md)
 - [AWSSysOps运维考试内容整理](clouds/aws-with-sysops.md)
@@ -115,15 +109,18 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [关于云上的CI/CD服务，以及IaC服务的总结](clouds/cloud-cicd-tools.md)
 - [GCP-cloud-Engineer学习笔记](clouds/gcp-cloud-engineer.md)
 
-## Principal
+## Principal & Base
 - [程序员原则](principals/whats-not-change.md)
 - [计算机思维](principals/computeritize.md)
 - [工程师心得](principals/engineer.md)
+- [数学和信息论](morefun/math-infomation-theory.md)
 
 ## Computer Science
 - [软件开发和程序员基础知识/基础情报技术](cs/programming-base.md)
+- [系统设计概念System-Design-concepts](morefun/system-design.md)
 - [*GithubActions实现workload工作流：自动化GCS部署和notification](cs/ghactions-autodeploy.md)
 - [Git和Github复习手册](cs/git.md)
+- [*网络安全分类：访问控制、身份管理、数据加密与网络防护的清晰分类](cs/network-security-tree.md)
 - [数据库：Database&SQL-AtoZ](cs/db-sql.md)
 - [网络基础：构架，协议栈，应用层，HTTP，DNS](cs/internet-base-app-layer.md)
 - [网络基础：传输层，TCP/UDP](cs/internet-base-transport-layer.md)
@@ -133,15 +130,9 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [网络安全：Cyber Security foundation](cs/cybersecurity.md)
 - [道德黑客：Ethical Hacking Technology](cs/ethical-hacking.md)
 
-## Link More
-- [关于云服务构架，系统设计等的上层思考](clouds/high-level-thinking.md)
-- [系统设计概念System-Design-concepts](morefun/system-design.md)
-- [G检定深度学习考试相关日语词汇和概念解释](morefun/gtest.md)
-- [*WEB3：初步接触比特币，元宇宙，以太坊，智能合约等概念](morefun/web3.md)
-- [*网络安全分类：访问控制、身份管理、数据加密与网络防护的清晰分类](cs/network-security-tree.md)
-- [数学和信息论基础思想](morefun/math-infomation-theory.md)
-
 ## Interesting Posts
+- [*WEB3：初步接触比特币，元宇宙，以太坊，智能合约等概念](morefun/web3.md)
+- [G检定深度学习考试相关日语词汇和概念解释](morefun/gtest.md)
 - [软件工程师能力模型探讨](https://www.cnblogs.com/wintersun/p/17367384.html)
 - [AlphaGo-Movie:通用人工智能的先驱](https://www.youtube.com/watch?v=WXuK6gekU1Y)
 - [关于DataEnginner-如何成为一个数据工程师-数据处理中重要的事情](https://zerotomastery.io/blog/how-to-become-a-data-engineer/?utm_content=%5BCommunity%5D+-+May+2024+-+Academy&utm_medium=email_action&utm_source=customer.io#Step-3-Learn-Data-Engineering-concepts)
@@ -157,9 +148,17 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [航海日志：定期思维检修1](principals/checkmind1.md)
 - [航海日志：定期思维检修2](principals/checkmind2.md)
 
+## Tools
+- [Fake RestAPI](https://jsonplaceholder.typicode.com/)
+- [好用的机器学习工具网站](tools/tool-site-for-study.md)
+- [Pandas工具代码](tools/pandas.md)
+- [机器学习工具函数helper_functions](tools/ml-helper-functions.md)
+- [数据处理框架Scikit-learnAPI](tools/feature-selection-sklearn.md)
+
 ---
 - 思考和联系是最重要的事，是快乐的源泉。
 - 科技再发展也离不开基础，所有的科技新发展，都是对基础的一种深度挖掘和联结。
 - 加密学，区块链，网络安全，信息论，数学，频谱分析，图论等领域，强化学习，遗传算法。
 - 这是一个充满API的世界，从程序包到云服务，都是API的连接，组合，一体化。
 - 宇宙的编程语言是数学，基础学科永远重要，是知识base的base，是根。
+- 种一棵树：算法(计算机算法和ML算法)&数学和基础学科 - 网络&安全&构架&体系 - 工具启发&项目实践&前沿扩展

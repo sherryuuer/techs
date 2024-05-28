@@ -1,7 +1,4 @@
-## 用LSTM构架的大语言模型
-
----
-### 语言模型的工作原理
+## 语言模型的工作原理
 
 语言模型的目标是为文本序列中的单词分配概率，通过将每个词汇单词看作一个类别，使用前面的单词作为输入，计算每个词汇类别的概率，类似于**多类别分类问题**。
 
@@ -23,7 +20,11 @@ def truncate_sequences(sequence, max_length):
 class LanguageModel(object):
     # Model Initialization
     def __init__(self, vocab_size, max_length, num_lstm_units, num_lstm_layers):
-        pass
+        self.vocab_size = vocab_size
+        self.max_length = max_length
+        self.num_lstm_units = num_lstm_units
+        self.num_lstm_layers = num_lstm_layers
+        self.tokenizer = tf.keras.preprocessing.text.Tokenizer(num_words=vocab_size)
 
     def get_input_target_sequence(self, sequence):
         seq_len = len(sequence)
@@ -31,7 +32,12 @@ class LanguageModel(object):
             input_sequence, target_sequence = truncate_sequences(
                 sequence, self.max_length
             )
-        pass
+        else:
+            # Next chapter
+            input_sequence, target_sequence = pad_sequences(
+                sequence, self.max_length
+            )
+        return input_sequence, target_sequence
 ```
 
 总体而言，语言模型通过多类别分类的方式，根据上下文预测每个单词的概率。在训练中，使用输入-目标序列的方式进行，其中目标序列是输入序列的右移版本。同时，可以考虑限制序列长度以优化训练效果。

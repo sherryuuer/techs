@@ -22,6 +22,8 @@
 
 **SQLStandards**是指SQL（结构化查询语言）的标准规范，由国际标准化组织（ISO）和美国国家标准协会（ANSI）制定，这些标准定义了SQL的语法、功能和行为，确保不同数据库系统的兼容性和一致性，主要版本包括SQL-86、SQL-89、SQL-92、SQL:1999、SQL:2003、SQL:2008、SQL:2011和SQL:2016。
 
+**Columns**：又可以叫做degrees，attributes，一个列可以叫做Column，Domain，Constraint（约束）。同一个东西。
+
 ## Database Models
 
 Database Models是指用于组织、存储和管理数据的结构和方法。
