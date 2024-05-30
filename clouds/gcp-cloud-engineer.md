@@ -230,7 +230,7 @@ codelabs：https://codelabs.developers.google.com/codelabs/cloud-bigtable-intro-
 - 自动分片sharding（水平分割）
 - 高可用性、全球范围内的强一致性、RDBMS和水平扩展。无需管理高可用性副本和只读副本。
 
-### Cloud Firestore
+### Cloud Firestore/Firebase
 
 - 自动扩展、高性能和易于应用程序开发而构建的 NoSQL 数据库。
 - Firestore更像是document数据库，collection group适合应用开发后台数据库

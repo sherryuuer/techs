@@ -117,7 +117,8 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 
 ## Computer Science
 - [软件开发和程序员基础知识/基础情报技术](cs/programming-base.md)
-- [系统设计概念System-Design-concepts](morefun/system-design.md)
+- [系统设计概念：System Design concepts](morefun/system-design.md)
+- [系统设计模式思考：System Design Interview](morefun/system-design-interview.md)
 - [*GithubActions实现workload工作流：自动化GCS部署和notification](cs/ghactions-autodeploy.md)
 - [Git和Github复习手册](cs/git.md)
 - [*网络安全分类：访问控制、身份管理、数据加密与网络防护的清晰分类](cs/network-security-tree.md)

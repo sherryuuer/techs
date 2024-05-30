@@ -383,26 +383,158 @@ imputer_model = imputer.fit(doubles_df)
 imputed_df = imputer_model.transform(doubles_df)
 ```
 - Describe the process of one-hot encoding categorical features.
+  - 独热编码将分类变量转换为二进制形式，其中每个类别都被表示为一个新的特征，而每个特征只有一个元素为1，其余为0。
 - Describe why one-hot encoding categorical features can be inefficient for tree-based models.
+  - 当应用独热编码于基数较高（high cardinality）的分类变量（具有许多不同类别值的变量）时，可能会导致效率降低。特别是在基于树的机器学习方法中（如随机森林或梯度提升），由于虚拟变量化导致连续变量更容易被重视，因此特征的重要性顺序可能变得不清晰，从而可能导致模型性能下降。
 ### Training
 - Perform random search as a method for tuning hyperparameters.
+```python
+# randome search
+# 指定したパラメータ範囲の組み合わせ(e.g. maxDepth:[2, 5, 10 ], numTrees:[5, 10])を指定した探索回数分ランダムに探索し、最も精度(評価指標)が高い組み合わせを採択する方法。
+# 違いはGridSearchCVではなく、RandomizedSearchCVを使うこと
+from sklearn import svm, datasets, linear_model
+from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
+from scipy.stats import uniform
+from sklearn.datasets import load_iris
+
+iris = load_iris()
+logistic = linear_model.LogisticRegression(solver='saga', tol=1e-2, max_iter=200, random_state=0)
+distributions = dict(C=uniform(loc=0, scale=4), penalty=['l2', 'l1'])
+clfrand = RandomizedSearchCV(logistic, distributions, random_state=0)
+searchrand = clfrand.fit(iris.data, iris.target)
+
+# grid search
+# 指定したパラメータ範囲の組み合わせ(e.g. maxDepth:[2, 5, 10], numTrees:[5, 10])を網羅的に探索し、最も精度(評価指標)が高い組み合わせを採択する方法。
+iris = datasets.load_iris()
+parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
+svc = svm.SVC()
+clfgs = GridSearchCV(svc, parameters)
+searchgs = clfgs.fit(iris.data, iris.target)
+```
+
 - Describe the basics of Bayesian methods for tuning hyperparameters.
+  - 在贝叶斯方法中，我们利用贝叶斯定理从先前获得的组合结果中寻找候选组合，其中某个值的概率变得较小，然后选择具有最高精度（评估指标）的组合。这种方法允许我们基于先前观察到的结果来动态地调整超参数，并且不断地寻找更好的组合，以提高模型的性能。
+  - 当我们尝试调整模型的超参数时，传统的方法是通过在一个预定义的参数空间中进行网格搜索或随机搜索来尝试不同的参数组合，然后选择表现最好的组合。这种方法的缺点之一是它需要大量的计算资源和时间，尤其是当参数空间较大时。
+  - 贝叶斯方法通过利用之前的试验结果来指导下一次尝试的参数选择，从而在参数空间中寻找到可能更优的区域。具体来说，它使用贝叶斯定理来更新先验概率分布，将先前的试验结果转化为对参数空间的后验概率分布。这意味着在选择下一个参数组合时，更有可能选择那些已经显示出良好性能的区域，而不是随机地在整个参数空间中进行搜索。
+  - 在贝叶斯优化的过程中，我们首先根据先验概率选择一个参数组合，然后评估该组合的性能，并利用这个结果来更新参数空间中参数组合的后验概率分布。通过这种迭代过程，我们可以逐步地缩小搜索空间，并集中在可能性能更高的参数组合上。这种方法通常比传统的网格搜索或随机搜索更高效，特别是在高维参数空间或需要大量计算资源的情况下。
+
 - Describe why parallelizing sequential/iterative models can be difficult.
+  - 梯度提升（Gradient Boosting）算法是一种迭代的算法，当构建弱学习器（小型模型）时，会使用先前模型的误差。因此，如果试图将处理分布到不同的节点上，节点之间就需要交换误差信息，这就变得很困难。
+
 - Understand the balance between compute resources and parallelization.
+  - 要注意到并行化并不是万能的解决方案。有时候，串行算法可能比并行算法更简单、更稳定、更易于理解和维护。因此，在考虑并行化时，需要综合考虑*任务的特性、计算资源的可用性以及额外开销*，并做出合适的决策。
+
 - Parallelize the tuning of hyperparameters using Hyperopt and SparkTrials.
+```python
+# single-machine hyperopt with a distributed training algorithm (e.g. MLlib)
+# SparkMLのモデルでhyperoptを使う場合は以下の通り
+num_evals = 4
+trials = Trials()
+best_hyperparam = fmin(fn=objective_function, 
+                       space=search_space,
+                       algo=tpe.suggest, 
+                       max_evals=num_evals,
+                       trials=trials,
+                       rstate=np.random.default_rng(42))
+
+# distributed hyperopt with single-machine training algorithms (e.g. scikit-learn) with the SparkTrials class.
+# sklearnのモデルでhyperoptを使う場合は以下の通り
+num_evals = 4
+spark_trials = SparkTrials(parallelism=2)
+best_hyperparam = fmin(fn=objective_function, 
+                       space=search_space,
+                       algo=tpe.suggest, 
+                       trials=spark_trials,
+                       max_evals=num_evals,
+                       rstate=np.random.default_rng(42))
+```
+
 - Identify the usage of SparkTrials as the tool that enables parallelization for
 tuning single-node models.
+  - 使用SparkTrials作为工具，它能够为调整单节点模型提供并行化功能。
+  - SparkTrials是一个工具，用于在Apache Spark中并行化地进行调整单节点模型的超参数搜索。通过使用SparkTrials，可以同时评估多个超参数设置，从而加速整个调参过程。这样可以利用Spark的并行计算能力，在分布式环境中更高效地执行超参数搜索。
+  - parallelism，指定了同时评估的最大试验数量。增加parallelism能够允许同时测试更多的超参数设置，从而提高搜索的效率。默认情况下，parallelism的值等于`SparkContext.defaultParallelism`，这个值是Spark上下文中默认的并行度。
 ### Evaluation and Selection
-- Describe cross-validation and the benefits of downsides of using
-cross-validation over a train-validation split.
-- Perform cross-validation as a part of model fitting.
-- Identify the number of models being trained in conjunction with a
-grid-search and cross-validation process.
-- Describe Recall and F1 as evaluation metrics.
-- Identify the need to exponentiate the RMSE when the log of the label variable
-is used.
-- Identify that the RMSE has not been exponentiated when the log of the label
-variable is used
+**Describe cross-validation and the benefits of downsides of using cross-validation over a train-validation split.**
+- 交叉验证（cross-validation）及其相对于训练-验证集分割的优缺点。
+- 在n折交叉验证中，我们将数据分成n份，其中一份作为验证集，其余的n-1份作为训练集。然后我们重复这个过程n次，每次选择不同的验证集。最终，我们将n次试验的结果取平均值作为最终的性能评估指标。
+- 交叉验证的主要优点是它更加稳健和可靠。通过重复多次，我们能够更好地评估模型的性能，减少由于特定数据分割带来的随机性。此外，交叉验证可以更好地利用数据，因为每个样本都被用于了训练和验证，从而更充分地利用了数据信息。
+- 然而，交叉验证也有一些缺点。首先，它需要花费更多的计算资源和时间，因为需要重复训练多次。其次，交叉验证在某些情况下可能会导致过拟合，特别是当数据集较小时。另外，对于某些模型，特别是在大数据集上，简单的训练-验证集分割可能已经足够提供良好的性能评估，而不必使用交叉验证。
+
+**Perform cross-validation as a part of model fitting.**
+```python
+# cvにpipelineを含める場合
+# pros: データ漏洩の可能性が低い
+# cons: string indexerのようなestimator/transformerがある場合、foldのdatasetに対して毎回変換をかけることになる
+stages = [string_indexer, vec_assembler, rf]
+pipeline = Pipeline(stages=stages)
+evaluator = RegressionEvaluator(labelCol="price", predictionCol="prediction")
+cv = CrossValidator(estimator=pipeline, evaluator=evaluator, estimatorParamMaps=param_grid, 
+                    numFolds=3, seed=42)
+cv_model = cv.fit(train_df)
+
+# pipelineにcvを含める場合
+# pros: 変換後にfoldのdatasetに分割するため、処理速度向上が見込める
+# cons: データ漏洩の可能性がある
+cv = CrossValidator(estimator=rf, evaluator=evaluator, estimatorParamMaps=param_grid, 
+                    numFolds=3, seed=42)
+stages_with_cv = [string_indexer, vec_assembler, cv]
+pipeline = Pipeline(stages=stages_with_cv)
+pipeline_model = pipeline.fit(train_df)
+```
+
+**Identify the number of models being trained in conjunction with a grid-search and cross-validation process.**
+- 在进行网格搜索（Grid Search）和交叉验证（Cross-Validation）过程中训练的模型数量如何计算的问题。
+```python
+# パラメータの組み合わせ×foldの数
+# 以下の場合だと、(2*2) * 3 = 12回
+param_grid = (ParamGridBuilder()
+              .addGrid(rf.maxDepth, [2, 5])
+              .addGrid(rf.numTrees, [5, 10])
+              .build())
+evaluator = RegressionEvaluator(labelCol="price", predictionCol="prediction")
+cv = CrossValidator(estimator=pipeline, evaluator=evaluator, estimatorParamMaps=param_grid, 
+                    numFolds=3, seed=42)   
+```
+
+**Describe Recall and F1 as evaluation metrics.**
+- Recall（召回率）：召回率是指在所有实际正例中，模型成功预测出的正例的比例。召回率衡量了模型在识别所有真实正例方面的能力，也就是模型能够捕捉到多少真正的正例。召回率的计算公式为：Recall = TP / (TP + FN)，其中 TP 是真正例数，FN 是假负例数。召回率越高，表示模型能够更好地捕捉到正例，但有可能导致更多的假正例。
+- F1 分数：F1 分数是精确率（Precision）和召回率的调和平均值，它综合考虑了模型的精确性和召回率。F1 分数的计算公式为：F1 = 2 * (Precision * Recall) / (Precision + Recall)，其中 Precision 表示模型预测的正例中真正的正例比例。F1 分数同时考虑了模型的准确性和全面性，是一个综合评估模型性能的指标。F1 分数越高，表示模型在精确性和召回率之间取得了更好的平衡。
+- 召回率更侧重于模型对正例的覆盖能力，而 F1 分数则更全面地评估了模型的性能，包括精确性和全面性。在某些场景下，召回率可能更为重要，例如在医学诊断中需要尽可能少地漏诊；而在其他场景下，如垃圾邮件过滤，精确性和全面性都很重要，因此 F1 分数可能更为合适。
+- Identify the need to exponentiate the RMSE when the log of the label variable is used.
+- Identify that the RMSE has not been exponentiated when the log of the label variable is used.
+```python
+# 目的変数の分布が歪んでいるときに、logをとって正規分布に近づけることでモデルの精度が向上する場合がある
+# RMSEはrootをとって単位を合わせるので、正しくRMSEを解釈するために、logではなく、実数に戻す必要あり。そのときにexponentiateする
+
+log_train_df = train_df.withColumn("log_price", log(col("price"))) #学習データ
+log_test_df = test_df.withColumn("log_price", log(col("price"))) #テストデータ
+
+r_formula = RFormula(formula="log_price ~ . - price", featuresCol="features", labelCol="log_price", handleInvalid="skip") 
+
+lr.setLabelCol("log_price").setPredictionCol("log_pred")
+pipeline = Pipeline(stages=[r_formula, lr])
+pipeline_model = pipeline.fit(log_train_df)
+pred_df = pipeline_model.transform(log_test_df)
+
+#exponentiateしない場合
+exp_df_noexp = pred_df.withColumn("prediction", col("log_pred"))
+
+regression_evaluator_noexp = RegressionEvaluator(labelCol="log_price", predictionCol="prediction")
+rmse_noexp = regression_evaluator.setMetricName("rmse").evaluate(exp_df_noexp)
+print(f"RMSE is {rmse_noexp}")
+
+#exponentiateする場合
+exp_df = pred_df.withColumn("prediction", exp(col("log_pred")))
+
+rmse = regression_evaluator.setMetricName("rmse").evaluate(exp_df)
+print(f"RMSE is {rmse}")
+```
+- 这段内容涉及在使用标签变量的对数（log）时需要对 RMSE 进行指数化（exponentiate）的原因。
+- 首先，当目标变量的分布是偏斜的（即不符合正态分布）时，有时将其取对数可以使其更接近于正态分布，这有助于提高模型的预测精度。
+- 在这个例子中，训练数据集和测试数据集中的价格标签被取对数，以使其更接近于正态分布。然后，一个线性回归模型被用于预测对数价格（log_price）。
+- 然而，在评估模型的性能时，我们通常希望使用原始单位进行比较，因此需要将预测结果从对数空间转换回原始单位。这就是为什么在预测数据中创建了一个新列，其中将对数预测（log_pred）指数化为实际的价格预测值。
+- 最后，分别计算了未指数化和指数化后的 RMSE，以评估模型的性能。指数化是为了确保 RMSE 能够反映出模型在原始数据空间中的预测误差，以便更好地理解和解释模型的性能。
 ## Section 3: Spark ML
 ### Distributed ML Concepts
 - Describe some of the difficulties associated with distributing machine

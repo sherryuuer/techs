@@ -112,3 +112,76 @@ jane.sayHello(); // 输出: Hello, I am a designer
 - 通过对象的复制和动态修改，原型范式提供了灵活的对象创建和继承机制。
 
 原型范式提供了一种不同于基于类的面向对象编程的方法，更加灵活和动态，适合某些特定的编程需求和环境。
+
+### Adapter Pattern
+
+适配器模式（Adapter Pattern）是一种结构型设计模式，它的主要目的是将一个接口转换成客户端期望的另一个接口，从而使原本*接口不兼容*的类可以一起工作。适配器模式使得原本由于接口不兼容而不能一起工作的那些类可以在一起工作。
+
+适配器模式的主要角色：
+1. **目标接口（Target）**：
+   - 这定义了客户端所使用的特定接口。
+
+2. **需要适配的类（Adaptee）**：
+   - 这是一个已经存在的接口或类，需要被适配成目标接口。
+
+3. **适配器（Adapter）**：
+   - 这个类实现了目标接口，并且持有一个需要适配的类的实例。适配器通过将目标接口的方法调用转发给需要适配的类来实现目标接口的方法。
+
+4. **客户端（Client）**：
+   - 通过目标接口与适配器交互。
+
+适配器模式的两种实现方式：
+1. **类适配器（Class Adapter）**：
+   - 使用继承来实现适配器模式。适配器继承自需要适配的类，并实现目标接口。
+   - 由于使用了多重继承（在Java等单继承语言中不常用），所以在C++等支持多重继承的语言中更常见。
+
+2. **对象适配器（Object Adapter）**：
+   - 使用组合来实现适配器模式。适配器持有一个需要适配的类的实例，并实现目标接口。
+   - 更加常用，因为它不依赖于多重继承，可以在大多数面向对象的编程语言中使用。
+
+假设我们有一个旧的类`OldPrinter`，它有一个方法`oldPrint`，但是我们希望在新系统中使用一个`Printer`接口，定义了一个方法`print`。
+
+OldPrinter 类：
+```java
+class OldPrinter {
+    void oldPrint(String text) {
+        System.out.println("Old Printer: " + text);
+    }
+}
+```
+
+Printer 接口：
+```java
+interface Printer {
+    void print(String text);
+}
+```
+
+对象适配器实现：
+```java
+class PrinterAdapter implements Printer {
+    private OldPrinter oldPrinter;
+
+    public PrinterAdapter(OldPrinter oldPrinter) {
+        this.oldPrinter = oldPrinter;
+    }
+
+    @Override
+    public void print(String text) {
+        oldPrinter.oldPrint(text);
+    }
+}
+```
+
+客户端代码：
+```java
+public class Client {
+    public static void main(String[] args) {
+        OldPrinter oldPrinter = new OldPrinter();
+        Printer printer = new PrinterAdapter(oldPrinter);
+        printer.print("Hello, World!");
+    }
+}
+```
+
+在这个示例中，`PrinterAdapter`实现了`Printer`接口，并将`print`方法的调用委托给`OldPrinter`类的`oldPrint`方法。客户端代码通过`Printer`接口与适配器进行交互，而无需了解底层的`OldPrinter`类。

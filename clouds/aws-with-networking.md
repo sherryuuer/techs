@@ -16,6 +16,13 @@
 - 混合环境（VPC，VPN，Direct Connect）
   - Transit Gateway
 
+- OTHER THOUGH
+  - 涉及到网关的服务Gateway，一般都只涉及路由设置，涉及Interface，IP等，一般会涉及路由表和DNS解析。
+  - 整个云构架中重要的部分：
+    - API到处都是，DNS解析非常重要
+    - PrivateLink和ENI功能强大
+    - 混合云的需求，多VPC和本地相连
+
 ## VPC
 
 ### 非云的虚拟网络拓扑
@@ -342,6 +349,7 @@
    - 例如，开发和测试环境、小型网站和博客、突发性流量的应用等。
 5. **监控和管理**：
    - AWS提供了工具和指标来监控Network I/O Credit的使用情况，如CloudWatch中的指标，可以帮助用户了解实例的网络性能和Credit使用情况。
+
 通过使用Network I/O Credit，AWS突发型实例能够在需要时提供高网络性能，同时在大多数时间保持低成本。这种机制确保了灵活性和成本效益，适合处理不均衡的网络流量需求。
 
 ## VPC traffic Monitoring & Troubleshooting & Analysis
@@ -403,8 +411,64 @@
   - UseCase：信任网络路径，信任连接检测，隔离网络区域检测等
   - 需要设置一个NNetwork Access Scope，有AWS预设的也可以自定义，定义后实质是一个json格式定义
 
-## Pravite Coneection
+## Pravite Connection
 
+### AWS的托管服务构架
+
+在 AWS 中，托管服务可以大致分为两种类型：通过 API 访问的托管服务和实例在用户 VPC 中的托管服务。这两种类型在架构和操作上有明显的区别。以下是对这两种类型的详细解释和它们的架构原理：
+
+**1. 通过 API 访问的托管服务**
+
+这些服务由 AWS 完全管理，用户通过 API 接口与这些服务交互，而不需要关心底层的基础设施和实例配置。服务的实例通常运行在 AWS 自己的基础设施中，而不是用户的 VPC 中。
+
+- **完全托管**：AWS 负责所有的基础设施管理，包括服务器配置、扩展、维护和安全。
+- **抽象化**：用户只需调用 API 接口进行操作，底层细节被完全抽象掉。
+- **高可用性**：AWS 提供了内建的高可用性和故障恢复机制。
+- **自动扩展**：服务会根据需求自动扩展，无需用户干预。
+
+**示例服务**
+- Amazon S3：对象存储服务，通过 API 进行文件的上传、下载和管理。
+- Amazon DynamoDB：NoSQL 数据库服务，通过 API 进行数据操作。
+- AWS Lambda：无服务器计算服务，通过 API 触发函数执行。
+
+**架构原理**
+- 客户端请求：用户通过 SDK 或 RESTful API 发送请求到 AWS 服务端点。
+- 服务处理：AWS 接收到请求后，在其管理的基础设施上处理请求。
+- 结果返回：处理结果通过 API 响应返回给用户。
+
+**2. 实例在用户 VPC 中的托管服务**
+
+这些服务运行在用户的 VPC 中，使用户可以对网络环境进行更细致的控制，同时享受托管服务的便利。这些服务实例需要用户在自己的 VPC 中配置，但管理和维护仍由 AWS 负责。
+
+- **网络控制**：用户可以控制服务实例所在的网络环境，包括子网、路由和安全组配置。
+- **托管维护**：虽然实例在用户的 VPC 中，但 AWS 仍负责服务的维护、打补丁和自动备份等任务。
+- **与其他 VPC 资源整合**：这些实例可以直接与同一 VPC 中的其他资源（如 EC2、RDS 等）通信。
+
+**示例服务**
+- Amazon RDS：关系数据库服务，数据库实例运行在用户的 VPC 中。
+- Amazon ElastiCache：内存缓存服务（Redis、Memcached），缓存节点运行在用户的 VPC 中。
+- Amazon Redshift：数据仓库服务，集群实例运行在用户的 VPC 中。
+- 当然还有EC2。
+
+**架构原理**
+- **实例部署**：用户在自己的 VPC 中创建和配置服务实例。
+- **AWS 管理**：AWS 自动处理实例的维护、监控、扩展和故障恢复。
+- **VPC 网络**：用户可以通过 VPC 网络配置（如子网和安全组）来控制实例的网络流量和安全策略。
+
+**比较和选择**
+- 通过 API 访问的托管服务
+  - **优点**：无需管理底层基础设施，自动扩展，高可用性。
+  - **缺点**：网络配置和控制能力有限，可能无法满足对网络细节有严格要求的应用。
+
+- 实例在用户 VPC 中的托管服务
+  - **优点**：提供对网络环境的更高控制权，能与 VPC 内其他资源更紧密地整合。
+  - **缺点**：需要配置和管理 VPC 内的网络环境，尽管实例的运维工作仍由 AWS 负责。
+
+- 选择依据
+  - **简单性和抽象化**：如果希望尽可能简化基础设施管理，使用通过 API 访问的托管服务。
+  - **网络控制和整合**：如果需要对网络配置有更高的控制权，并希望与 VPC 内其他资源无缝集成，选择实例在用户 VPC 中的托管服务。
+
+### 关于私有连接
 - 包括VPC Peering，VPC Gateway Endpoint，VPC Interface Endpoint，PrivateLink
 - TransitGateway可以实现，私有和公有的混合构架
 - 私有连接的目的：
@@ -413,11 +477,165 @@
   - NAT连接会产生额外的Cost
   - 数据库和应用服务器等不应该暴露在外网的部分需要私有连接
 
-## VPC Peering
+### VPC Peering
 
 - 是AWS Network管理的组件
 - 现在可以同region也可以跨region
+- 同一个AZ中进行Peering的VPC之间的data transfer是免费的，但是跨AZ的需要付费
 - 可以跨账户
 - CIDR不能有overlapping
+- 不具有传递性，必须两两连接
+- 两个VPC之间只能设置一个Peering，不具有冗余性
+- 一个VPC可以设置的最大上限数量是125个Peering
 - 必须更新*每个VPC的subnet*的*route table*，以确保双方允许通信
 - 需要一个请求方VPC和一个接受方VPC授权连接
+- 限制Case：如果VPCA-VPCB之间是Peering：
+  - VPCA无法利用VPCB的Internet Gateway，NAT Gateway，或者VPC Endpoint（Gateway）
+  - 如果VPCB和一个On-premise之间是VPN或者DX，VPCA也*无法连接到On-premise*，需要其他Proxy设置。
+
+- 补充：*Proxy*是指一种代理服务器：比如负载均衡，CDN内容分发服务，身份代理，API网关，地址转换NAT等都是代理形式。
+
+### VPC Endpoint
+
+- VPC Endpoint在不经过公共互联网的情况下，将VPC私有连接到支持的 AWS 服务。这种连接是安全的、可靠的，低成本，并且简化了与这些服务的交互。
+- AWS 提供两种类型的 VPC Endpoint：接口端点 (Interface Endpoint) 和网关端点 (Gateway Endpoint)。
+- 接口端点是基于 AWS PrivateLink 的，使用弹性网络接口 (ENI) 在您的 VPC 中为支持的服务提供私有 IP 地址。
+  - 访问支持 PrivateLink 的服务，例如 Amazon S3、DynamoDB 之外的 AWS 服务（如 EC2、Systems Manager、Kinesis 等）。
+  - 连接第三方 SaaS 应用程序或您自己的服务，通过 PrivateLink 在您的 VPC 中公开这些服务。
+  - 现在S3也有了Interface端点了。
+
+- 网关端点是针对 Amazon S3 和 DynamoDB 提供的，使用 VPC 路由表将流量定向到这些服务。
+  - 访问 Amazon S3 和 DynamoDB，而无需通过公共互联网。
+  - 在数据处理、分析和存储工作流中，确保数据在 VPC 内部安全传输。
+
+**设置 VPC Endpoint 的步骤**
+- 登录到 AWS 管理控制台，导航到 VPC 控制台，选择“Endpoints”，并点击 “Create Endpoint”。
+- 选择服务类型：
+  - 对于接口端点，选择所需的 AWS 服务或第三方服务。
+  - 对于网关端点，选择 Amazon S3 或 DynamoDB。
+- 选择 VPC 和子网：
+  - 对于接口端点，选择将创建弹性网络接口 (ENI) 的子网。
+- 配置安全组（仅适用于接口端点）：
+  - 设置安全组以控制访问权限。
+- 更新路由表：
+  - 对于网关端点，选择要更新的路由表，并添加指向目标服务的路由。
+
+**接口interface和网关gateway**
+- *接口Interface端点*
+  - 通过 AWS PrivateLink 实现，通过在用户 VPC 的子网中创建**弹性网络接口（Elastic Network Interface, ENI）**，将流量定向到支持 *PrivateLink* 的 AWS 服务。
+  - VPC 内的资源是通过私有 IP 地址*路由访问* ENI，流量通过 PrivateLink 路由到 AWS 服务。
+  - 内部启用私有 *DNS 名称解析*后，服务的标准 DNS 名称会解析为 ENI 的**私有 IP 地址**，确保请求流量通过接口端点。
+- *网关Gateway端点*
+  - 网关端点通过*更新 VPC 路由表*，将流量定向到支持网关端点的 AWS 服务，如 Amazon S3 和 DynamoDB。
+  - 无网络接口
+  - 网关端点通过在 VPC **路由表中添加特殊路由**，将流量安全地定向到 AWS 内部管理的虚拟网关。类似于一个特殊的黑洞路由，但它实际上会处理特定服务的流量。
+- 网关路由示例：
+```scss
+Destination      | Target
+----------------|----------------
+0.0.0.0/0       | igw-abcdefgh  (Internet Gateway)
+10.0.0.0/16     | local         (Local VPC)
+pl-xxxxxxxxxxxxx| vpce-12345678 (Gateway Endpoint)
+```
+
+- 网关Gateway是是*网络边界*的重要组件，管理着进出网络的流量。实现不同网络之间的连接和通信。控制数据的进出和*路由*。
+- 接口是网络设备（如计算机、路由器、交换机）上的连接点，用于与其他设备或网络进行通信。在计算机网络中，接口通常是物理网卡或虚拟网卡的概念。用于接收和发送*数据包。*接口需要配置 IP 地址、子网掩码等网络参数，以便与网络进行通信。
+- 网关是*网络的边界设备*，控制流量的进出和路由；而接口是*设备内部的组成部分*，用于连接设备与网络。
+- **PrivateLink** 提供的专用连接传输是通过 AWS 内部网络基础设施进行的，确保了数据在 VPC 内部的安全、高效传输。AWS 的全球网络、专用线路和虚拟专用云等服务，为 PrivateLink 提供了可靠的基础设施，使得用户可以在 VPC 内部安全地访问托管服务或其他服务，而无需经过公共互联网。
+- PrivateLink就像是服务和你的VPC中的虚拟网卡之间的量子连接。这只是一种比喻，意思是他们之间看似分离，但是维持着一种安全可靠的私有连接。
+
+### VPC Gateway Endpoint
+
+- 路由表设置，在创建S3的GatewayEndpoint的时候，选择了私有子网，创建后会帮助*自动登录路由表*
+  - ip目标为一个AWS创建的prefix list，它包括了所有的S3的ip，形式为`pl-xxxxx`，可以用于设置你的安全组和*路由表*
+  - EC2的话，*SecurityGroup*的 default 的 rule 是 allow all，但是如果你用的是 custom outbound rule 的话，需要添加针对`pl-xxxxx`的 http 和 https 的 outbound rules
+  - EC2还需要一个 IAM role 用于access S3/DynamoDB
+  - target是vpce-<id>
+- **VPC Endpoint Pollicy**
+  - 通过定义一个IAM Policy，内部限定要访问的S3 bucket为特定的Resource桶，以及特定的Action
+  - 不定义的情况下default为允许对拥有的所有的S3的bucket的所有的Actions
+
+- **S3 Bucket Policy**
+  - 在Bucket level可以定义policy限制条件condition，只允许从*vpce*通过的Access，或者只从某*vpc*来的Access（表示该vpc中所有的endpoints）
+  - S3的Policy中的条件不能用 SourceIP 条件来定义，因为它只能定义 publicIP 或者 Elastic IP address，而不能定义privateIP。（当然，因为S3是在AWS的VPC中，无法去定义你的VPC中的私有IP）
+- Troubleshooting：
+  - 检查安全组是否有custom rule没有开放对pl地址的outbound
+  - 检查VPC Endpoint Policy是否设置了deny
+  - 检查私有子网的路由表是否有路由到vpce的pl地址条件（正常的话是自动被设置的）
+  - 检查VPC的DNSresolution是否是enabled
+  - 检查S3 Bucket Policy是否允许对bucket的访问
+  - 检查IAM permission，user permission和IAM Role
+
+- **Remote Network**（VPN/DX或者PeeringVPC）连接问题
+  - 结论是*不能*。因为Gateway是VPC和AWS的VPC之间的网关（两个网络的边界点），只能处理路由表所在的私有子网的通信。VPN/DX或者Peering的信息进来后，他们没有路由指示，找不到要跳的点。
+
+### VPC Interface Endpoint（PrivateLink）
+
+Interface功能可以说是VPC Endpoint的一个Extension。
+
+- **VPC Endpoint Interface（通过PrivateLink实现）**
+  - 需要进行DNS查询
+  - 创建的ENI会创建一个local IP在你的VPC中
+  - 通过对多个AZ中进行ENI的设置，实现服务的高可用性
+  - support all service except DynamoDB。
+  - 依赖SG进行安全设置，在创建interface endpoint的时候就设置其interface的安全组。HTTPS的inbound rules。（可以把它想象成就是一个VPC中的带网卡的服务了）
+  - 需要DNSresolution解决服务的公共域名到私有hostname的映射。注意：这个可以通过 Site-to-site-VPN 和 Direct Connect 进行跨VPC访问。
+  - Region/Zonal DNS entries：地区级别的DNS入口是，会提供多个endpoint域名，作为入口并实现高可用性，但是费用包括了跨AZ的部分，Zonal的DNS入口是单个AZ的，不会有那么多域名，可用性降低，价格也低。
+  - 考虑到每一个服务都是一个API（所以他们都需要解决域名，进行IP接口访问！），如果设置interface，有时候需要设置非常多接口，用于多种服务组合。
+  - 只支持IPv4 traffic
+  - *只支持TCP协议*通信
+- *troubleshooting*：check DNS resolution 和 route table 
+
+- **PrivateLink**
+  - 目的是expose一个VPC中的应用（SAAS）给其他很多VPC（可暴露给1000个VPC）而不需要通过Internet Gateway，peering（可联通100个VPC），nat等。
+  - 高可用性，安全性。
+  - NLB+SAAS构架：消费端VPC（ENI（可设置多个，以提高可用性））--> PrivateLink --> 服务端VPC（NLB --> multi-servers(SAAS)）
+  - NLB+On-premise构架：消费端VPC（ENI）--> PrivateLink --> EdgeVPC（NLB）--> VPN/DX（安全连接On-premise（SAAS））
+  - ECS构架：多task多应用 --> ALB --> NLB --> PrivateLink --> ENI-of-VPC/VGW连接的其他VPN网络
+  - VPC Endpoint构架：VPC Endpoint interface --> PrivateLink --> S3
+
+- **DNS resolution**
+  - ENI会在VPC中创建一个private endpoint interface hostname
+  - SETTINGS：
+    - 转换内容：服务的public hostname需要resolve为private endpoint interface hostname
+    - *DNS解析需要enable VPC的两个设置：*
+    - *enableDnsSupport* 是 AWS 中用于配置 VPC 的一个功能，它允许 VPC 中的实例使用默认的 DNS 解析服务来解析公共 DNS 域名，从而能够与互联网上的资源进行通信。默认启用，但是关闭了也可以自己设置Custom DNS Server。
+    - *enableDnsHostname* 是 AWS VPC 中的一个配置选项，它允许 VPC 内的实例分配具有公开可解析主机名的 DNS 记录，从而使其他网络中的资源可以通过主机名来访问 VPC 中的实例。新VPC默认是禁用的。前置条件是 enableDnsSupport 为 True。
+    - 通过设置Private DNS enabled，就可以使用PrivateDNS名，它是一个很短的以服务开头的hostname，比如sql.region.amazon.com。但是解析前的DNS名为vpce为开头的两个很长的DNS名，可以有很多个冗余设置。如果你没设置这个，就需要一个option：--endpoint-url手动设置endpoint的DNS名，自行解决。
+    - 当enable了Private DNS设置后，内部使用的是AWS创建的Route53 Private Hosted Zone的域名解析功能。
+
+- **Remote Network**（VPN/DX或者PeeringVPC）连接问题
+  - 结论是*能*。
+  - Peering的VPC的需要attached to *Custom Route53 Private Hosted Zone*
+  - On-premise的DNS Query需要forwarded to *Custom Route53 Resolver*
+
+- **VPCPeering和PrivateLink的选择**
+  - Peering是多资源对多资源，PL是针对一个single服务点
+  - PL不在乎CIDR的Overlapping
+  - Peering最多创建125个，但是PL没有限制
+  - Peering是*双向通信*的，PL是消费VPC向源服务的*单向通信*
+
+## Transit Gateway
+
+- 为了简化混合云的VPC内部环境：比如要连接6个VPC网络，如果用Peering，就需要组合算法C(6,2)也就是15条Peering来连接他们，但是使用Transit Gateway，就是一个星型图只需要6条线。
+
+- **Attachments**
+  - **VPCs**
+    - 是一种Regional Route，用于连接同一个Region中的VPC
+    - VPC的CIDR不能overlapping
+    - RouteTable：TGW有所有VPC的路由表（ip via att-x），而各个VPC的路由表（或者subnet的路由表）也需要登录TGW的路由（tgw-ip:tgw-xxx）
+  - Other Transit Gateway：跨区连接，则两个Region各一个TransitGateway，然后Peering他们
+  - A Connect SD-WAN/third-party network appliance
+  - VPN
+  - DX Gateway
+
+- **创建和设置方法：**
+  - 创建TGW
+  - 创建TGW Attachment：（为每一个连接对象）选择VPC/VPN/DX - 选择相关联的Subnet
+  - 通过创建Attachment，会自动创建出Accociations（连接信息），Propagations，和Routes
+    - Propagations：传播指的是将路由信息从一个关联的网络资源传播到Transit Gateway路由表的过程
+    - 启用传播，以便这些VPC和VPN连接的路由信息可以传播到Transit Gateway的路由表中
+    - 发现Propagations的列表信息和Accociations的内容一样
+    - Routes的内容中多了CIDR信息，和路由类型（Propagated）
+  - 为每个VPC中连接的Subnet的路由表定义TransitGateway的路由信息（TGW的CIDR只要覆盖各个VPC的CIDR就可以了，比如各个VPC是16mask，那么TGW是8mask就可以了）
+  

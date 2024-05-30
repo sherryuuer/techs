@@ -1,0 +1,6 @@
+- 关注整个构架，或者关注某个功能，理解scope很重要。
+- **功能性设计 functional**和**非功能性设计 non-functional**。
+- 功能性是实际的具体的功能。
+- 非功能性一般是：Scalability可扩展性，Throuthput，StorageCapacity，Performance，Availibility
+- *Back of the envelope calculation*：很多非功能性标准，无法立刻得到一个十分精确的计算结果，“信封背后的计算”是一种方便快捷的方法，用于在不需要高精度的情况下，快速得到一个大致的估算结果。这种方法强调的是效率和实用性，常用于需要快速决策的场合。
+- 分布式系统很重要。

@@ -24,6 +24,8 @@
 
 **Columns**：又可以叫做degrees，attributes，一个列可以叫做Column，Domain，Constraint（约束）。同一个东西。
 
+**OLTP&OLAP**：前者是事务性处理，后者是分析目的的处理。前者的构架主要是应用端的客户信息记录，后者的构架则是在ETL中充当数据存储的数据库，然后供下游分析使用。
+
 ## Database Models
 
 Database Models是指用于组织、存储和管理数据的结构和方法。

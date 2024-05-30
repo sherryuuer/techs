@@ -268,6 +268,31 @@ NAT(Network Address Translation，网络地址转换)和NAT Network在VirtualBox
 
 - `netstat -nr`显示网络路由表的内容。一般是子网的第一个IP。
 
+### nmap命令
+
+- `nmap` 是一个网络扫描工具，用于网络发现和安全审计。它可以探测主机和服务，提供有关网络设备和服务的信息。
+- `man nmap`打开nmap的使用手册。
+- `nmap <ip>`扫描对象的开放端口。最多扫描1000个端口。
+- `nmap <ip-range>`扫描IP range比如：192.168.11.1-255，或者192.168.11.1/24
+- `sudo nmap -sS <ip>`进行TCP SYN扫描利用三次握手的前两步来快速、隐蔽地探测目标端口的状态。只发送SYN信号探测。收到SYN/ACK表示端口开放，收到RST表示端口是关闭状态。并不建立连接。需要管理权限。
+- `nmap -sT <ip>`通过正常的三次握手的TCP连接进行扫描，不需要sudo，容易被检测。
+- `nmap -sU <ip>`用于探测开放的UDP端口。通常比TCP扫描慢，因为UDP没有确认机制。
+- `nmap -sF <ip>`：执行 TCP FIN 扫描，探测防火墙和包过滤系统
+- `nmap -sX <ip>`：执行 TCP Xmas 扫描，发送带有 FIN、URG 和 PUSH 标志的包
+- `nmap -sN <ip>`：执行 TCP NULL 扫描，发送没有设置任何标志的包
+- `sudo nmap -sV <ip>`：进行服务和版本检测，确定开放端口运行的服务版本，一个端口就是一个运行的程序，检测的就是*程序的服务版本*。
+- `nmap -O <ip>`：进行操作系统检测，确定目标主机的*操作系统*，至少需要一个端口是开放的。
+- `nmap -sn <ip>`：执行 Ping 扫描，仅用于*发现活动主机*，不扫描端口
+- `nmap -p [port] <ip>`：扫描指定的端口范围，而不是所有端口，可以指定比如80，或者80,22,53，或者1-100指定范围
+- `nmap -F <ip>`：扫描前100个最常用的端口
+- `nmap -T4 <ip>`：进行快速扫描，提高扫描速度
+- `nmap --script [script] <ip>`：使用 Nmap 脚本引擎（NSE）执行自定义脚本扫描
+- `nmap -A <ip>`：执行高级扫描，包括操作系统检测、版本检测和 traceroute
+- `nmap -Pn <ip>`：跳过主机发现，直接进行端口扫描
+- `nmap -oN [filename] <ip>`：将扫描结果以普通文本格式保存到文件
+- `nmap -oX [filename] <ip>`：将扫描结果以 XML 格式保存到文件
+- `nmap -oG [filename] <ip>`：将扫描结果以 Grepable 格式保存到文件
+- `nmap -v <ip>`：进行详细扫描，输出更多详细信息
 
 ## Vulnerability Analysis
 

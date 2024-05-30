@@ -42,15 +42,15 @@ class LanguageModel(object):
 
 总体而言，语言模型通过多类别分类的方式，根据上下文预测每个单词的概率。在训练中，使用输入-目标序列的方式进行，其中目标序列是输入序列的右移版本。同时，可以考虑限制序列长度以优化训练效果。
 
-### 使用Padding的方法使输入等长
+## 使用Padding的方法使输入等长
 
 大多数神经网络处理固定长度的输入数据，因为它们具有前馈结构，使用多个固定大小的层来计算网络的输出。然而，由于文本数据涉及不同长度的文本序列（例如句子、段落等），语言模型需要能够处理不同长度的输入数据。因此，我们使用递归神经网络（在接下来的章节中详细讨论）作为语言模型的基础。
 
 虽然递归神经网络结构允许语言模型接受不同长度的输入文本，但在训练批次`batch`中，仍然需要每个经过标记化的文本序列具有相同的长度。这是因为训练批次必须具有适当的张量`tensor`形状，即在这种情况下需要是一个二维矩阵。
 
-为了模拟具有不同长度序列的适当二维矩阵形状，我们采用填充的方式。对于比最大序列长度短的每个序列，我们在其末尾添加一个特殊的非词汇标记，直到其长度等于最大序列长度。通常，特殊的填充标记被赋予ID 0，而每个词汇单词的ID是正整数。因为Tokenizer对象从来不用0作转换。
+为了模拟具有不同长度序列的适当二维矩阵形状，我们采用填充的方式。对于比最大序列长度短的每个序列，我们在其末尾添加一个*特殊的非词汇标记*，直到其长度等于最大序列长度。通常，特殊的填充标记被赋予*ID 0*，而每个词汇单词的ID是正整数。因为Tokenizer对象从来不用0作转换。
 
-下面的代码中的`pad_sequences`函数就实现了这个功能。
+下面的代码中的`pad_sequences`辅助函数就实现了这个功能。
 
 ```python
 import tensorflow as tf
@@ -85,7 +85,7 @@ class LanguageModel(object):
         return input_sequence, target_sequence
 ```
 
-### RNN&LSTM
+## RNN&LSTM
 
  **RNN的结构和运行机制**
 
@@ -127,7 +127,7 @@ class LanguageModel(object):
 
 总之，默认RNN单元在处理长距离依赖方面存在问题。而LSTM通过引入门控机制来解决这个问题，并有效地处理长距离依赖关系。门控机制是LSTM的核心，使得它能够选择性地记忆和遗忘信息。
 
-关注代码的`make_lstm_cell`方法，唯一需要关注的就是细胞的个数。这里用的是keras的内置方法。
+关注代码的`make_lstm_cell`初始化程序的方法，唯一需要关注的就是细胞的个数。这里用的是keras的内置方法。
 
 ```python
 import tensorflow as tf
@@ -147,7 +147,7 @@ class LanguageModel(object):
         return cell
 ```
 
-### Dropout
+## Dropout
 
 Dropout是一种正则化技术，通过随机丢弃网络中的部分节点来防止过拟合。在循环神经网络（RNN）中，Dropout可以应用于输入、输出和隐含层。
 
@@ -175,6 +175,33 @@ Dropout是一种正则化技术，通过随机丢弃网络中的部分节点来�
 * 不同的Dropout策略对RNN模型的影响可能有所不同，需要进行实验找到最优策略。
 * Dropout与其他正则化技术可以结合使用，以获得更好的效果。
 
+Tensorflow2.0的封装方法：
+
+```python
+import tensorflow as tf
+
+# 假设我们需要一个 LSTM 单元
+units = 128  # 例如，LSTM单元的数量
+dropout_keep_prob = 0.5  # 保留50%的输出
+
+# 创建一个 LSTM 单元
+lstm_cell = tf.keras.layers.LSTMCell(units)
+
+# 将 LSTM 单元包装在一个 RNN 层中，并应用 dropout
+dropout_cell = tf.keras.layers.RNN(
+    lstm_cell,
+    dropout=1 - dropout_keep_prob,  # 设置 dropout 概率
+    return_sequences=True  # 如果需要返回完整的序列，而不仅仅是最终的状态
+)
+
+# 或者创建完整的 LSTM 层，并应用 dropout
+lstm_layer = tf.keras.layers.LSTM(
+    units,
+    dropout=1 - dropout_keep_prob,  # 设置 dropout 概率
+    return_sequences=True  # 如果需要返回完整的序列，而不仅仅是最终的状态
+)
+```
+
 下面的代码中的`make_lstm_cell`方法实现了对输出进行dropout。
 
 ```python
@@ -193,14 +220,24 @@ class LanguageModel(object):
     def make_lstm_cell(self, dropout_keep_prob):
         cell = tf.keras.layers.LSTMCell(self.num_lstm_units) 
         # apply dropout to output
-        # node keep rate (i.e. 1 minus the dropout rate) is given by dropout_keep_prob.
-        dropout_cell = tf.compat.v1.nn.rnn_cell.DropoutWrapper(cell, output_keep_prob=dropout_keep_prob)
+        # 1.0 version
+        # dropout_cell = tf.compat.v1.nn.rnn_cell.DropoutWrapper(cell, output_keep_prob=dropout_keep_prob)
+        # dropout_keep_prob 是在每次训练迭代中保留输出的概率
+        # 2.0 version
+        dropout_keep_prob = 0.5  # 例如 0.5 表示保留50%的输出
+        dropout_cell = tf.keras.layers.RNN(
+            cell,
+            dropout=1 - dropout_keep_prob,  # 设置 dropout 概率
+            return_sequences=True  # 如果需要返回完整的序列，而不仅仅是最终的状态
+        )
         return dropout_cell
 ```
 
-### RNN对多层结构
+## RNN的多层结构
 
 和所有的深度学习人工神经网络一样，RNN也有多层结构。
+
+代码中的 cell，是一个 Keras 层，允许将多个 RNN 单元堆叠在一起，从而形成一个多层的 RNN 结构。每一层的输出作为下一层的输入。这个层本质上是一个*容器*，可以包含多个 RNN 单元（如 SimpleRNNCell, LSTMCell, GRUCell 等）。
 
 ```python
 import tensorflow as tf
@@ -215,12 +252,6 @@ class LanguageModel(object):
         self.num_lstm_layers = num_lstm_layers
         self.tokenizer = tf.keras.preprocessing.text.Tokenizer(num_words=vocab_size)
 
-    # Create a cell for the LSTM
-    def make_lstm_cell(self, dropout_keep_prob):
-        cell = tf.keras.layers.LSTMCell(self.num_lstm_units)
-        return tf.compat.v1.nn.rnn_cell.DropoutWrapper(
-            cell, output_keep_prob=dropout_keep_prob)
-    
     # Stack multiple layers for the LSTM
     def stacked_lstm_cells(self, is_training):
         dropout_keep_prob = 0.5 if is_training else 1.0
@@ -229,7 +260,7 @@ class LanguageModel(object):
         return cell
 ```
 
-### LSTM的输出
+## LSTM的输出
 
 下面这段demo代码演示了如何使用TensorFlow创建一个基本的LSTM模型，并对序列数据进行处理。该模型可以用于解决各种序列问题，例如文本分类、时间序列预测等。通过理解这段代码，基本可以理解lstm的输出原理。
 
@@ -240,13 +271,12 @@ lens = [4, 9, 10, 5, 10]
 # 创建一个lstm单元，里面包含7个隐藏单元，这些隐藏单元可以记录前面时间步的信息
 cell = tf.keras.layers.LSTMCell(units=7)
 # input_sequences是一个输入占位符
-# Shape: (batch_size, time_steps, embed_dim)
-# batch_size：表示一次处理的样本数量。
+# Shape: (time_steps, embed_dim)
 # time_steps：表示序列的长度，这里为10。
-# embed_dim：表示每个时间步的向量维度，这里为20。
-input_sequences = tf.compat.v1.placeholder(
-    tf.float32,
-    shape=(None, 10, 20)
+# embed_dim：表示每个时间步的向量维度（特征），这里为20。
+input_sequences = tf.keras.Input(
+    shape=(10, 20),
+    dtype=tf.float32
 )
 # 创建一个rnn层，使用前面创建的单元
 # 设定return_sequences为true表示返回所有时间步的输出，反之只输出最后一个
@@ -263,7 +293,33 @@ output = rnn(input_sequences)
 print(output)
 ```
 
-继续语言模型的代码实现，关注`run_lstm`对lstm对输出的实现。
+那么这里模型的代码实现，关注`run_lstm`对lstm对输出的实现。
+
+在代码中，二元序列（binary_sequences）的作用是用于计算输入序列的实际长度。具体来说，它将输入序列中的非零值转换为 1，填充值（通常为零）保持为 0。通过这种方式，可以忽略填充值，仅考虑实际的序列长度。
+
+知道每个序列的实际长度可以避免对填充值的无效计算，从而提高计算效率。
+
+序列模型（如 RNN、LSTM）在处理变长序列时，可以使用掩码 masking 来忽略填充值的影响。通过二元序列，可以生成相应的掩码，确保模型只关注实际的有效数据。
+
+下面的demo演示了二元序列的计算：
+
+```python
+input_sequences = tf.constant([
+    [1, 2, 3, 0, 0],  # 长度为 3
+    [4, 5, 0, 0, 0],  # 长度为 2
+    [6, 7, 8, 9, 0]   # 长度为 4
+])
+
+binary_sequences = tf.math.sign(input_sequences)
+# binary_sequences = [[1, 1, 1, 0, 0], 
+#                     [1, 1, 0, 0, 0], 
+#                     [1, 1, 1, 1, 0]]
+
+sequence_lengths = tf.math.reduce_sum(binary_sequences, axis=1)
+# sequence_lengths = [3, 2, 4]
+```
+
+具体代码：
 
 ```python
 import tensorflow as tf
@@ -288,17 +344,21 @@ class LanguageModel(object):
         dropout_keep_prob = 0.5 if is_training else 1.0
         cell_list = [self.make_lstm_cell(dropout_keep_prob) for i in range(self.num_lstm_layers)]
         cell = tf.keras.layers.StackedRNNCells(cell_list)
-        return cell_list
+        return cell
 
      # Convert input sequences to embeddings
     def get_input_embeddings(self, input_sequences):
         embedding_dim = int(self.vocab_size**0.25)
         embedding=tf.keras.layers.Embedding(
-            self.vocab_size+1, embedding_dim, embeddings_initializer='uniform',
-            mask_zero=True, input_length=self.max_length
+            self.vocab_size + 1, # 包含一个填充token
+            embedding_dim, 
+            embeddings_initializer='uniform', # 初始化方法均匀分布
+            mask_zero=True,  # 将0作为填充标记
+            input_length=self.max_length
         )
         input_embeddings = embedding(input_sequences)
         return input_embeddings
+    
     # Run the LSTM on the input sequences
     def run_lstm(self, input_sequences, is_training):
         cell = self.stacked_lstm_cells(is_training)
@@ -316,7 +376,7 @@ class LanguageModel(object):
 
 ### 损失计算
 
-通过demo理解一下lstm的损失计算
+通过一个demo理解一下lstm的损失计算
 
 ```python
 import tensorflow as tf
@@ -325,10 +385,10 @@ import tensorflow as tf
 # batch_size: 表示一次处理的样本数量。
 # time_steps: 表示序列的长度，这里为10。
 # cell_size: 表示LSTM单元的隐藏单元数量，这里为7。
-lstm_outputs = tf.compat.v1.placeholder(tf.float32, shape=(None, 10, 7))
+lstm_outputs = tf.keras.Input(shape=(10, 7), tf.float32)
 # 定义变量 vocab_size，表示词汇表的大小，即所有可能的词的数量。
 vocab_size = 100
-#print(lstm_outputs)
+# print(lstm_outputs)
 # 使用 tf.keras.layers.Dense 添加一个全连接层，将LSTM输出转换为最终的预测值。
 # 全连接层的输出维度为 vocab_size，表示每个时间步预测每个词的概率。
 logits = tf.keras.layers.Dense(units=vocab_size)(lstm_outputs)
