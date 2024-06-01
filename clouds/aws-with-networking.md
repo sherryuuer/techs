@@ -1,3 +1,5 @@
+网络构架才是构架师最应该掌握的第一个技能。网络构架是所有其他构架的基础。
+
 构架俯瞰：
 
 - 单个Region/VPC：
@@ -618,24 +620,177 @@ Interface功能可以说是VPC Endpoint的一个Extension。
 ## Transit Gateway
 
 - 为了简化混合云的VPC内部环境：比如要连接6个VPC网络，如果用Peering，就需要组合算法C(6,2)也就是15条Peering来连接他们，但是使用Transit Gateway，就是一个星型图只需要6条线。
+- 通过弹性网络接口（**ENI**, Elastic Network Interface）在子网中实现与VPC的连接，但其工作方式比简单的ENI配置更复杂和高效。
+
+**底层逻辑：**
+- *网络虚拟化和分段：*
+  Transit Gateway利用AWS的网络虚拟化技术，将不同的VPC、VPN连接和Direct Connect链接划分为隔离的网络段，确保流量隔离和安全性。它支持基于标签的路由和策略，允许灵活的流量管理。
+- *边缘路由器：*
+  Transit Gateway使用高性能的边缘路由器来管理和转发流量。这些路由器可以处理大量的网络流量，并支持高可用性和冗余设计，以确保连 接的可靠性。
+- *软件定义网络（SDN）：*
+  - 通过SDN，AWS可以快速部署和调整网络拓扑，满足用户需求。
+  - 软件定义网络（SDN, Software-Defined Networking）是一种网络架构方法，通过将网络控制平面与数据平面分离，实现网络的集中管理和动态配置。SDN的核心思想是使用软件来集中控制网络行为，而不是依赖传统的硬件设备进行独立和分散的管理。
+- *大规模路由表管理：*
+  Transit Gateway使用高效的路由表管理技术，能够处理和维护大规模的路由表。可以通过Route Tables配置细粒度的路由策略，以控制流量的路径选择。
 
 - **Attachments**
   - **VPCs**
     - 是一种Regional Route，用于连接同一个Region中的VPC
     - VPC的CIDR不能overlapping
     - RouteTable：TGW有所有VPC的路由表（ip via att-x），而各个VPC的路由表（或者subnet的路由表）也需要登录TGW的路由（tgw-ip:tgw-xxx）
-  - Other Transit Gateway：跨区连接，则两个Region各一个TransitGateway，然后Peering他们
-  - A Connect SD-WAN/third-party network appliance
-  - VPN
-  - DX Gateway
+  - **Other Transit Gateway**：跨区连接，则两个Region各一个TransitGateway，然后Peering他们
+  - **A Connect SD-WAN/third-party network appliance**
+  - **VPN**
+  - **DX Gateway**
 
-- **创建和设置方法：**
-  - 创建TGW
-  - 创建TGW Attachment：（为每一个连接对象）选择VPC/VPN/DX - 选择相关联的Subnet
-  - 通过创建Attachment，会自动创建出Accociations（连接信息），Propagations，和Routes
+### TGW + VPCs构架
+
+- **创建和设置方法（VPC之间）：**
+  - 第一步，创建TGW（勾选enable传播和路由默认设置，也就是所有VPC可以互相连通）
+  - 第二步，创建TGW Attachment：（为每一个连接对象）选择VPC/VPN/DX - 选择相关联的Subnet
+  - 第三步（因为第一步的勾选，所以这里是自动的），通过创建Attachment，会自动创建出Accociations（连接信息），Propagations，和Routes
     - Propagations：传播指的是将路由信息从一个关联的网络资源传播到Transit Gateway路由表的过程
     - 启用传播，以便这些VPC和VPN连接的路由信息可以传播到Transit Gateway的路由表中
     - 发现Propagations的列表信息和Accociations的内容一样
     - Routes的内容中多了CIDR信息，和路由类型（Propagated）
-  - 为每个VPC中连接的Subnet的路由表定义TransitGateway的路由信息（TGW的CIDR只要覆盖各个VPC的CIDR就可以了，比如各个VPC是16mask，那么TGW是8mask就可以了）
+  - 第四步，为每个VPC中连接的Subnet的路由表定义TransitGateway的路由信息（TGW的CIDR只要覆盖各个VPC的CIDR就可以了，比如各个VPC是16mask，那么TGW是8mask就可以了）
+  - 如果想**限制某些VPC之间的通信**，则在第一步创建TGW的时候，不要勾选enable默认传播和路由设置，而是在之后设置。第二步Attachment和之前一样，第三步没有了自动设置，需要在路由表界面手动设置：
+    - *Accociation*：为每个VPC创建路由表，并在Accociations的tab对每个VPC进行各自路由表的attachemnt添加（vpc：route-table的一一对应）。（Accociation=Attachment）
+    - *Propagation*：为每个路由表添加要进行传播的对象VPC。
+    - *Routes*：路由表有两种，一种是通过Propagation的设置而创建的动态路由，这种路由在VPC进行了CIDR修改后会自动更新。还有一种是手动静态路由，无法检测VPC中的CIDR变更，需要手动修改和维护。
+    - 第四步，每个VPC中的*Subnet的路由表*，也需要设置为，在TGW中创建的，各个VPC自己的路由表（而不是原本的默认TGW公有默认路由表）
   
+- **TGW VPC Network Patterns**
+  - *Flat Network*：（VPC之间可全连通）上面第一个设置方式，使用TGW的默认路由，连接的所有VPC都可以互通，每个VPC的路由设置都指向TGW的默认路由。
+  - *Segmented Network*：（VPC之间不可横向连通，只能是VPC - VPN本地的双向连通）
+    - 分段网络构架为：多个VPC消费端 - TGW - VPN本地服务Service
+    - 各个VPC的路由表为：指向VPN的CIDR：tgw-xxx
+    - TGW的路由表有两个：
+      - RT for VPCs：帮助VPCs路由到VPN的attachment：指向VPN的CIDR：vpn-att
+      - RT for VPN：帮助VPN路由到各个VPCs的attachment：指向各个VPC的CIDR：各个vpc-att（有几个VPC就设置几个路由记录）
+
+- **多AZ冗余设置**注意事项
+  - 当谈论ENI的时候，在VPC中设置一个ENI点就可以实现多个服务器通信，但是在TGW的场合，需要在VPC所跨的每个AZ中都设置专用的Subnet和对应的路由表用于和TGW连接
+  - 总之，ENI的连接scope是整个VPC，TGW的对应子网的路由连接scope是AZ，跨多个AZ的VPC需要在每个AZ都设置用于连接的专用子网路由（内置TGW的子网虚拟接口ENI，一般mask是/28，它包括所有workload子网的CIDR）
+
+- 特性：**AZ affinity**
+  - TGW会尽量保持流量在同一个AZ内传输，以减少跨AZ通信的开销和延迟。
+  - 为了确保高可用性，TGW通常在多个AZ中部署ENI，这样即使一个AZ出现故障，流量仍然可以通过其他AZ进行路由。
+  - 当用户创建VPC附件时，TGW会*自动选择*最优的AZ进行ENI的部署，确保流量路径最短且高效。
+- 特性：**Appliance Mode**
+  - flow hash 算法（通过关注5 tuples，source，destination信息），将流量 fix 在一个ENI上
+  - 单向流量路由：在Appliance mode下，TGW会将进入和退出流量通过同一个ENI传输，确保流量路径的一致性。这种模式特别适合需要对进出流量进行同步处理的网络设备，如状态检测防火墙和负载均衡器。
+  - 对称路由：通过确保流量的对称性，Appliance mode可以防止状态检测设备在处理不对称流量时（当仅有AZ affinity功能开启时，会出现不对称）出现问题。
+- **应用场景：**
+  - AZ Affinity：
+    - 性能敏感应用：适用于需要低延迟和高性能的应用，如实时数据处理、金融交易系统等。
+    - 跨区域备份和同步：优化跨AZ数据传输，减少同步延迟。
+  - Appliance Mode：
+    - 安全设备：适用于需要状态检测的安全设备，如防火墙、入侵检测/防御系统（IDS/IPS）。
+    - 负载均衡器：确保负载均衡器能够对称地处理进出流量，提高负载分配的效率。
+    - 特定网络服务：适用于需要对称流量处理的其他网络服务，如VPN网关、网络分析工具等。
+- -option：ApplianceModeSupport=enable
+
+### Transit Gateway Peering
+
+- 跨区连接。
+- 需要设置静态路由（Static）。而不是BGP边界网关的动态路由（Propagated）。也就是在各个VPC中的路由表中，设置到其他region的路由策略，是其他region中的子网CIDR，以及以TGW-peering为目标的，Static类型路由。
+- 确保每个Transit Gateway使用唯一的自治系统编号（ASN, Autonomous System Number）是最佳实践。这主要是为了避免潜在的冲突和路由问题。（也许未来会拥有BGP边界网关路由的功能）
+  - 路由器在交换路由信息时，能够明确区分路径，避免混淆。
+  - 路由策略配置时，可以针对不同的ASN制定精确的规则，减少错误和冲突。
+  - 网络扩展或变更时，能快速识别和配置新的对等连接，而不必担心ASN冲突。
+- 自动传输加密，支持50Gbps带宽
+
+### Transit Gateway Connect（SD-WAN/third-party network appliance）
+
+- SD-WAN（Software-Defined Wide Area Network，软件定义广域网）和第三方网络设备是网络技术领域中的两个相关概念。
+- SD-WAN是一种管理和控制广域网（WAN）的方式，通过软件来定义和管理网络。
+- 第三方网络设备指的是由非主要网络服务提供商（如思科、华为等）生产的网络硬件设备。
+- 在实际应用中，SD-WAN解决方案经常与第三方网络设备结合使用，例如，企业可以在其SD-WAN架构中集成第三方防火墙设备，以增强其网络安全性；或者使用第三方交换机和路由器来扩展网络覆盖范围和性能。
+
+- 当你的一个VPC中有虚拟网络设备（virtual appliance）的时候，就可以用Transit Gateway Connect进行网络连接
+- Transport Mechanism：需要设置传输机制
+  - 虚拟网路设备在VPC的情况下，需要将VPC作为attachment
+  - 虚拟网络设备在On-premise，需要DirectConnect作为attachment
+  - 然后需要对TGW Connect进行attachment设置
+- 通过设置就能建立**GRE隧道协议**，以及建立**BGP session连接**：
+  - 隧道就像是外面的一个壳，需要一层attachment建立，会有一个IP地址；内部的session是私有连接，会有自己的connect的attachment连接，所以也有一个内部的IP。双IP。
+  - GRE（Generic Routing Encapsulation）是一种隧道协议，用于将多种网络层协议封装在点对点连接中，以在IP网络上传输。它常用于创建VPN和在不同网络之间传输数据。
+  - BGP（Border Gateway Protocol）是一种用于在互联网中交换路由信息的协议，支持动态路由主要用于控制不同自治系统（AS）之间的路由选择。（不同自治系统一般在Region不同的时候出现了）
+  - 所以说Connect功能不支持静态路由，BGP是他的最低限制，很强。
+- 单个Connect支持最大5Gbps带宽，想要达到5Gbps以上，需要对多个ConnectPeer使用same prefix。
+  - 这意味着，如果希望通过多个 Connect Peer 实现带宽的叠加，可以将它们配置为同一子网的一部分，然后通过这些设备实现负载均衡或流量聚合，从而达到超过单个 Connect 带宽的总体吞吐量。
+  - 最大可以配置4条ConnectPeer，意味着最大带宽可以达到20Gbps
+
+### Transit Gateway VPN
+
+- 少量的VPC和VPN连接可以使用S2SVPN的IPSec连接。
+- 量多就要TransitGateway的VPN Attachment了。
+- 混合环境
+- VGW的S2SVPN构架下，VGW的带宽限制为1.25Gbps，同时因为VGW不支持ECMP流量分发技术，所以带宽上限就是1.25Gbps
+  - 提高带宽，可以使用TransitGateway，因为他支持**ECMP和动态路由BGP**，而On-premise端也可以设置为支持BGP+ECMP支持，增加带宽。两条通道就可以增加到5Gbps带宽（2connection x 2tunnel x 1.25Gbps）
+  - 通过ECMP技术可以给每个VPN connection分配CIDR，然后通过BGP动态路由最佳路径，同时提高带宽
+- **Accelerator构架**，高速安全
+  - VPN -> AWS Global Accelerator(edge location) -> Transit Gateway -> VPCs
+  - 通过AGA可以进入高速网络，而从AGA到TGW的通信，都是在AWS网络内部的，很安全，减少了在外网暴露的风险
+  - AGA的构架只能在TransitGateway下使用，S2SVPN的VGW（虚拟网关）没法用
+  
+### Transit Gateway DX
+
+- Direct Connect是一种网络服务，它允许用户通过专用连接将其本地数据中心与AWS云连接起来，从而提高网络性能和安全性。在Direct Connect中，Private Virtual Interface (Private VIF) 是一种虚拟接口类型，用于在用户的本地网络和其在AWS VPC（虚拟私有云）中的资源之间建立私有连接。
+- 普通的连接方式：
+  - On-premise --> DX --> <Private VIF(virtual interface)> --> DX Gateway --> VGW --> VPCs
+  - 但是这种连接可以连的VPC数量有限
+- TGW的连接方式之一：
+  - On-premise --> DX --> <Transit VIF(virtual interface)> --> DX Gateway --> TransitGateway --> VPCs
+  - 最多可以连接4个Transit VIFs，6个Transit Gateway，这意味着在一个Region中可以连接最多24个TGW（数字可能会进化哦）
+  - 但是上面这种Transit VIF连接方式是不安全的，没有加密。下面的较为安全。
+- TGW的连接方式之二：
+  - On-premise --> DX --> <Public VIF(virtual interface)> --> VPN Connection --> TransitGateway --> VPCs
+  - 这种方式使用了IPSec加密，IPsec（Internet Protocol Security）是一套用于在IP网络中提供安全通信的协议和技术。它通过对IP数据包进行加密和认证，确保数据在传输过程中的机密性、完整性和真实性。IPsec通常用于建立虚拟专用网络（VPN）。Layer3加密。
+
+### Multicast with Transit Gateway
+
+- 在网络通信中，**多播（Multicast）**是一种向多个目标节点发送单个数据包的通信方法。与单播（Unicast）和广播（Broadcast）不同，单播是一对一的通信，广播是一对所有的通信，而多播则是一/多对多的通信。
+- 多播通常用于以下场景：
+  - 流媒体传输：*UDP*，在视频直播、音频流传输等场景中，多播可以使得服务器只需发送一份数据流，而多个客户端可以同时接收。
+  - 组播会议：在网络会议、在线教育等场景中，多播可以将数据流有效地发送给多个参与者，减少网络带宽和资源消耗。
+  - 分布式系统：在分布式系统中，多播可以用于节点之间的集群通信，有效地进行信息传递和同步。
+  - 组播路由：多播也可以用于构建组播路由协议，使得路由器能够有效地处理多播数据包的转发和路由选择。
+  - 总的来说，多播通过在网络中同时传输一份数据流，可以在一定程度上减少网络拥塞和资源消耗，提高数据传输的效率，是网络通信中的重要技术之一。
+- 包括多组件：
+  - 多播域（Multicast Domain）：指的是一个由支持组播协议的设备组成的逻辑网络子集，其中多播数据包可以在该子集内传输。
+  - 发送者（Sender）：发送者是将数据包发送到多播组的节点或设备。
+  - 接收者（Receiver）：接收者是从多播组接收数据包的节点或设备。
+  - 多播组（Multicast Group）：多播组是一组具有共同目标的接收者。发送者将数据包发送到多播组的 IP 地址，而接收者通过订阅该地址来接收数据包。
+  - IGMP（Internet Group Management Protocol）：IGMP是在 IPv4 网络中管理多播组成员的协议。它允许主机和路由器加入或离开多播组，并在网络中传播多播成员的信息。
+  - MLD（Multicast Listener Discovery）：MLD是在 IPv6 网络中类似于 IGMP 的协议，用于管理多播组成员。
+  - 组播路由协议：组播路由协议用于在网络中传输多播数据包，并确保它们能够到达多播组的所有成员。
+  - 组播转发器（Multicast Forwarder）：组播转发器是负责在网络中转发多播数据包的设备或路由器。它们根据多播路由表来转发数据包，确保它们按照多播组成员的订阅信息进行传输。
+
+- 创建TransitGateway的时候可以Enable这个功能
+- 支持IPv4和IPv6地址
+- 支持引入外部设备的混合部署方式
+- 支持静态（static API call）和动态（IGMP）的群组管理
+- Sender必须是Nitro实例
+- 一个子网只能在一个多播域
+- 一个ENI可以是多个群组的成员
+- SG和NCAL设置流量允许IGMP协议的query，join，leave权限
+- 多播域权限拥有者可以分享域到别的AWS账户，集成RAM，resource access manager
+
+- **创建过程**：
+  - 创建多播域和参加的子集
+  - 创建多播群组和成员（就是ENI们）
+  - 配置Group Membership（使用CLI/SDK的API静态方式或者IGMP的动态方式）
+  - （此时就可以从sender端发送流量到Group中的member了）
+  - 多VPC和多账户的构架也相似。
+
+- 如何**集成外部多播服务**：
+  - 先要构建一个传输机制（transport mechanisum）比如Internet，VPN，DX
+  - 然后通过在本地端创建多播路由MR，在VPC创建对应的虚拟路由VR，来构架起来GRE通道和PIM多播协议
+    - *详细：*
+    - GRE（Generic Routing Encapsulation）隧道是一种在 IP 网络中传输数据的协议。它通过在两个网络设备之间封装数据包来创建虚拟的点对点连接。GRE 隧道通常用于将两个远程网络连接起来，或者在 Internet 上创建私有网络。
+    - PIM（Protocol Independent Multicast）邻居是多播协议中的概念，用于在多播网络中管理邻居关系。PIM 协议是一种动态路由协议，用于在多播网络中选择最佳路径，并确保多播数据能够在网络中传递到正确的地方。
+    - 在一些情况下，GRE 隧道和 PIM 邻居可能会结合使用，比如在建立跨越 Internet 的多播网络时。在这种情况下，GRE 隧道可以用来在 Internet 上创建虚拟的点对点连接，而 PIM 邻居可以用来在多播网络中管理邻居关系和路由信息，确保多播数据能够正确传递。
+  - 最后在VPC中创建TransitGateway，将VPC中的服务器子网的ENI和虚拟路由的ENI构成多播domain，从而就可以进行多播了。
+

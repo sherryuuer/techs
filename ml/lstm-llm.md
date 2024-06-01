@@ -374,15 +374,14 @@ class LanguageModel(object):
         return (lstm_outputs, binary_sequences)
 ```
 
-### 损失计算
+## 损失计算
 
-通过一个demo理解一下lstm的损失计算
+通过一个demo理解一下lstm的损失计算：
 
 ```python
 import tensorflow as tf
 # 定义一个占位符 lstm_outputs，用于接收来自LSTM层的输出数据。
 # Shape: (batch_size, time_steps, cell_size)
-# batch_size: 表示一次处理的样本数量。
 # time_steps: 表示序列的长度，这里为10。
 # cell_size: 表示LSTM单元的隐藏单元数量，这里为7。
 lstm_outputs = tf.keras.Input(shape=(10, 7), tf.float32)
@@ -393,8 +392,8 @@ vocab_size = 100
 # 全连接层的输出维度为 vocab_size，表示每个时间步预测每个词的概率。
 logits = tf.keras.layers.Dense(units=vocab_size)(lstm_outputs)
 # Target tokenized sequences：定义一个占位符 target_sequences，用于接收真实的目标序列数据。
-# Shape: (batch_size, time_steps) 其中每个元素表示序列中每个位置的词对应的索引。
-target_sequences = tf.compat.v1.placeholder(tf.int64, shape=(None, 10))
+# Shape: (time_steps, cell_size) 其中每个元素表示序列中每个位置的词对应的索引。
+target_sequences = tf.keras.Input(shape=(None, 10), tf.int64)
 # 使用 tf.nn.sparse_softmax_cross_entropy_with_logits 计算模型的损失函数。
 # labels 表示真实的标签序列，logits 表示模型的预测值。
 # 该函数会计算每个时间步的预测值与真实标签之间的交叉熵损失，并将所有时间步的损失求平均值。
@@ -486,16 +485,22 @@ class LanguageModel(object):
 
 ```python
 import tensorflow as tf
-# Logits with a vocab_size = 100
-logits = tf.compat.v1.placeholder(tf.float32, shape=(None, 5, 100))
-probabilities = tf.compat.v1.nn.softmax(logits, axis=-1)
+
+# 假设我们有一个logits张量，形状为 (batch_size, 5, 100)
+logits = tf.random.uniform(shape=(32, 5, 100))  # 示例张量，替代占位符
+probabilities = tf.nn.softmax(logits, axis=-1)
+
+print(probabilities)
 ```
 
 ```python
 import tensorflow as tf
-# Placeholder for the model probabilities
-probabilities = tf.compat.v1.placeholder(tf.float32, shape=(None, 5, 100))
-word_preds = tf.compat.v1.argmax(probabilities, axis=-1)
+
+# 假设我们有一个probabilities张量，形状为 (batch_size, 5, 100)
+probabilities = tf.random.uniform(shape=(32, 5, 100))  # 示例张量，替代占位符
+word_preds = tf.argmax(probabilities, axis=-1)
+
+print(word_preds)
 ```
 
 虽然相比较注意力机制长短记忆模型已经过时了一点点但是我们依然需要了解和学习。
@@ -526,9 +531,6 @@ t = tf.constant([1, 2, 3, 4, 5, 6])
 
 # 使用 tf.gather，在轴 0 上选择索引为 [1, 3, 5] 的元素
 selected_elements = tf.gather(t, [1, 3, 5])
-
-with tf.compat.v1.Session() as sess:
-    print(repr(sess.run(selected_elements)))
 ```
 
 使用 `tf.gather_nd`:
@@ -542,9 +544,6 @@ t = tf.constant([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
 # 使用 tf.gather_nd，在轴 0 和轴 1 上选择指定索引的元素
 indices = tf.constant([[0, 1], [2, 0]])
 selected_elements = tf.gather_nd(t, indices)
-
-with tf.compat.v1.Session() as sess:
-    print(repr(sess.run(selected_elements)))
 ```
 
 如果你只需在一个轴上选择特定索引的元素，使用 `tf.gather` 更为简单。但如果你需要在多个维度上进行复杂的选择，那么 `tf.gather_nd` 更为适用。
