@@ -19,6 +19,7 @@
   - Transit Gateway
 
 - OTHER THOUGH
+  - 网关是网络自治系统（AS）的分界
   - 涉及到网关的服务Gateway，一般都只涉及路由设置，涉及Interface，IP等，一般会涉及路由表和DNS解析。
   - 整个云构架中重要的部分：
     - API到处都是，DNS解析非常重要
@@ -106,6 +107,11 @@
     - PrivateSubnet的路由要路由到NatInstance的EIP，或者这个instance的ID本身（没有EIP的情况）
     - 因为它是一个EC2所以它有自己的好处，可能比较便宜，并且可以有自己的SG，可以设置portforward，或者bastion
 - DNS：Route53 Resolver
+
+*Tips*
+
+- 当创建Subnet的时候，一般顺便创建对应的路由表，然后和Subnet相关联
+- 当创建EC2的时候，一般顺便创建对应的SG，顺便在SG中添加白名单 
 
 ### Advanced Topics（CIDR，ENI，BYOIP）
 
@@ -887,22 +893,38 @@ Interface功能可以说是VPC Endpoint的一个Extension。
   - Site to site是网络之间的VPN
   - Client to site是设备和网络之间的VPN
 - VPN的类型types：
-  - **IPSec**：AWS支持，点对点的连接。
+  - **IPSec**：AWS支持，点对点的连接。本地数据中心的流量是通往IGW的，但是通过该协议，是被加密的。
   - *GRE/DMVPN*，AWS不支持。
     - *GRE（Generic Routing Encapsulation）*：一种隧道协议，用于在点对点的链路上封装多种网络层协议的数据包，允许在互联网上传输私有网络的多协议流量。它不提供加密。
     - *DMVPN（Dynamic Multipoint VPN）*：一种基于GRE和NHRP（Next Hop Resolution Protocol）的VPN技术，允许构建动态、按需创建的多点对多点VPN网络，适合大规模、分支机构间的动态连接。DMVPN通常与IPsec结合使用，以提供安全性。
 
 ### Site to site VPN
 
-- VGW（VirtualGateway，AWS端）- CGW（CustomGateway，本地端）
+- VGW（VirtualGateway，AWS端，ASN）- CGW（CustomGateway，本地端，ASN）
 - VGW在AWS的两个不同的AZ中各创建Tunnel Endpoint，以提高可用性。
 - 一个VPC只能设置一个VGW，所以一个VPC对接多个本地中心，都是通过这一个VGW实现。
 - VGW使用BGP，支持静态和动态路由。
 - 对于BGP可以自己设置自治系统编号，如果自己不设置，AWS会为他设置default的编号64512。
 - VGW的数据加密算法：AES-256，SHA-2
 
+- *创建步骤*简要包括：
+  - 在控制台创建VPC端和本地端端VGW和CGW
+  - 创建VPN连接，然后下载配置文件
+  - 根据下载的配置文件，在本地VPN设备（如Cisco、Juniper或其他支持IPSec的设备）上配置IPSec隧道：
+    - *设置IKE（Internet Key Exchange）参数*，其中有一个参数：`nat_traversal=yes`，这是**NAT-Traversal**机制：
+      - VGW - NAT - CGW
+      - NAT检测和处理：IKE在建立IPsec隧道时，会检测路径上的NAT设备。如果检测到NAT设备，IKE将启动NAT-T机制，通过UDP封装IPsec流量。
+      - UDP端口：在启用NAT-T的情况下，IKE协商和IPsec流量使用的UDP端口为4500，而非传统的500端口。这样可以避免NAT设备修改IPsec报文头，导致连接失败。
+      - 总之就是在原本的数据报头上，添加一层UDP（port4500）来交给NAT处理，防止它修改了原本的数据。
+    - *设置IPSec参数（加密算法、身份验证算法等）*
+    - *配置静态或动态路由*
+  - 确认VPN隧道在AWS控制台上显示为“Up”状态，尝试连接
 
- 
+- VPN中的*静态路由和动态路由*：
+  - 静态路由意味着，本地添加了新的CIDR，则AWS端需要自己手动添加对方子网的CIDR
+  - 动态路由意味着，**使用BGP，之需要指定对方的ASN**，当本地添加了新的CIDR，则AWS端会自动添加，但是**限制条件是只能容忍100个动态路由添加**，解决方案是，**整合本地端CIDR为一个更大的CIDR range**，从而减少CIDR个数。
+
+
 
 
 

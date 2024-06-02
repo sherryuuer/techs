@@ -537,25 +537,84 @@ print(f"RMSE is {rmse}")
 - 最后，分别计算了未指数化和指数化后的 RMSE，以评估模型的性能。指数化是为了确保 RMSE 能够反映出模型在原始数据空间中的预测误差，以便更好地理解和解释模型的性能。
 ## Section 3: Spark ML
 ### Distributed ML Concepts
-- Describe some of the difficulties associated with distributing machine
-learning models.
-- Identify Spark ML as a key library for distributing traditional machine learning
-work.
-- Identify scikit-learn as a single-node solution relative to Spark ML.
+**Describe some of the difficulties associated with distributing machine learning models.**
+- 分布式机器学习模型的困难
+
+1. 数据分布：
+   - 异质数据：数据通常分布在多个节点上，确保所有相关数据点可用于训练是一个挑战。
+   - 同步问题：从不同节点聚合数据需要同步，这可能消耗大量资源和时间。
+
+2. 模型一致性：
+   - 参数同步：在不同节点之间确保模型参数的一致性，特别是在异步环境中，这是一个挑战。
+   - 版本控制：管理不同版本的模型并确保所有节点使用正确的版本可能很困难。
+
+3. 计算负载：
+   - 资源分配：有效地分配计算负载以避免瓶颈是复杂的。
+   - 可扩展性：确保模型能有效地随数据量和节点数量的增加而扩展。
+
+4. 通信开销：
+   - 网络延迟：高网络延迟会减慢训练过程。
+   - 数据传输成本：在节点之间传输大量数据既昂贵又缓慢。
+
+5. 容错性：
+   - 节点故障：处理节点故障而不中断训练过程是关键但具有挑战性。
+   - 数据丢失：在节点故障期间确保数据不丢失需要强大的备份和恢复机制。
+
+6. 超参数调优：
+   - 复杂性：在分布式环境中调优超参数增加了协调和同步的复杂性。
+   - 资源密集性：在分布式节点上运行多个超参数调优迭代会消耗大量资源。
+
+7. 算法设计：
+   - 适应性：并非所有的机器学习算法都容易适应分布式框架。
+   - 优化：设计能在分布式环境中高效运行且不显著降低性能或精度的算法是个挑战。
+
+- 例子：Spark中的max_bins
+  - 在Spark中，数据按行分布在多个工作节点上。每个工作节点需要计算每个特征在每个分割点上的统计信息，并聚合这些统计信息来决定分割点。
+  - 挑战：如果Worker1有一个其他工作节点没有的唯一值（例如，32），很难确定这是一个好的分割点。
+  - 解决方案：Spark使用maxBins参数将连续变量离散化为桶。然而，桶的数量必须与基数最高的分类变量相同，这增加了复杂性。
+
+**Identify Spark ML as a key library for distributing traditional machine learning work.**
+**Identify scikit-learn as a single-node solution relative to Spark ML.**
+
+- Spark ML和scikit-learn的对比
+  - Spark ML：关键库，用于分布式传统机器学习工作。
+  - scikit-learn：单节点解决方案，相对于Spark ML。
+- 将sklearn代码迁移到Databricks时：
+  - 直接在多节点ML集群上运行sklearn代码不会提高处理速度。
+  - 原因：sklearn假定单节点，不支持分布式处理。
+  - 需要重构为Spark ML和Spark DataFrame。
+
 ### Spark ML Modeling APIs
-- Split data using Spark ML.
-- Identify key gotchas when splitting distributed data using Spark ML.
+**Split data using Spark ML**
+```python
+# SparkMLの場合
+train_df, test_df = df.randomSplit([.8, .2], seed=42)
+
+# sklearnの場合
+from sklearn.model_selection import train_test_split
+X = df.select([pair[0] for pair in df.dtypes if pair[0] != 'price']).toPandas()
+y = df.select(['price']).toPandas()
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42)
+```
+**Identify key gotchas when splitting distributed data using Spark ML.**
+- Spark ML分布式数据拆分的关键注意事项
+- 保持再现性：固定seed值，即使会话改变也能保持相同的随机分布。
+- 重新分区影响：使用repartition可能导致再现性丧失。
+- 以下内容得出repartition前后的count是不一样的。
+```python
+print(f'count before repartition: {train_df.cache().count()}')
+train_df_repartition, test_df_repartition = df.repartition(24).randomSplit([.8, .2], seed=42)
+print(f'count after repartition: {train_df_repartition.cache().count()}')
+```
+
 - Train / evaluate a machine learning model using Spark ML.
 - Describe Spark ML estimator and Spark ML transformer.
 - Develop a Pipeline using Spark ML.
 - Identify key gotchas when developing a Spark ML Pipeline.
 ### Hyperopt
-- Identify Hyperopt as a solution for parallelizing the tuning of single-node
-models.
-- Identify Hyperopt as a solution for Bayesian hyperparameter inference for
-distributed models.
-- Parallelize the tuning of hyperparameters for Spark ML models using
-Hyperopt and Trials.
+- Identify Hyperopt as a solution for parallelizing the tuning of single-node models.
+- Identify Hyperopt as a solution for Bayesian hyperparameter inference for distributed models.
+- Parallelize the tuning of hyperparameters for Spark ML models using Hyperopt and Trials.
 - Identify the relationship between the number of trials and model accuracy.
 ### Pandas API on Spark
 - Describe key differences between Spark DataFrames and Pandas on Spark DataFrames.
