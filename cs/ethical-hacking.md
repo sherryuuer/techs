@@ -294,6 +294,12 @@ NAT(Network Address Translation，网络地址转换)和NAT Network在VirtualBox
 - `nmap -oG [filename] <ip>`：将扫描结果以 Grepable 格式保存到文件
 - `nmap -v <ip>`：进行详细扫描，输出更多详细信息
 
+
+- `sudo nmap -f <ip>`：进行分片（fragmentation）扫描。分片扫描的主要目的是通过将一个大的数据包分割成多个较小的数据包来*绕过某些防火墙和入侵检测系统（IDS）*，这些系统可能会基于包的大小或内容进行检测和过滤。具体来说，-f 选项会将 IP 数据包分成 8 字节的片段，这些较小的片段可以使某些网络安全设备难以重新组装和检查整个数据包，从而使扫描活动更不容易被检测到。
+- `sudo nmap -D <ip>` 选项用于进行 "Decoy" 扫描。Decoy 扫描的目的是在扫描目标主机时使用伪装，掩盖真实扫描者的 IP 地址。通过这种方法，可以使目标主机的管理员难以判断真实的扫描源，从而提高扫描者的隐蔽性。具体来说，-D 选项会向目标主机发送来自多个虚假的 IP 地址（诱饵）的扫描请求，其中包括一个或多个诱饵 IP 和真实的扫描者 IP。这样，目标主机的日志中将记录多个来源的扫描活动，增加了识别真实扫描源的难度。
+- `sudo nmap -D RND:10 <target>`这个命令将生成 10 个随机的诱饵 IP 地址来进行扫描。
+- `sudo nmap -D decoy1,decoy2,decoy3 <target>`这个命令将使用 decoy1、decoy2、decoy3 这三个指定的诱饵 IP 地址来进行扫描。
+
 ## Vulnerability Analysis
 
 ## Exploitation & Gaining Access

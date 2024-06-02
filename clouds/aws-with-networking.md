@@ -621,6 +621,12 @@ Interface功能可以说是VPC Endpoint的一个Extension。
 
 - 为了简化混合云的VPC内部环境：比如要连接6个VPC网络，如果用Peering，就需要组合算法C(6,2)也就是15条Peering来连接他们，但是使用Transit Gateway，就是一个星型图只需要6条线。
 - 通过弹性网络接口（**ENI**, Elastic Network Interface）在子网中实现与VPC的连接，但其工作方式比简单的ENI配置更复杂和高效。
+- 可以跨账户连接VPC（TGW Sharing）：
+  - 使用Resource Access Manager进行资源共享：选择资源 - 设置权限 - 选择分享对象（用户，组织，IAM role和user）
+  - 使用了S2SVPN的连接分享不能跨账户
+  - 使用DX的连接分享可以跨账户
+  - 对TGW的管理权限，不会让渡给被分享的账户
+  - 需要使用AZ ID来保证AZ标识符的唯一性
 
 **底层逻辑：**
 - *网络虚拟化和分段：*
@@ -793,4 +799,110 @@ Interface功能可以说是VPC Endpoint的一个Extension。
     - PIM（Protocol Independent Multicast）邻居是多播协议中的概念，用于在多播网络中管理邻居关系。PIM 协议是一种动态路由协议，用于在多播网络中选择最佳路径，并确保多播数据能够在网络中传递到正确的地方。
     - 在一些情况下，GRE 隧道和 PIM 邻居可能会结合使用，比如在建立跨越 Internet 的多播网络时。在这种情况下，GRE 隧道可以用来在 Internet 上创建虚拟的点对点连接，而 PIM 邻居可以用来在多播网络中管理邻居关系和路由信息，确保多播数据能够正确传递。
   - 最后在VPC中创建TransitGateway，将VPC中的服务器子网的ENI和虚拟路由的ENI构成多播domain，从而就可以进行多播了。
+
+### TGW构架：中心化出站流量
+
+（通过这个构架感觉到，最复杂的地方，在一，每一个VPC的子网，和每一个attachment都需要设置路由表）
+
+- 意思是所有的VPC（Applications）的Internet出站流量都通过TGW，和他连接的一个VPC（Shared Service）的NAT进行出站。
+
+- 路由设定：
+- VPCs（没网络出口）子网路由：将Internet流量指向TGW
+- TGW（内网VPCs）的Att路由：将Internet流量指向流量出口VPC的Att / 对入站其他VPC的流量，**将CIDR指向Black Hole**，这里的黑洞是为了**不让内网VPC之间进行流量通信**。如果允许通信，则需要添加对各个VPC的CIDR的Att指向设定 
+- TGW（流量出口VPC）的Att路由：对各个VPC设置流量指向各个VPC的Att
+- VPC（有网络出口）的子网路由：将Internet流量指向NAT子网
+- VPC（有网络出口）的NAT子网路由：将Internet流量指向IGW / 对其他VPC的流量，将CIDR指向TGW（入站流量）
+
+- 该构架会进行流量优化，试图将流量控制在同一个AZ中，如果一个AZ故障了，会自动引流到另一AZ，failover功能
+- NAT能力：最大同时连接55000连接，带宽从5Gbps可以扩展到100Gbps
+- 这个构架并不能省钱，目的是为了控制整体的网络流量的
+
+### TGW构架：中心化网络检查+GLB
+
+- Appliance设备在网络中是指，执行特定网络任务的专用设备。比如防火墙，负载均衡，入侵检测等。
+- 这种构架的目的是中心化组织的网络流量，以便进行监督Inspection。
+- 需要开启之前说的Appliance Mode，他保证了流量的对称性，适合这种构架。
+- VPC之间的流量，都会通过GLB的Appliance监察设备
+- 路由表还是一样的非常复杂，但是没有了刚刚的VPC之间的BlackHole路由，而是将VPC之间的流量都导向Traffice Inspection VPC的GLB进行流量过滤。
+- 在这种构架下，在GLB后面增加一层NAT子网，则可以实现向IGW的出站流量，这时候，不管是出站还是入站流量，都会经过GLB的监察。
+- GLB使用的是服务的Endpoint Interface，通过PrivateLink，流量是安全的
+- GLB使用GENEVE（通用网络虚拟化封装协议），将IP地址封装在UDP网络报文中。
+
+### TGW构架：中心化VPC Interface Endpoints
+
+- 单个VPC构架的时候，使用服务，在该VPC中创建各个服务的ENI，但是如果有很多很多VPC，那么在每个里面都创建很多ENI则非常复杂和没必要。
+- 这个构架使用TGW将所有的ENI集成到一个VPC中，然后通过TGW将该VPC和其他VPC连接（部署TGW ENI）
+- 提到Interface Endpoints必定要涉及**DNS解决**：
+  - 对中心化VPC的Private Hosted Zone无效化
+  - 创建自定义的Private Hosted Zone
+  - 为所有要用的服务创建Alias Record，从dns名（sqs.region.amazonaws.com）指向VPC Endpoint DNS
+  - 将Private Hosted Zone添加到需要使用服务的，各个VPC中
+- 如果是想省钱，则可以将他们用Peering进行多对1连接
+
+## AWS的混合构架：S2SVPN和DX
+
+- S2SVPN，使用IPSec安全协议 -> VGW
+- Client2Site，使用客户端 -> Client VPN Endpoint
+- Direct Connect
+
+需要了解的基础概念在这部分：静态动态路由和BGP
+
+### 静态和动态路由
+
+- 自治系统AS（Autonomous System）是互联网中的一组IP地址，由一个或多个网络路由器管理，并遵循统一的路由政策。
+  - 主要作用是使互联网中的不同网络能够相互通信，并通过路由协议来确定数据包的传输路径，从而实现全球范围内的网络连接和数据交换。
+  - 可以被看作是路由器的管理单位，它包含了一组IP地址和一组路由器，这些路由器遵循相同的路由策略来管理这些IP地址。
+  - 分为Public和Private：Public的范围是（1-64495），Private的范围是（64512-65534）
+  - *所以每一个网络自治域都有自己的编号，并被路由器管理*。
+  - 所以不同的网络系统，域，都是一个自治系统，
+
+- 静态路由：手动配置的路由，管理员直接指定数据包的传输路径。
+- 动态路由：通过路由协议自动学习和更新路由表，根据网络变化自动调整数据包的传输路径。
+- 区别：静态路由由管理员手动配置，适用于小型网络或需要特定路径的情况；动态路由使用路由协议自动更新路由表，适用于大型网络或需要适应网络变化的情况。
+
+### BGP 边界网关协议
+
+- BGP（Border Gateway Protocol）是一种用于互联网中**自治系统**（也就是**网关Gateway**）之间交换路由信息的协议，它基于路径矢量算法Path-vector。
+- Path-vector是BGP使用的路由选择算法，它不仅考虑了路径的长度，还考虑了路径上经过的自治系统的情况，以选择最佳路径。
+- 两种类型：
+  - iBGP：Routing within 自治系统
+  - eBGP：Routing between 自治系统s
+- 自治系统之间的路由选择由多个因素决定，其中一些因素（attributes）包括：
+  1. **权重（Weight）**：（*在自治系统内部交换信息*）本地路由器配置的一个用于标识优先级的非标准属性，越高的权重值表示优先级越高。
+  2. **AS路径（AS Path）**：路由信息中包含的经过的自治系统的序列，用于避免循环并确定最佳路径。*如果为了选择最高带宽的路径，而不是最短hop跳数量的路径。可以手动使得一个路径的ASpath变长，比如可以对最短路径进行hop跳的增加，比如200，200，200，以使他超过最高带宽的路径，这样就会自动选择最高带宽的路径了。*
+  3. **本地优先级（Local Preference）**：（*在自治系统内部交换信息*）或者叫局部路由偏好，用于在同一自治系统内部选择最佳路径的属性，本地优先级越高（通过数字表示），路径优先级越高。用于在BGP路由器内部选择最佳路径的属性，表示对特定路由的偏好程度。
+  4. **自治系统接入点（Origin）**：指示路由信息的来源，如IGP（Interior Gateway Protocol）、EGP（Exterior Gateway Protocol）或Incomplete。
+  5. **多路径（Multipath）**：允许路由器选择多个等效的最佳路径，并将流量分配给这些路径。
+  6. **MED（Multi-Exit Discriminator）**：用于在同一自治系统内部选择最佳路径的可选属性，表示到达自治系统外部的最佳出口点的优先级。**MED越低，优先级越高**。*MED可以在自治系统之间交换。*
+- BGP路由信息交换方法：
+  - 每个BGP路由器向*相邻路由器*发送本地路由表中的路由信息，并接收相邻路由器发送的路由信息。（这就是动态路由）
+  - 然后根据收到的相邻邻居路由的信息更新自己的路由表。通往一个目标的路径可能有多个，这也是一种failover。
+
+### VPN Basics
+
+- VPN（虚拟专用网络）是一种技术，通过**加密的隧道**在公共网络（如互联网）上创建安全的、*私密*的网络连接，允许用户安全地访问和传输数据。
+- Layer 2 VPN（L2VPN）：在数据链路层（第2层）工作，直接连接两个或多个远程网络的链路层。常见技术包括VPLS和L2TP。它传输以太网帧等数据链路层的帧，通常用于连接同一广播域的远程站点。
+- Layer 3 VPN（L3VPN）：在网络层（第3层）工作，连接不同的IP子网。常见技术包括MPLS VPN和IPsec VPN。它传输IP数据包，支持多个不同的子网和路由协议，可以实现更复杂的网络结构和路由策略。**AWS仅支持layer3的VPN**
+- VPN的两种形式forms：
+  - Site to site是网络之间的VPN
+  - Client to site是设备和网络之间的VPN
+- VPN的类型types：
+  - **IPSec**：AWS支持，点对点的连接。
+  - *GRE/DMVPN*，AWS不支持。
+    - *GRE（Generic Routing Encapsulation）*：一种隧道协议，用于在点对点的链路上封装多种网络层协议的数据包，允许在互联网上传输私有网络的多协议流量。它不提供加密。
+    - *DMVPN（Dynamic Multipoint VPN）*：一种基于GRE和NHRP（Next Hop Resolution Protocol）的VPN技术，允许构建动态、按需创建的多点对多点VPN网络，适合大规模、分支机构间的动态连接。DMVPN通常与IPsec结合使用，以提供安全性。
+
+### Site to site VPN
+
+- VGW（VirtualGateway，AWS端）- CGW（CustomGateway，本地端）
+- VGW在AWS的两个不同的AZ中各创建Tunnel Endpoint，以提高可用性。
+- 一个VPC只能设置一个VGW，所以一个VPC对接多个本地中心，都是通过这一个VGW实现。
+- VGW使用BGP，支持静态和动态路由。
+- 对于BGP可以自己设置自治系统编号，如果自己不设置，AWS会为他设置default的编号64512。
+- VGW的数据加密算法：AES-256，SHA-2
+
+
+ 
+
+
 

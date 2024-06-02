@@ -15,7 +15,7 @@ Talk is cheap, show the code only.
 from helper_functions import unzip_data, create_tensorboard_callback, plot_loss_curves, compare_historys
 ```
 
-## Downloading a text dataset
+## 数据准备
 
 下载和解压数据。
 
@@ -27,7 +27,7 @@ from helper_functions import unzip_data, create_tensorboard_callback, plot_loss_
 unzip_data("nlp_getting_started.zip")
 ```
 
-## Visualizing text data
+## 数据可视化
 
 数据读取和可视化。
 
@@ -71,7 +71,7 @@ for row in train_df_shuffled[["text", "target"]][random_index:random_index+5].it
   print("---\n")
 ```
 
-### Split data into training and validation data
+### 数据分割
 
 将 text 和 target 转化为 numpy array 格式并进行数据的分割，方便后续使用。
 
@@ -93,22 +93,127 @@ len(train_sentences), len(train_labels), len(val_sentences), len(val_labels)
 train_sentences[:10], train_labels[:10]
 ```
 
-## Converting text into numbers using tokenization
+## 文本分词
 
-Tokenization，我还是很喜欢Daniel的解释，很简洁简单好懂。分词技术，以下几种：
+**Tokenization**，我还是很喜欢Daniel的解释，很简洁简单好懂。分词技术，以下几种：
 
 - Word-level：这相当于给每个单词标记数字。
 - Character-level：相当于给26个字母标记数字。
 - Sub-word-level：这是所谓的分词，Token其实是组成了单词的部分。他们被叫做*token*。
 
-Embedding，嵌入。
+**Embedding**，嵌入。是一个单词的向量表示。可以自己训练得到，也可以用pre-trained的嵌入层。
 
-## Turning our tokenized text into an embedding
-## Modelling a text dataset
-### Starting with a baseline (TF-IDF)
-### Building several deep learning text models
-### Dense, LSTM, GRU, Conv1D, Transfer learning
-## Comparing the performance of each our models
-## Combining our models into an ensemble
-## Saving and loading a trained model
-## Find the most wrong predictions
+向量之间的相似度使用余弦相似度度量。
+
+**嵌入矩阵和上下文矩阵**：
+
+嵌入矩阵（Embedding Matrix）是将离散的词汇或类别映射到低维连续向量空间的矩阵。在自然语言处理中，通常使用词嵌入技术，将每个单词表示为一个固定长度的向量。这些向量在嵌入矩阵中进行存储，每行对应一个单词的嵌入。
+
+上下文矩阵（Context Matrix）是用来表示某种上下文的矩阵。上下文可以是一个句子、一个文档，或者其他一些序列数据。这个矩阵捕捉了序列中的信息，并可用于下游任务，如情感分析、命名实体识别等。
+
+这两个矩阵之间的关系在自然语言处理中非常密切。在很多任务中，嵌入矩阵用来将单词映射到向量空间，而上下文矩阵则用来表示单词所处的上下文信息。嵌入矩阵可以视为上下文矩阵的一部分，因为它包含了单词的语义信息，而上下文矩阵则更广泛地表示了整个序列的语义。
+
+在深度学习模型中，通常会将嵌入矩阵作为模型的一部分，在训练过程中学习得到，以便模型能够更好地理解输入数据。上下文矩阵则可能由嵌入矩阵以及其他模型的隐藏状态等信息组成，用来表示更高级的语义和序列信息。
+
+**TextVectorization**类的输出结果是经过向量化处理后的文本数据。这个类可以将输入的原始文本数据转换成数值化的表示，使其可以被深度学习模型所理解和处理。
+
+输出结果通常是一个向量，其长度与词汇表的大小相同，每个位置对应一个词汇表中的单词或子词。每个位置上的值表示对应单词在文本中出现的次数、TF-IDF值或者其他形式的权重。
+
+例如，如果有一个词汇表包含了单词 "cat"、"dog" 和 "bird"，那么一个包含 "cat" 和 "dog" 的句子可能被向量化为 [1, 1, 0]，其中第一个位置对应 "cat"，第二个位置对应 "dog"，第三个位置对应 "bird"。
+
+一个普通的分词模型：
+```python
+import tensorflow as tf
+from tensorflow.keras.layers import TextVectorization
+
+# Use the default TextVectorization variables
+text_vectorizer = TextVectorization(max_tokens=None, # how many words in the vocabulary (all of the different words in your text)
+                                    standardize="lower_and_strip_punctuation", # how to process text
+                                    split="whitespace", # how to split tokens
+                                    ngrams=None, # create groups of n-words?
+                                    output_mode="int", # how to map tokens to numbers
+                                    output_sequence_length=None) # how long should the output sequence of tokens be?
+                                    # pad_to_max_tokens=True) # Not valid if using max_tokens=None
+```
+
+但是需要找到句子的平均长度：这里的结果是15，也就是句子的长度大约是15个单词。
+```python
+# find avarage number of tokens in training tweets
+round(sum([len(i.split()) for i in train_sentences]) / len(train_sentences))
+```
+
+根据这个数据我们可以有自己的custom分词模型：
+```python
+# Setup text vectorization with custom variables
+max_vocab_length = 10000 # max number of words to have in our vocabulary
+max_length = 15 # max length our sequences will be (e.g. how many words from a Tweet does our model see?)
+
+text_vectorizer = TextVectorization(max_tokens=max_vocab_length,
+                                    output_mode="int",
+                                    output_sequence_length=max_length)
+```
+
+将这个分词模型实例应用于训练数据：使用adapt方法，这相当于是拟合了一个*分词模型*。
+```python
+# Fit the text vectorizer to the training text
+text_vectorizer.adapt(train_sentences)
+```
+
+如果将这个分词模型应用于一个具体的例子：
+```python
+# Create sample sentence and tokenize it
+sample_sentence = "There's a flood in my street!"
+text_vectorizer([sample_sentence])
+```
+
+那么它将会输出，该句子的嵌入向量。
+```
+<tf.Tensor: shape=(1, 15), dtype=int64, numpy=
+array([[264,   3, 232,   4,  13, 698,   0,   0,   0,   0,   0,   0,   0,
+          0,   0]])>
+```
+最后会出现0，是因为我们确定了最大长度，对于不足的部分，会用0进行填充。
+
+最后可以检查我们的**分词器text_vectorizer**中的unique tokens的数量，以及最常见和最不常见的token。通过get_vocabulary()方法可以得到所有的unique tokens。他们按照出现的次数进行排列。
+
+```python
+# Get the unique words in the vocabulary
+words_in_vocab = text_vectorizer.get_vocabulary()
+top_5_words = words_in_vocab[:5] # most common tokens (notice the [UNK] token for "unknown" words)
+bottom_5_words = words_in_vocab[-5:] # least common tokens
+print(f"Number of words in vocab: {len(words_in_vocab)}")
+print(f"Top 5 most common words: {top_5_words}") 
+print(f"Bottom 5 least common words: {bottom_5_words}")
+
+# Number of words in vocab: 10000
+# Top 5 most common words: ['', '[UNK]', 'the', 'a', 'in']
+# Bottom 5 least common words: ['pages', 'paeds', 'pads', 'padres', 'paddytomlinson1']
+```
+
+## 文本嵌入
+
+和上面的分词不同，分词是**静态**表达，而嵌入则是**动态**的，可以进行学习和进化。这个嵌入层，将作为模型的一部分存在，所以在训练中，它的参数是可以被更新和进化的。
+
+一个嵌入层如下：这里定义的128为输出的长度，意味着输出的嵌入矩阵的维度将是128维度。
+
+```python
+tf.random.set_seed(42)
+from tensorflow.keras import layers
+
+embedding = layers.Embedding(input_dim=max_vocab_length, # set input shape
+                             output_dim=128, # set size of embedding vector
+                             embeddings_initializer="uniform", # default, intialize randomly
+                             input_length=max_length, # how long is each input
+                             name="embedding_1") 
+
+embedding
+```
+
+## Model 0: Naive Bayes (baseline)
+## Model 1: Feed-forward neural network (dense model)
+## Model 2: LSTM model
+## Model 3: GRU model
+## Model 4: Bidirectional-LSTM model
+## Model 5: 1D Convolutional Neural Network
+## Model 6: TensorFlow Hub Pretrained Feature Extractor
+## Model 7: Same as model 6 with 10% of training data
