@@ -42,6 +42,16 @@ Network Model是一种数据库模型，它通过图结构来表示数据和它�
 
 Relational Model是一种数据库模型，通过二维表格（关系）来组织数据，每个表由行（记录）和列（字段）组成。行代表数据项，列代表数据属性。关系模型的核心概念包括表（relation）、键（key）、关系（relationship），以及使用SQL（结构化查询语言）进行数据查询和操作。这种模型提供了高度的数据独立性和灵活性，是目前最广泛使用的数据库模型，常见的关系数据库管理系统（RDBMS）有MySQL、PostgreSQL、Oracle、SQL Server等。
 
+*OLTP&OLAP*：一个是事务处理，一个是分析处理。前者主要是数据行为记录，后者主要是数据分析用途。
+
+## Postgre
+
+- DCL(data control): grant, revoke
+- DDL(data defination): create, drop, alter, rename, trancate, comment
+- DQL(data query): select
+- DML(data modification): insert, delete, update, merge, call, explain plan, lock table 
+
+
 ## resources
 
 - [DB-Fiddle](https://www.db-fiddle.com/)

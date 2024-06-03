@@ -209,7 +209,69 @@ embedding = layers.Embedding(input_dim=max_vocab_length, # set input shape
 embedding
 ```
 
-## Model 0: Naive Bayes (baseline)
+## Model 0: Naive Bayes (baseline/benchmark)
+
+- TfidfVectorizer：用于将文本数据转换为TF-IDF（Term Frequency-Inverse Document Frequency）特征矩阵。TF-IDF是一种用于文本挖掘的特征值，反映了一个词在一个文档中的重要性。
+- MultinomialNB：多项式朴素贝叶斯分类器，适用于特征值表示为多项式分布的情况，常用于文本分类。
+- Pipeline：用于将多个处理步骤串联起来，使得工作流程更简洁清晰。
+
+```python
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.pipeline import Pipeline
+
+# Create tokenization and modelling pipeline
+model_0 = Pipeline([
+                    ("tfidf", TfidfVectorizer()), # convert words to numbers using tfidf
+                    ("clf", MultinomialNB()) # model the text
+])
+
+# Fit the pipeline to the training data
+model_0.fit(train_sentences, train_labels)
+```
+
+计算分数和进行预测。
+```python
+baseline_score = model_0.score(val_sentences, val_labels)
+print(f"Our baseline model achieves an accuracy of: {baseline_score*100:.2f}%")
+# Make predictions
+baseline_preds = model_0.predict(val_sentences)
+baseline_preds[:20]
+```
+
+## 创建一个评估函数
+
+```python
+# Function to evaluate: accuracy, precision, recall, f1-score
+from sklearn.metrics import accuracy_score, precision_recall_fscore_support
+
+def calculate_results(y_true, y_pred):
+    """
+    Calculates model accuracy, precision, recall and f1 score of a binary classification model.
+
+    Args:
+    -----
+    y_true = true labels in the form of a 1D array
+    y_pred = predicted labels in the form of a 1D array
+
+    Returns a dictionary of accuracy, precision, recall, f1-score.
+    """
+    # Calculate model accuracy
+    model_accuracy = accuracy_score(y_true, y_pred) * 100
+    # Calculate model precision, recall and f1 score using "weighted" average
+    model_precision, model_recall, model_f1, _ = precision_recall_fscore_support(y_true, y_pred, average="weighted")
+    model_results = {"accuracy": model_accuracy,
+                    "precision": model_precision,
+                    "recall": model_recall,
+                    "f1": model_f1}
+    return model_results
+
+# Get baseline results
+baseline_results = calculate_results(y_true=val_labels,
+                                     y_pred=baseline_preds)
+baseline_results
+```
+
 ## Model 1: Feed-forward neural network (dense model)
 ## Model 2: LSTM model
 ## Model 3: GRU model

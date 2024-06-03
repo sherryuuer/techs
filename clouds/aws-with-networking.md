@@ -20,7 +20,7 @@
 
 - OTHER THOUGH
   - 网关是网络自治系统（AS）的分界
-  - 涉及到网关的服务Gateway，一般都只涉及路由设置，涉及Interface，IP等，一般会涉及路由表和DNS解析。
+  - 涉及到网关的服务Gateway，一般都只涉及路由设置。涉及Interface，IP等，一般会涉及路由表和DNS解析。
   - 整个云构架中重要的部分：
     - API到处都是，DNS解析非常重要
     - PrivateLink和ENI功能强大
@@ -898,8 +898,9 @@ Interface功能可以说是VPC Endpoint的一个Extension。
     - *GRE（Generic Routing Encapsulation）*：一种隧道协议，用于在点对点的链路上封装多种网络层协议的数据包，允许在互联网上传输私有网络的多协议流量。它不提供加密。
     - *DMVPN（Dynamic Multipoint VPN）*：一种基于GRE和NHRP（Next Hop Resolution Protocol）的VPN技术，允许构建动态、按需创建的多点对多点VPN网络，适合大规模、分支机构间的动态连接。DMVPN通常与IPsec结合使用，以提供安全性。
 
-### Site to site VPN
+## Site to site VPN
 
+### S2SVPN 构架
 - VGW（VirtualGateway，AWS端，ASN）- CGW（CustomGateway，本地端，ASN）
 - VGW在AWS的两个不同的AZ中各创建Tunnel Endpoint，以提高可用性。
 - 一个VPC只能设置一个VGW，所以一个VPC对接多个本地中心，都是通过这一个VGW实现。
@@ -924,7 +925,98 @@ Interface功能可以说是VPC Endpoint的一个Extension。
   - 静态路由意味着，本地添加了新的CIDR，则AWS端需要自己手动添加对方子网的CIDR
   - 动态路由意味着，**使用BGP，之需要指定对方的ASN**，当本地添加了新的CIDR，则AWS端会自动添加，但是**限制条件是只能容忍100个动态路由添加**，解决方案是，**整合本地端CIDR为一个更大的CIDR range**，从而减少CIDR个数。
 
+- *几个Scenario解析：*
+  - CGW-VGW后能通过VPC的IGW连接互联网吗？
+    - 不能。因为网关只是一个网关设备Gateway，不是ENI，它不像ENI那样会遵守子网的流量规则。
+  - CGW-VGW，VPC的IGW前设置有NAT Gateway可以通互联网吗？
+    - 还是不能的。VGW没有对NAT的控制权。Blocked by NAT restrictions。 
+  - CGW-VGW，VPC的IGW前设置self-control的NAT EC2 Instance，可以连接互联网吗？
+    - 可以。可以自己控制NAT的约束条件，打通VGW到NAT到IGW的路由流量。 
+  - VGW-CGW，在本地DC端的NAT，可以让VPC来的流量通过吗？
+    - 可以。如同上面的情况，只要这个NAT是可以完全自己控制的，就可以设置从CGW到外网的流量路由。
+  - CGW-VGW的VPC后可以和其他Peering VPC互通流量吗？
+    - 不能。PeeringVPC不具有传递性，它只接受从连通的VPC（必须是流量Origin）的情况。而CGW的流量并不是源。
+  - CGW-VGW进来的流量可以通向VPC Gateway Endpoint而使用S3/DynamoDB吗？
+    - 不能。
+    - 源不同。VPC Gateway Endpoint的设计初衷是为了在VPC内部提供到AWS服务（如S3）的安全私有访问路径。虚拟网关处理的是来自外部网络的流量。这些外部流量在进入VPC之前，通常不被视为VPC内部的流量。
+    - VPC Gateway Endpoint依赖于VPC路由表中的路由规则，而这些规则通常不会包含来自VGW的外部流量路径。
+  - CGW-VGW-PrivateLink（VPC Interface Endpoint）连接AWS服务？
+    - 可以。PrivateLink：使用AWS PrivateLink为外部网络提供到S3的私有连接。PrivateLink允许你在VPC中创建接口VPC端点（Interface VPC Endpoint），从而在VPC和外部网络之间建立私有连接。
 
+### Tunnel的各种功能
 
+- *VPN Tunnels Active/Passive Mode*
+  - 在AWS中，当你创建一个VPN连接时，每个VPN连接通常会包含**两个IPSec隧道**。这两条隧道连接到不同的虚拟网关（VGW）或客户网关（CGW + FW（statefull））设备，从而提供上述的冗余和高可用性。
+  - 静态路由，*Active/Active* mode：
+    - 由于从AWS的VPC端来的流量是*随机选择一条tunnel*传送流量到CGW的。所以有可能引起非对称路由，所以**CGW端要开启非对称路由mode**，允许非对称路由（一条tunnel进另一条tunnel出）
+  - 静态路由，*Active/Passive* mode：
+    - 一次只有一条tunnel是up状态，用于双向通信。在本地端需要配置本地路由，比如加入moniter脚本，当一条隧道down了后要随时将另一条隧道up。
+    - 这种情况两边通信用的是同一条tunnel，所以不会发生非对称路由。
+  - 动态路由，*Active/Active* mode：
+    - 开两条隧道，但是由于是动态路由，BGP协议，可以设置路由偏好ASPATH（shorter），MED（lower），从而避免非对称路由。
+
+- *VPN Dead Peer Detection（DPD）*
+  - 它是一种检测IPSec VPN 连接是否还活着的机制。
+  - 如果enable DPD功能，AWS每十秒会对CGW发送一个确认信息：R-U-THERE 信息，然后如果收到一个ACK信息则说明对方还在。 
+  - timeout默认是30秒。可以设置更长。
+  - 使用UDP500协议或者UDP4500协议。
+  - timeout后的action三种：
+    - Clear（default action）：终止IPSec IKE session，停止隧道清理路由。
+    - Restart：AWS重启IKE Phase 1
+    - None：take no action
+  - Custom 使用动态路由必须支持DPD，总之*动态路由必然支持DPD*，因为既然是动态肯定要有确认对方是否生存的功能。
+  - *idle connection*：如果隧道上没有任何通信发生，隧道仍然会被关闭：对策来说：
+    - 可以设置一个合适的idle timeout
+    - 或在一端设置一个host，每隔5-10秒就向对方发生一个ping，来保证通道不会处于idle状态
+
+### Monitoring
+
+- **CloudWatch**进行进行监控的三个指标：
+  - TunnelState：0代表隧道都down，1代表隧道都up，0到1之间代表总有隧道没有up。
+  - TunnelDataIN：通过隧道收到的bytes
+  - TunnelDataOut：通过隧道送出的bytes
+- 可以创建CloudWatch Alarm，以及发送失败消息
+
+- **PersonalHealth Dashboard（PHD）**
+  - S2SVPN会自动给PHD发送notification
+  - 包括（故障的时候）*通道端点replacement通知*和*单通道VPN通知（其中一个通道1小时以上没工作了的情况）*
+
+### 组合构架：TGW，Multi-S2SVPN，冗余高可用性VPN
+
+- 在VPC端的VGW可以被Transit Gateway所替代
+- 1个TGW - 1个CGW：单VPN构架
+- 1个VGW - 多个CGW：Multi-VPN构架，受到VGW的带宽限制，每个IPSec通道的带宽只有1.25Gbps
+- 1个TGW - 多个CGW：Multi-VPN构架，每个VPC附件attachment的带宽最大为50 Gbps。
+- 多个S2SVPN连接：比如两组连接，每组都有两条通道，提高可用性
+
+**VPN Cloud Hub**
+
+- VPN Gateway可以不*用attach*在任何VPC上
+- VPN Gateway - 连接多个本地DC的 CGW（有各自的自治系统号码），从而达到*各个本地DC之间互相使用IPSec Tunnel建立VPN通信*的目的。这里面没有AWS的VPC参与。
+- 每个CGW必须有unique的 BGP ASN，和动态路由
+- 每个本地DC必须有不同（no overlapping）的CIDR range
+- 最多可以连接10个本地DC的CGW
+- 在本地DC之间实现failover功能
+- VPN Gateway当然也*可以attach*在VPC上：这时候，各个本地DC之间可以通信，同时也可以都和VPC通信
+
+### EC2 based VPN
+
+- *VPN Termination*是指终止或结束VPN连接的过程或设备。在VPN（Virtual Private Network，虚拟专用网络）中，Termination指的是在网络中结束数据传输的点或设备。这通常是在连接两个网络或者连接用户设备和企业网络时发生的。VPN Termination点可以是网络设备，如路由器、防火墙或VPN服务器，它们负责加密和解密数据、处理连接请求，并终止连接。
+- 使用EC2 based VPN的可是想使用其他的通道协议而不是IPSec，比如：GRE，dmvpn
+- EC2实例作为VPN端点时，可以通过操作系统OS层面的*IP表（iptables）*来管理流量的转发和过滤。iptables是Linux系统上用于配置和管理网络规则的工具，可以用于实现诸如*路由、NAT、端口转发和访问控制*等功能。
+  - *流量转发*：通过iptables设置规则，将VPN连接的流量从EC2实例转发到VPC或本地数据中心。这些规则可以指定特定的源、目标、端口等条件，以确保只有符合条件的流量被转发。
+  - *NAT转换*：如果需要在VPN连接的两端进行地址转换，可以使用iptables设置NAT规则，将源地址或目标地址进行转换，以确保流量正确地在VPC和本地网络之间传递。
+  - 这使得**VPC和本地DC之间可以有overlapping的CIDR**，而VGW的情况下是不允许的。
+  - *安全性增强*：通过iptables可以实现对流量的深度检查和过滤，从而增强VPN连接的安全性。可以安装threat protection 软件，可以设置规则来防范DDoS攻击、阻止恶意流量、限制访问等。
+- 可以达到Transitive Routing（流量传递）的目的。而网关系统VGW则不可以。
+- 增强带宽，带宽是EC2的上限5Gbps，同时可以水平扩展。
+- 提高性能，垂直扩展，需要提高instance size。
+- 需要无效化源/目标检测，因为需要IPforwarding。这是因为启用源/目标检查会导致EC2实例丢弃转发的数据包，这会影响到流量的正常转发。
+- 下面是一些使用IP转发需要禁用源/目标检查的情况：
+  - *NAT网关*: 当EC2实例用作NAT网关时，它接收到的数据包的源IP地址是内部网络的私有IP地址，但目标IP地址是公共Internet IP地址。启用源/目标检查可能会导致EC2实例丢弃这些数据包，因为它们的目标IP地址不是实例的私有IP地址。禁用源/目标检查可以确保NAT网关可以正常转发数据包。
+  - *VPN网关*: 当EC2实例用作VPN网关时，它可能需要将流量从VPC路由到VPN连接或从VPN连接路由到VPC。在这种情况下，启用源/目标检查可能会导致EC2实例丢弃转发的数据包，因为它们的目标或源地址与EC2实例本身不匹配。禁用源/目标检查可以确保VPN网关能够正常地转发流量。
+  - *路由器或网关*: 在一些情况下，EC2实例可能被配置为路由器或网关，负责将流量从一个网络接口转发到另一个网络接口。启用源/目标检查可能会干扰EC2实例作为路由器或网关的功能，因为它可能会丢弃转发的数据包。
+- 需要设置EC2的自动恢复，比如结合CloudWatch和System Manager，进行服务器重启之类。
+- AWS不提供或者maintain第三方的VPN设备和软件你需要自己选择和安装。有些大企业比如Cisco提供AMI，你可以直接安装和使用。
 
 

@@ -607,17 +607,63 @@ train_df_repartition, test_df_repartition = df.repartition(24).randomSplit([.8, 
 print(f'count after repartition: {train_df_repartition.cache().count()}')
 ```
 
-- Train / evaluate a machine learning model using Spark ML.
-- Describe Spark ML estimator and Spark ML transformer.
-- Develop a Pipeline using Spark ML.
-- Identify key gotchas when developing a Spark ML Pipeline.
+**Train / evaluate a machine learning model using Spark ML.**
+```python
+from pyspark.ml.regression import LinearRegression
+from pyspark.ml.evaluation import RegressionEvaluator
+from pyspark.ml.feature import VectorAssembler
+# 特征集合器 / 并对训练数据和测试数据进行变换
+vec_assembler = VectorAssembler(inputCols=["bedrooms"], outputCol="features")
+vec_train_df = vec_assembler.transform(train_df)
+vec_test_df = vec_assembler.transform(test_df)
+# 创建训练模型实例 / 进行拟合
+lr = LinearRegression(featuresCol="features", labelCol="price")
+lr_model = lr.fit(vec_train_df)
+# 使用模型，对测试数据进行预测
+pred_df = lr_model.transform(vec_test_df)
+# 回归评估器实例 / 评估结果
+regression_evaluator = RegressionEvaluator(predictionCol="prediction", labelCol="price", metricName="rmse")
+rmse = regression_evaluator.evaluate(pred_df)
+```
+**Describe Spark ML estimator and Spark ML transformer.**
+- 推定器（estimator）：一种算法，它根据DataFrame中的数据进行拟合，并生成一个转换器（Transformer）。例如，学习算法从DataFrame中学习并生成模型就是一种推定器。推定器具有.fit()方法，用于从DataFrame中学习（或“拟合”）参数。
+- 转换器（transformer）：将一个DataFrame转换为另一个DataFrame。它接收一个DataFrame作为输入，并返回一个添加了一个或多个列的新DataFrame。转换器不从数据中学习参数，只是简单地应用基于规则的转换。转换器具有.transform()方法。
+
+**Develop a Pipeline using Spark ML.**
+- 在Spark ML中，One Hot Encoder在对类别特征进行编码之前需要先进行字符串索引（String Indexer）变换，这是因为One Hot Encoder只能处理数值类型的数据，而不能直接处理字符串类型的数据。
+```python
+from pyspark.ml import Pipeline
+from pyspark.ml import PipelineModel
+from pyspark.ml.feature import OneHotEncoder, StringIndexer
+# 数据分割
+train_df, test_df = df.randomSplit([.8, .2], seed=42)
+
+categorical_cols = [field for (field, dataType) in train_df.dtypes if dataType == "string"]
+index_output_cols = [x + "Index" for x in categorical_cols]
+ohe_output_cols = [x + "OHE" for x in categorical_cols]
+
+string_indexer = StringIndexer(inputCols=categorical_cols, outputCols=index_output_cols, handleInvalid="skip")
+ohe_encoder = OneHotEncoder(inputCols=index_output_cols, outputCols=ohe_output_cols)
+
+stages = [string_indexer, ohe_encoder, vec_assembler, lr] #estimatorをリスト化する
+pipeline = Pipeline(stages=stages)
+
+pipeline_model = pipeline.fit(train_df) #まとめてfitして、transformerを作成する
+
+# optional
+pipeline_model.write().overwrite().save(DA.paths.working_dir) #transformerに変換したパイプラインをまるごと保存
+saved_pipeline_model = PipelineModel.load(DA.paths.working_dir) #読み込み
+
+pred_df = saved_pipeline_model.transform(test_df) #指定した順番通りにまとめてtransform（transformerなのでtransformメソッド持っている）
+```
+**Identify key gotchas when developing a Spark ML Pipeline.**
 ### Hyperopt
 - Identify Hyperopt as a solution for parallelizing the tuning of single-node models.
 - Identify Hyperopt as a solution for Bayesian hyperparameter inference for distributed models.
 - Parallelize the tuning of hyperparameters for Spark ML models using Hyperopt and Trials.
 - Identify the relationship between the number of trials and model accuracy.
 ### Pandas API on Spark
-- Describe key differences between Spark DataFrames and Pandas on Spark DataFrames.
+**Describe key differences between Spark DataFrames and Pandas on Spark DataFrames.**
 
 **Dataframe有以下三种类型**
 - 1: pandas dataframe

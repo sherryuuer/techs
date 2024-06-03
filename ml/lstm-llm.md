@@ -481,7 +481,7 @@ class LanguageModel(object):
         return overall_loss
 ```
 
-### 计算概率和单词预测
+## 计算概率和单词预测
 
 ```python
 import tensorflow as tf
@@ -505,7 +505,7 @@ print(word_preds)
 
 虽然相比较注意力机制长短记忆模型已经过时了一点点但是我们依然需要了解和学习。
 
-### 张量切片
+## 张量切片
 
 和一般的python列表的切片不一样，tensor的切片在tf中使用gather和gather_nd方法。
 
@@ -548,7 +548,7 @@ selected_elements = tf.gather_nd(t, indices)
 
 如果你只需在一个轴上选择特定索引的元素，使用 `tf.gather` 更为简单。但如果你需要在多个维度上进行复杂的选择，那么 `tf.gather_nd` 更为适用。
 
-### 预测下一个单词
+## 预测下一个单词
 
 `get_word_predictions`方法通过接收两个张量参数，`word_preds`和`binary_sequences`，以及一个表示批次大小的标量`batch_size`。
 

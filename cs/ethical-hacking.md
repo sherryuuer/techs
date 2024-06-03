@@ -300,6 +300,8 @@ NAT(Network Address Translation，网络地址转换)和NAT Network在VirtualBox
 - `sudo nmap -D RND:10 <target>`这个命令将生成 10 个随机的诱饵 IP 地址来进行扫描。
 - `sudo nmap -D decoy1,decoy2,decoy3 <target>`这个命令将使用 decoy1、decoy2、decoy3 这三个指定的诱饵 IP 地址来进行扫描。
 
+### Python 扫描工具
+
 ## Vulnerability Analysis
 
 ## Exploitation & Gaining Access

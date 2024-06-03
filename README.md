@@ -64,7 +64,6 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [*NLP：词嵌入WordEmbeddings](ml/wordembeddings.md)
 - [*NLP：LSTM语言模型构架](ml/lstm-llm.md)
 - [*NLP：文本分类-灾难文本分类项目<ZTM>](ml/text-classification.md)
-- [*NLP：Seq2Seq模型](ml/seq2seq-model.md)
 - [Pytorch初见就有点爱](ml/pytorch-firsttime.md)
 - [Pytorch框架模板](ml/pytorch-template.md)
 - [迁移学习：站在巨魔的肩膀上](ml/transfer-learning.md)
@@ -85,6 +84,7 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [*GNN：图基础和图论的数学-Graph-Neural-Networks](ml/gnn.md)，
 - [*GCN图卷积神经网络和它的实现-Graph-Convolutional-Networks](ml/gcn.md)
 - [Databricks-ML-spark](clouds/databricks-ml-spark.md)
+- [机器学习系统设计-ML-System-Design](ml/ml-system-design.md)
 
 ## Python and Math
 - [编程的历史和分类：声明式和命令式](python/programing-lang.md)
@@ -113,7 +113,7 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [程序员原则](principals/whats-not-change.md)
 - [计算机思维](principals/computeritize.md)
 - [工程师心得](principals/engineer.md)
-- [数学和信息论](morefun/math-infomation-theory.md)
+- [数学思维模型](morefun/math-theory.md)
 
 ## Computer Science
 - [软件开发和程序员基础知识/基础情报技术](cs/programming-base.md)
