@@ -1,8 +1,10 @@
+## 系统设计流程
+
 机器学习的标准开发周期包括数据收集、问题制定、模型创建、模型实施和模型增强。
 
 机器学习系统设计涉及多个步骤，从问题陈述到模型的扩展，每一步都至关重要。以下是详细的步骤和它们的相互关系：
 
-## 1. 问题陈述（Problem Statement）
+### 1. 问题陈述（Problem Statement）
 首先，需要明确你要解决的问题。这一步非常关键，因为它决定了整个项目的方向和目标。
 
 **关键问题**：
@@ -15,7 +17,7 @@
 - **背景**：电信公司希望减少客户流失率，提高客户保留率
 - **重要性**：通过预测客户流失，可以提前采取措施保留客户
 
-## 2. 确定指标（Identify Metrics）
+### 2. 确定指标（Identify Metrics）
 明确衡量模型性能的指标。选择合适的指标对于评估模型的有效性和实际应用至关重要。
 
 **关键问题**：
@@ -27,7 +29,7 @@
 - 分类问题：准确率（Accuracy）、精确率（Precision）、召回率（Recall）、F1分数（F1 Score）
 - 回归问题：均方误差（MSE）、平均绝对误差（MAE）、R^2
 
-## 3. 确定需求（Identify Requirements）
+### 3. 确定需求（Identify Requirements）
 定义系统的具体需求，包括功能需求和非功能需求。
 
 **关键问题**：
@@ -41,7 +43,7 @@
 - 数据需求：需要每天更新的数据
 - 性能需求：响应时间小于1秒
 
-## 4. 训练和评估模型（Train and Evaluate Model）
+### 4. 训练和评估模型（Train and Evaluate Model）
 选择合适的算法，训练模型并评估其性能。这个步骤通常包括数据预处理、特征工程、模型选择和超参数调优。
 
 **关键步骤**：
@@ -55,7 +57,7 @@
 - 评估模型的准确率、精确率和召回率
 - 使用交叉验证和超参数调优提升模型性能
 
-## 5. 设计高层系统（Design High Level System）
+### 5. 设计高层系统（Design High Level System）
 设计系统的高层架构，包括数据流、系统组件和交互。
 
 **关键元素**：
@@ -68,7 +70,7 @@
 - 系统组件：数据收集模块、预处理模块、预测服务、存储模块
 - 交互：预处理模块将数据传递给预测服务，预测结果存储在数据库中
 
-## 6. 扩展设计（Scale the Design）
+### 6. 扩展设计（Scale the Design）
 考虑系统在实际应用中的扩展性，包括处理大规模数据和高并发请求的能力。
 
 **关键考虑**：
@@ -82,3 +84,179 @@
 - 使用微服务架构和负载均衡处理高并发请求
 - 使用容器化（如Docker）和容器编排（如Kubernetes）部署和管理模型
 
+## 特征选择和特征工程技巧
+
+### One hot encoding
+
+问题：计算量大，内存消耗高，不适合自然语言处理，有多少个unique特征就有多少特征向量。
+
+可以尝试将不重要的特征分类到“其他”标签中。
+
+可以使用的方法：`pandas.get_dummies`,sklearn `OneHotEncoder`。但是前者不会记住进行了编码的值，如果加入了新的值，会导致前后不一致。但是后者则可以在训练和预测期间保持变换的一致性，所以推介后者。
+
+其实这个方法处理大基数特征的时候是不切实际的，所以很多公司都采用更高级的技术。
+
+### Feature hashing
+
+哈希技巧或哈希技巧法，是一种用于将高维稀疏特征向量映射到较低维度的稠密向量的技术。
+
+Feature hashing通过哈希函数将特征索引到固定大小的向量中，从而减少特征的维度。这种方法在处理大量稀疏特征时非常有效，常用于文本数据和高维数据。
+
+工作原理
+- 哈希函数：使用一个哈希函数将每个特征映射到一个固定大小的向量索引。
+- 哈希冲突：多个特征可能映射到同一个索引，这称为哈希冲突。Feature hashing通过将这些冲突特征的值累加或使用签名函数处理冲突。
+- 签名函数：有时会引入签名函数（例如，取正负号）来减少哈希冲突带来的影响。
+
+下面是一个使用 Python 实现的简单 Feature Hashing 示例，利用哈希函数将文本特征映射到固定大小的特征向量中。
+
+假设我们有几条文本数据，我们将使用 Feature Hashing 将这些文本数据转换为固定大小的特征向量。
+
+```python
+import numpy as np
+from sklearn.feature_extraction.text import HashingVectorizer
+
+# 示例文本数据
+documents = [
+    "I love machine learning",
+    "Machine learning is amazing",
+    "I love coding in Python"
+]
+
+# 使用 HashingVectorizer 进行 Feature Hashing
+vectorizer = HashingVectorizer(n_features=10, alternate_sign=False)  # 设定特征向量的固定大小为 10
+
+# 转换文本数据为哈希特征向量
+hashed_features = vectorizer.transform(documents)
+
+# 转换结果为数组形式以便查看
+hashed_features_array = hashed_features.toarray()
+
+# 打印哈希特征向量
+for i, doc in enumerate(documents):
+    print(f"Document {i+1}: {doc}")
+    print(f"Hashed Features: {hashed_features_array[i]}")
+    print()
+```
+
+1. **`HashingVectorizer`**:
+   - `n_features=10`：指定目标特征向量的长度为 10。
+   - `alternate_sign=False`：默认情况下哈希冲突会累加特征值，设为 False 表示不使用签名函数。
+
+2. **转换文本数据**：
+   - `vectorizer.transform(documents)`：将文本数据转换为稀疏矩阵形式的哈希特征向量。
+
+3. **结果查看**：
+   - `hashed_features.toarray()`：将稀疏矩阵转换为密集数组，方便查看结果。
+
+假设上述代码的输出如下：
+
+```plaintext
+Document 1: I love machine learning
+Hashed Features: [ 0.  0.  1.  0.  1.  1.  0.  0.  1.  0.]
+
+Document 2: Machine learning is amazing
+Hashed Features: [ 0.  0.  1.  0.  1.  0.  0.  1.  0.  1.]
+
+Document 3: I love coding in Python
+Hashed Features: [ 1.  0.  1.  0.  0.  1.  1.  0.  0.  0.]
+```
+每个文档都被转换为长度为 10 的特征向量，这些向量可以直接用于后续的机器学习模型中。通过这种方式，Feature Hashing 可以有效地将高维特征映射到低维空间。
+
+用一个更简单的解释方法，就是和implement哈希数据结构的时候用的公式一样，mode。
+```
+h(the) mod 5 = 0
+h(quick) mod 5 = 4
+h(brown) mod 5 = 4
+h(fox) mod 5 = 3
+```
+如此得到结果[1, 0, 0, 1, 2]。这里mod5表示分5组。这里因为1，和2都没有所以为0，在index为4的有两个所以为2，这里执行了累加。
+
+很多大公司会使用这种方法，但是这种方法需要权衡，因为空间太小会引起哈希冲突，太大则会增加计算量。
+
+### Crossed feature
+
+**交叉特征**：交叉特征是通过将两个或多个原始特征的值组合起来创建的新特征。例如，假设我们有两个类别特征“性别”和“职业”，可以通过交叉特征将它们组合成一个新的特征“性别_职业”。不如叫特征组合。
+
+- 捕捉特征交互：通过交叉特征，可以捕捉到原始特征之间的交互关系，这对于模型性能提升非常重要。
+- 提高模型复杂度：增加了特征的多样性和复杂度，使模型能够学习更复杂的模式。
+- 维度爆炸：交叉特征可能会显著增加特征的数量，导致特征空间维度爆炸，增加计算和存储成本。
+- 稀疏性问题：如果特征值组合太多，可能导致很多稀疏特征，影响模型训练效率。
+
+交叉特征在推荐系统、广告点击率预测等领域应用广泛。例如，在推荐系统中，可以通过用户ID和商品ID的交叉特征来捕捉用户对特定商品的偏好。
+
+简单来说就是进行特征组合，我觉得这在特定的问题中可能会比较有效。比如经纬度组合，这肯定是必须的。
+
+在大公司中这也是常用技巧，比如爱彼迎。
+
+### Embedding
+
+Embedding（嵌入）是一种将高维稀疏数据转换为低维稠密向量的方法，广泛应用于自然语言处理（NLP）、推荐系统、图像处理等领域。
+
+特征嵌入是一种新兴技术，旨在将特征从原始空间转换到新空间以支持有效的机器学习。嵌入的目的是捕捉特征的语义含义；例如，相似的特征在嵌入向量空间中会彼此接近。
+
+最重要的好处就是可以*捕捉复杂的语义特征*，并且是可以被训练的。
+
+Doordash 公司使用 Store Embedding (store2vec) 类似于word2vec技术，用来个性化商店信息流。以此找到商店和用户的关系。
+
+```python
+# tensorflow example
+# Embed a 1,000 word vocabulary into 5 dimensions.
+embedding_layer = tf.keras.layers.Embedding(1000, 5)
+```
+
+### Numeric features
+
+Numeric features（数值特征）是指数据集中以数值形式表示的特征。它们是连续的，可以进行算术运算，如加减乘除。数值特征在机器学习和数据分析中非常常见，通常用于描述定量信息。以下是数值特征的详细介绍：
+
+数值特征可以分为两类：
+
+- **连续特征**：这些特征可以取任何值，例如温度、身高、体重等。
+- **离散特征**：这些特征只能取有限的几个值，但这些值是数值形式的，例如考试分数、家庭成员数量等。
+
+特点：
+
+- **可度量**：数值特征表示可以精确测量的量。
+- **有序性**：数值特征有自然的顺序，可以比较大小。
+- **可运算**：可以对数值特征进行各种数学运算。
+
+以下是一些数值特征的示例：
+
+- **人口统计数据**：年龄、收入、房价、家庭成员数量等。
+- **科学测量数据**：温度、压力、湿度、浓度等。
+- **金融数据**：股票价格、交易量、利率等。
+
+常见的预处理方法包括：
+
+- **归一化（Normalization）**：MinMaxScaler将特征值缩放到特定范围（如 0 到 1）内，以便于处理不同量级的数据。
+- **标准化（Standardization）**：StandardScaler将特征值调整为均值为 0、标准差为 1 的标准正态分布，以提高模型收敛速度和效果。
+- **缺失值处理**：用均值、中位数、特定值或插值方法填补缺失值。
+
+数值特征广泛应用于各类机器学习和数据分析任务中，例如：
+
+- **回归分析**：预测数值目标变量，例如房价预测、股票价格预测等。
+- **分类任务**：使用数值特征作为输入，进行分类任务，例如疾病诊断、客户分类等。
+- **聚类分析**：根据数值特征将数据分组，例如市场细分、图像分割等。
+
+以下是一个处理数值特征的示例，展示了归一化和标准化的过程：
+
+```python
+import numpy as np
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
+
+# 示例数据
+data = np.array([[25, 50000], [30, 54000], [35, 58000], [40, 62000]])
+
+# 归一化
+min_max_scaler = MinMaxScaler()
+normalized_data = min_max_scaler.fit_transform(data)
+
+print("Normalized Data:")
+print(normalized_data)
+
+# 标准化
+standard_scaler = StandardScaler()
+standardized_data = standard_scaler.fit_transform(data)
+
+print("\nStandardized Data:")
+print(standardized_data)
+```

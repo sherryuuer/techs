@@ -1019,4 +1019,80 @@ Interface功能可以说是VPC Endpoint的一个Extension。
 - 需要设置EC2的自动恢复，比如结合CloudWatch和System Manager，进行服务器重启之类。
 - AWS不提供或者maintain第三方的VPN设备和软件你需要自己选择和安装。有些大企业比如Cisco提供AMI，你可以直接安装和使用。
 
+### Transit VPC
+
+- 多VPC对多本地DC的构架，一个复杂的mesh用一个VPC来替代的结构：Multi-VPC -- TransitVPC -- Multi-ON-premise-DC
+- Transit VPC通过一个中心VPC来实现路由，从而简化了网络管理和路由策略的制定。所有的流量都会通过这个中心VPC进行转发和管理。
+- 可以在VPC中的EC2上安装Advanced Threat Protection等软件 
+- Transit VPC可以集中管理和监控流量，通过应用安全策略、访问控制列表（ACL）和防火墙来增强网络安全性。
+- 可以有Overlapping CIDR，因为可以通过NAT转发功能（**TransitGateway不行，除了这一点其他的都可以通过TransitGateway实现。**）
+- Transitive Routing：VPC Endpoints，IGW。因为它是一个EC2base的VPN
+- Client - site 连接多个VPC资源
+
+## Client VPN
+
+### Components
+
+- 通过Client VPN Endpoint，可以连接到AWS的VPC，通过该VPC还可以使用Peered VPC，Endpoint Services，IGW，On-premise等。
+- 主要的Components：
+  - Client 主机（CIDR range 不能和 VPC 的 CIDR range 有 overlapping）
+  - VPC - VPN target Subnet
+  - 认证机制，比如ACM，AD，SAML/SSO
+  - Client VPN Endpoint（同时就会在target subnet中创建ENI，以及它的SG）
+  - Client连接到VPN Endpoint的同时就是land到了这个subnet中，就可以使用各种资源了
+  - VPN Endpoint关联的Route表，控制访问路由
+  - Authorization Rules：用于对用户的更精细控制，比如在AD控制的基础上，设置部门分别的访问权限
+  - Application Subnet（可访问的资源），IGW等其他VPC资源
+- 限制：
+  - Client CIDR range不能和VPC的local CIDR重合
+  - CLient CIDR range也不能和手动添加到VPN Endpoint的路由重合
+  - Client CIDR range的block size必须在/22到/12之间
+  - Clinet CIDR range无法在创建了VPN Endpoint后改变
+  - VPN Endpoint不能和AZ中的多个Subnet建立关系
+  - VPN Endpoint不能和dedicated tenancy VPC中的Subnet建立联系
+  - Client VPN只支持IPv4
+
+### 创建流程
+
+*创建认证证书并上传到ACM*
+
+- git clone OpenVPN/easy-rsa.git仓库
+- 初始化该easy-rsa pki环境
+- 创建一个新的CA（root CA）
+- 生成一个server的证书和密钥
+- 生成一个client的证书和密钥
+- 将上面生成的所有证书和密钥放入一个文件夹
+- import所有的证书和密钥到ACM
+
+*设置VPC环境*
+
+- 创建VPC，APP子网和关联路由表，目标子网和关联路由表
+- 创建目标子网的SG，没有inbound，只有outbound（通往0.0.0.0/0）
+- 在APP子网中创建EC2，和它的相应SG，允许来自目标子网的SG的inbound流量
+
+*创建Client VPN Endpoint*
+
+- 填写 Client CIDR 地址
+- 选择之前import的 ACM server和client 证书
+- 选择正确的VPC和关联目标子网的SG信息
+
+*关联VPN Endpoint到目标子网 & Authorize traffic*
+
+- 在创建好的VPN Enpoint进行目标子网关联（有associate标签栏）
+- 添加Authorization Rule，可设置目标子网范围，添加用户授权群组
+- 根据上面的rule会自动设置路由记录，同时也可以自己手动添加其他路由记录
+
+*下载和更新VPN configuration file*
+
+- 下载文件到本地，修改文件
+- 修改文件：对remote DNS记录，添加prefix，可随意添加没有规则（官方指定的步骤）
+- 下载一开始创建的client端认证和密钥文件
+- 修改文件：添加client认证和密钥的绝对路径
+
+*连接测试*
+
+- 下载并安装OpenVPN Client
+- 导入VPN configuration file
+- connect，ping app EC2
+- 以上设置，没有涉及IGW，所以无法联网
 
