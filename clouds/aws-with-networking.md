@@ -1096,3 +1096,54 @@ Interface功能可以说是VPC Endpoint的一个Extension。
 - connect，ping app EC2
 - 以上设置，没有涉及IGW，所以无法联网
 
+### 如何从Clinet VPN访问外网
+
+- 方法一是从VPC的IGW（打通三层路由设置）
+  - VPN Endpoint route添加
+  - Authorize traffic rule添加
+  - Target subnet route添加
+- 方法二是从本地split tunnel
+  - 切断VPN，删除上述各种路由
+  - 在VPN Endpoint进行变更设置，enable split tunnel有效化
+  - 重连VPN即可
+
+### 如何从Client VPN访问其他Peered VPC
+
+- 更新target subnet的路由，指向Peered VPC
+- 更新Peered VPC的资源SG，允许来自target subnet的SG的流量
+- VPN Endpoint中为Authorize traffic rule添加Peered VPC的CIDR许可
+- VPN Endpoint中为路由表添加到Peered VPC的CIDR许可
+
+## Direct Connect（DX）
+
+### 概要 definition
+
+- OSI对照
+  - 层 - 功能 - 协议和设备 - DX对照(并不能完全一一对照)
+  - Application - End user layer - HTTP/FTP/SSH/DNS - *BGP*
+  - Presentation - Syntax（语法，格式）layer - SSL/IMAP/MPEG/Encryption&Compression
+  - Session - Synch&Send to Ports - APIs/Sockets/WinSock
+  - Transport - End to end connections - TCP/UDP - *TCP(Port 179)*
+  - Network - Packets - IP/ICMP/IPSec - *Peer & Amazon IP*
+  - Datalink - Frames - Ethernet/PPP/Switch/Bridge - *Ethernet 802.1Q LAN(VLAN tagging)*
+  - Physical - Physical structure - Coax/Fiber/Wireless/Hubs/Repeaters - *Single Mode Fiber 1G/10G/100G*
+
+- Direct Connet Locations
+  - 网络集线器，第三方协同管理各个数据中心，在AWS Backbone Network层面，这些Location已经和AWS建立了连接
+  - 全球100多个，选择最近的，建立和本地的私有连接
+  - 低延迟和持续带宽
+  - 降低数据传输成本，不用在跨VPC，跨区域上产生cost
+  - 连接AWS Private Network（VPC）和AWS Public Services Endpoints（S3/DynamoDB）
+  - 施工1～3个月
+  - 专用连接1/10/100Gbps
+  - 50Mbps～10Gbps的带宽，依靠APN Partner就可以了
+  - 内部有两个路由router：*AWS Direct Connect Router*和*Customer Router*
+  - *AWS Direct Connect Router*和VPC之间建立*VIF（Virtual Interface）*（也就是一种逻辑连接）
+    - Public VIF - S3/SQS
+    - Private VIF - VPC
+    - Transit VIF - Transit Gateway
+  - *Customer Router*和DC之间的连接是物理连接（比如layer2Link）
+
+### 要求 requirements
+
+- Single-mode Fiber
