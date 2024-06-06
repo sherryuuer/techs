@@ -1146,4 +1146,9 @@ Interface功能可以说是VPC Endpoint的一个Extension。
 
 ### 要求 requirements
 
-- Single-mode Fiber
+- Single-mode Fiber：现在有1G，10G，100G光缆，这是一种*物理设置*而不是逻辑设置。
+- 802.1Q VLAN encapsulation：802.1Q VLAN封装是一种通过在以太网帧中添加标签来支持VLAN的标准。它允许在同一物理网络上创建多个逻辑网络，从而实现流量隔离和网络管理的灵活性。
+- Auto-Negotiation必须是disabled状态以保证速度1Gbps以上，改用*手动设定*
+  - 自动协商（Auto-Negotiation）是一种网络协议，允许以太网设备在建立连接时自动协商共同支持的最佳传输速度、双工模式（全双工或半双工）和其他相关参数。这个过程在以太网网络中非常重要，因为它确保了设备之间能够以最佳性能进行通信，而无需手动配置。
+- Custom路由必须支持BGP和BGP MD5认证：对每个消息都要验证哈希值，有一些零信任的特征，比如持续验证，但是在范围，管理，策略，细度上还是不及。另外MD5哈希算法已被证明在密码学上不安全，存在碰撞漏洞和破解风险。
+-（Option）Enable BFD（Bidirectional Forwarding Detection，双向转发检测）是一种网络协议，用于快速检测IP网络中的链路故障。
