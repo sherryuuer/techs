@@ -185,3 +185,128 @@ public class Client {
 ```
 
 在这个示例中，`PrinterAdapter`实现了`Printer`接口，并将`print`方法的调用委托给`OldPrinter`类的`oldPrint`方法。客户端代码通过`Printer`接口与适配器进行交互，而无需了解底层的`OldPrinter`类。
+
+### Decorator Pattern
+
+装饰器设计模式（Decorator Design Pattern）是一种结构型设计模式，用于动态地向对象添加行为或职责，而不影响其他对象。与继承相比，装饰器模式提供了一种更灵活的方法来扩展对象的功能。以下是对装饰器设计模式的介绍：
+
+1. **组件接口（Component Interface）**：
+   - 定义了对象可以执行的方法，所有具体组件和装饰器都必须实现这个接口。
+
+2. **具体组件（Concrete Component）**：
+   - 实现了组件接口，表示可以动态添加职责的对象。
+
+3. **装饰器（Decorator）**：
+   - 实现了组件接口，包含一个指向具体组件的引用。装饰器可以在调用具体组件的方法前后添加额外的行为。
+
+4. **具体装饰器（Concrete Decorator）**：
+   - 继承自装饰器，向组件添加具体的职责。
+
+**UML类图**
+
+```
+Component
+  + operation()
+    |
+ConcreteComponent
+  + operation()
+    |
+Decorator
+  - component: Component
+  + operation()
+    |
+ConcreteDecoratorA
+  - addedState: Type
+  + operation()
+  + addedBehavior()
+    |
+ConcreteDecoratorB
+  + operation()
+  + addedBehavior()
+```
+
+下面是一个使用装饰器设计模式的示例，演示如何向对象动态添加职责。假设我们有一个简单的接口 `Coffee`，定义了 `cost` 和 `description` 方法。
+
+```python
+from abc import ABC, abstractmethod
+
+# 组件接口
+class Coffee(ABC):
+    @abstractmethod
+    def cost(self) -> float:
+        pass
+
+    @abstractmethod
+    def description(self) -> str:
+        pass
+
+# 具体组件
+class SimpleCoffee(Coffee):
+    def cost(self) -> float:
+        return 5.0
+
+    def description(self) -> str:
+        return "Simple Coffee"
+
+# 装饰器
+class CoffeeDecorator(Coffee):
+    def __init__(self, decorated_coffee: Coffee):
+        self.decorated_coffee = decorated_coffee
+
+    def cost(self) -> float:
+        return self.decorated_coffee.cost()
+
+    def description(self) -> str:
+        return self.decorated_coffee.description()
+
+# 具体装饰器A
+class MilkDecorator(CoffeeDecorator):
+    def cost(self) -> float:
+        return self.decorated_coffee.cost() + 1.5
+
+    def description(self) -> str:
+        return self.decorated_coffee.description() + ", Milk"
+
+# 具体装饰器B
+class SugarDecorator(CoffeeDecorator):
+    def cost(self) -> float:
+        return self.decorated_coffee.cost() + 0.5
+
+    def description(self) -> str:
+        return self.decorated_coffee.description() + ", Sugar"
+
+# 使用装饰器模式
+coffee = SimpleCoffee()
+print(f"Cost: {coffee.cost()}, Description: {coffee.description()}")
+
+coffee_with_milk = MilkDecorator(coffee)
+print(f"Cost: {coffee_with_milk.cost()}, Description: {coffee_with_milk.description()}")
+
+coffee_with_milk_and_sugar = SugarDecorator(coffee_with_milk)
+print(f"Cost: {coffee_with_milk_and_sugar.cost()}, Description: {coffee_with_milk_and_sugar.description()}")
+```
+
+输出：
+```
+Cost: 5.0, Description: Simple Coffee
+Cost: 6.5, Description: Simple Coffee, Milk
+Cost: 7.0, Description: Simple Coffee, Milk, Sugar
+```
+
+*适用场景*：
+
+- 需要在不影响其他对象的情况下动态地添加职责或行为。
+- 使用继承无法有效扩展类的功能。
+- 需要透明地对待被装饰的对象。
+
+*优点*：
+
+- 更灵活地扩展对象的功能，而不需要继承多个类。
+- 可以动态组合多个装饰器，实现复杂的功能。
+
+*缺点*：
+
+- 会增加系统中类和对象的数量，导致系统更加复杂。
+- 多层装饰器的调试比较困难。
+
+装饰器设计模式是面向对象编程中强大且灵活的工具，用于动态地向对象添加新的功能。

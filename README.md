@@ -42,7 +42,7 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 ## Machine learning
 - [对大语言模型的简单解释](ml/ai-4-prompt.md)/[日文版](ml/ai-4-prompt-jp-version.md)
 - [Prompt-Engineering-Framework](ml/prompt-engineering.md)
-- [LangChain大模型框架](tools/langchain.md)
+- [LangChain大模型框架](ml/langchain.md)
 - [机器学习以及它的分类总结](ml/mltypes.md)
 - [*机器学习算法之线性回归：特征选择方法，评估方法，非常用回归模型](ml/regression.md)
 - [*机器学习算法之分类问题：逻辑回归，集成算法](ml/classification.md)
@@ -83,15 +83,15 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [Transformers编码器构架各个模块的代码实践](ml/transformers-encoder.md)
 - [*GNN：图基础和图论的数学-Graph-Neural-Networks](ml/gnn.md)，
 - [*GCN图卷积神经网络和它的实现-Graph-Convolutional-Networks](ml/gcn.md)
-- [Databricks-ML-spark](clouds/databricks-ml-spark.md)
+- [Databricks-ML-spark](ml/databricks-ml-spark.md)
 - [机器学习系统设计：设计流程，特征工程，和Pipeline技巧](ml/ml-system-design.md)
 
 ## Python and Math
 - [编程的历史和分类：声明式和命令式](python/programing-lang.md)
 - [用Python进行统计分析](python/statistics-with-python.md)
-- [网络基础：使用Python实现的套接字编程](cs/python-sockets-programming.md)
+- [网络基础：使用Python实现的套接字编程](python/python-sockets-programming.md)
 - [Python代码单元测试](python/codetest.md)
-- [使用Python调用OpenAI的API](ml/open-ai.md)
+- [使用Python调用OpenAI的API](python/open-ai.md)
 - [Python的break和continue如何影响循环](python/break-continue.md)
 - [面向对象编程设计模式Java&Python的Cheatsheet总结](python/oop-design-pattern.md)
 - [*Python自动化Automation](python/python-automation.md)
@@ -105,7 +105,7 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [AWS-Bedrock项目实践1：Code Generation (APIGateway,S3,bedrock)](clouds/bedrock-pj1.md)
 - [AWS-Bedrock项目实践2-3：Notes Summarisation & Image Generation & 模型评估 & RAG](clouds/bedrock-pj2-3.md)
 - [Google-Gimini-API上手体验和要点总结：目前最爱Gemini](clouds/gemini-api.md)
-- [GCP的ID认证服务：WorkloadIdentity是什么，如何让外部ID可以在GCP内作业](cs/workloadidentity.md)
+- [GCP的ID认证服务：WorkloadIdentity是什么，如何让外部ID可以在GCP内作业](clouds/workloadidentity.md)
 - [关于云上的CI/CD服务，以及IaC服务的总结](clouds/cloud-cicd-tools.md)
 - [GCP-cloud-Engineer学习笔记](clouds/gcp-cloud-engineer.md)
 
@@ -113,12 +113,12 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [程序员原则](principals/whats-not-change.md)
 - [计算机思维](principals/computeritize.md)
 - [工程师心得](principals/engineer.md)
-- [数学思维模型](morefun/math-theory.md)
+- [数学思维模型](principals/math-theory.md)
 
 ## Computer Science
 - [软件开发和程序员基础知识/基础情报技术](cs/programming-base.md)
-- [系统设计概念：System Design concepts](morefun/system-design.md)
-- [系统设计模式思考：System Design Interview](morefun/system-design-interview.md)
+- [系统设计概念：System Design concepts](cs/system-design.md)
+- [系统设计模式思考：System Design Interview](cs/system-design-interview.md)
 - [*GithubActions实现workload工作流：自动化GCS部署和notification](cs/ghactions-autodeploy.md)
 - [Git和Github复习手册](cs/git.md)
 - [*网络安全分类：访问控制、身份管理、数据加密与网络防护的清晰分类](cs/network-security-tree.md)
@@ -141,6 +141,10 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [外部链接：Fine-Tuning or Retrieval?单纯的RAG可能比RAG加微调更好](https://arxiv.org/abs/2312.05934)
 - [外部链接：Prompt Design and Engineering: Introduction and Advanced Methods](https://arxiv.org/abs/2401.14423)
 - [外部链接：竟然有人用Excel实现了GPT2的构架，只要理解了基础，工具只是辅助而已！so coooool!](https://spreadsheets-are-all-you-need.ai/index.html#watch-the-lessons)
+
+## Concepts Seeds
+
+- [UMAP](concepts/umap.md)
 
 ## logbooks
 - [项目过程心得总结-不定期添加](principals/pj-thinking.md)
