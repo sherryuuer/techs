@@ -149,8 +149,9 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 
 ## logbooks
 - [项目过程心得总结-不定期添加](principals/pj-thinking.md)
-- [航海日志：定期思维检修1](principals/checkmind1.md)
-- [航海日志：定期思维检修2](principals/checkmind2.md)
+- [航海日志：定期思维检修1-202404](principals/checkmind1.md)
+- [航海日志：定期思维检修2-202405](principals/checkmind2.md)
+- [航海日志：定期思维检修3-202406](principals/checkmind3.md)
 
 ## Tools
 - [外部链接：Fake RestAPI](https://jsonplaceholder.typicode.com/)
