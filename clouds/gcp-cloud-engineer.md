@@ -284,9 +284,16 @@ codelabs：https://codelabs.developers.google.com/codelabs/cloud-bigtable-intro-
 ### Cloud PubSub
 
 - 可以将 PubSub 视为 Apache Kafka 的替代方案，后者是开源替代方案。
-- Publisher > Topic > Message Storage > Subscription > Subscriber
-- delivery方式：push / pull
+- Publisher > Topic > Message & Storage > Subscription > Subscriber > ACK(应答后会删除message)
+- 如果长时间收不到应答就会多次发送message，要注意
+- delivery方式：push / pull / BQ Subscription(can load table to BQ)/ GCS Subscription
+- ACK功能要手动开启
 - 关键词：Capture Streaming data、Pubsub、Decoupled（解藕），Asynchronous application architecture（异步应用构架）
+- CloudShell：装载了开发工具的虚拟机(list account: `gcloud auth list`;list pjs: `gcloud config list project`)
+- Pull message by cloud shell: `gcloud pubsub subscriptions pull --auto-ack MySub_name`
+- Enable bucket object upload topic: `gsutil notification create -t MyTopic -f json gs://bucket_name`
+  - [Link for gsutil tools of GCS](https://cloud.google.com/storage/docs/gsutil/commands/notification)
+  - [Topic filter](https://cloud.google.com/pubsub/docs/subscription-message-filter?authuser=1)
 
 ### Dataflow
 

@@ -510,5 +510,299 @@ compare_baseline_to_new_results(baseline_results, model_4_results)
 ```
 
 ## Model 5: 1D Convolutional Neural Network
+
+```python
+# Test out the embedding, 1D convolutional and max pooling
+embedding_test = embedding(text_vectorizer(["this is a test sentence"])) # turn target sentence into embedding
+conv_1d = layers.Conv1D(filters=32, kernel_size=5, activation="relu") # convolve over target sequence 5 words at a time
+conv_1d_output = conv_1d(embedding_test) # pass embedding through 1D convolutional layer
+max_pool = layers.GlobalMaxPool1D() 
+max_pool_output = max_pool(conv_1d_output) # get the most important features
+embedding_test.shape, conv_1d_output.shape, max_pool_output.shape
+
+# Set random seed and create embedding layer (new embedding layer for each model)
+tf.random.set_seed(42)
+from tensorflow.keras import layers
+model_5_embedding = layers.Embedding(input_dim=max_vocab_length,
+                                     output_dim=128,
+                                     embeddings_initializer="uniform",
+                                     input_length=max_length,
+                                     name="embedding_5")
+
+# Create 1-dimensional convolutional layer to model sequences
+from tensorflow.keras import layers
+inputs = layers.Input(shape=(1,), dtype="string")
+x = text_vectorizer(inputs)
+x = model_5_embedding(x)
+x = layers.Conv1D(filters=32, kernel_size=5, activation="relu")(x)
+x = layers.GlobalMaxPool1D()(x)
+# x = layers.Dense(64, activation="relu")(x) # optional dense layer
+outputs = layers.Dense(1, activation="sigmoid")(x)
+model_5 = tf.keras.Model(inputs, outputs, name="model_5_Conv1D")
+
+# Compile Conv1D model
+model_5.compile(loss="binary_crossentropy",
+                optimizer=tf.keras.optimizers.Adam(),
+                metrics=["accuracy"])
+
+# Get a summary of our 1D convolution model
+model_5.summary()
+
+# Fit the model
+model_5_history = model_5.fit(train_sentences,
+                              train_labels,
+                              epochs=5,
+                              validation_data=(val_sentences, val_labels),
+                              callbacks=[create_tensorboard_callback(SAVE_DIR, 
+                                                                     "Conv1D")])
+
+# Make predictions with model_5
+model_5_pred_probs = model_5.predict(val_sentences)
+model_5_pred_probs[:10]
+
+# Convert model_5 prediction probabilities to labels
+model_5_preds = tf.squeeze(tf.round(model_5_pred_probs))
+model_5_preds[:10]
+
+# Calculate model_5 evaluation metrics 
+model_5_results = calculate_results(y_true=val_labels, 
+                                    y_pred=model_5_preds)
+model_5_results
+
+# Compare model_5 results to baseline 
+compare_baseline_to_new_results(baseline_results, model_5_results)
+```
+
 ## Model 6: TensorFlow Hub Pretrained Feature Extractor
+
+```python
+# Example of pretrained embedding with universal sentence encoder - https://tfhub.dev/google/universal-sentence-encoder/4
+import tensorflow_hub as hub
+embed = hub.load("https://tfhub.dev/google/universal-sentence-encoder/4") # load Universal Sentence Encoder
+embed_samples = embed([sample_sentence,
+                      "When you call the universal sentence encoder on a sentence, it turns it into numbers."])
+
+print(embed_samples[0][:50])
+
+# Each sentence has been encoded into a 512 dimension vector
+embed_samples[0].shape
+
+# We can use this encoding layer in place of our text_vectorizer and embedding layer
+sentence_encoder_layer = hub.KerasLayer("https://tfhub.dev/google/universal-sentence-encoder/4",
+                                        input_shape=[], # shape of inputs coming to our model 
+                                        dtype=tf.string, # data type of inputs coming to the USE layer
+                                        trainable=False, # keep the pretrained weights (we'll create a feature extractor)
+                                        name="USE") 
+
+# Create model using the Sequential API
+model_6 = tf.keras.Sequential([
+  sentence_encoder_layer, # take in sentences and then encode them into an embedding
+  layers.Dense(64, activation="relu"),
+  layers.Dense(1, activation="sigmoid")
+], name="model_6_USE")
+
+# Compile model
+model_6.compile(loss="binary_crossentropy",
+                optimizer=tf.keras.optimizers.Adam(),
+                metrics=["accuracy"])
+
+model_6.summary()
+
+# Train a classifier on top of pretrained embeddings
+model_6_history = model_6.fit(train_sentences,
+                              train_labels,
+                              epochs=5,
+                              validation_data=(val_sentences, val_labels),
+                              callbacks=[create_tensorboard_callback(SAVE_DIR, 
+                                                                     "tf_hub_sentence_encoder")])
+
+# Make predictions with USE TF Hub model
+model_6_pred_probs = model_6.predict(val_sentences)
+model_6_pred_probs[:10]
+
+# Convert prediction probabilities to labels
+model_6_preds = tf.squeeze(tf.round(model_6_pred_probs))
+model_6_preds[:10]
+
+# Calculate model 6 performance metrics
+model_6_results = calculate_results(val_labels, model_6_preds)
+model_6_results
+
+# Compare TF Hub model to baseline
+compare_baseline_to_new_results(baseline_results, model_6_results)
+```
+
 ## Model 7: Same as model 6 with 10% of training data
+
+```python
+### NOTE: Making splits like this will lead to data leakage ###
+### (some of the training examples in the validation set) ###
+
+### WRONG WAY TO MAKE SPLITS (train_df_shuffled has already been split) ### 
+
+# # Create subsets of 10% of the training data
+# train_10_percent = train_df_shuffled[["text", "target"]].sample(frac=0.1, random_state=42)
+# train_sentences_10_percent = train_10_percent["text"].to_list()
+# train_labels_10_percent = train_10_percent["target"].to_list()
+# len(train_sentences_10_percent), len(train_labels_10_percent)
+
+# One kind of correct way (there are more) to make data subset
+# (split the already split train_sentences/train_labels)
+train_sentences_90_percent, train_sentences_10_percent, train_labels_90_percent, train_labels_10_percent = train_test_split(
+  np.array(train_sentences),
+  train_labels,
+  test_size=0.1,
+  random_state=42
+)
+
+# Check length of 10 percent datasets
+print(f"Total training examples: {len(train_sentences)}")
+print(f"Length of 10% training examples: {len(train_sentences_10_percent)}")
+
+# Check the number of targets in our subset of data 
+# (this should be close to the distribution of labels in the original train_labels)
+pd.Series(train_labels_10_percent).value_counts()
+
+# Clone model_6 but reset weights
+model_7 = tf.keras.models.clone_model(model_6)
+
+# Compile model
+model_7.compile(
+  loss="binary_crossentropy",
+  optimizer=tf.keras.optimizers.Adam(),
+  metrics=["accuracy"]
+)
+
+# Get a summary (will be same as model_6)
+model_7.summary()
+
+# Fit the model to 10% of the training data
+model_7_history = model_7.fit(x=train_sentences_10_percent,
+                              y=train_labels_10_percent,
+                              epochs=5,
+                              validation_data=(val_sentences, val_labels),
+                              callbacks=[create_tensorboard_callback(SAVE_DIR, "10_percent_tf_hub_sentence_encoder")])
+
+# Make predictions with the model trained on 10% of the data
+model_7_pred_probs = model_7.predict(val_sentences)
+model_7_pred_probs[:10]
+
+# Convert prediction probabilities to labels
+model_7_preds = tf.squeeze(tf.round(model_7_pred_probs))
+model_7_preds[:10]
+
+# Compare to baseline
+compare_baseline_to_new_results(baseline_results, model_7_results)
+```
+
+## Comparing the performance of each of our models
+
+```python
+# Combine model results into a DataFrame
+all_model_results = pd.DataFrame({"baseline": baseline_results,
+                                  "simple_dense": model_1_results,
+                                  "lstm": model_2_results,
+                                  "gru": model_3_results,
+                                  "bidirectional": model_4_results,
+                                  "conv1d": model_5_results,
+                                  "tf_hub_sentence_encoder": model_6_results,
+                                  "tf_hub_10_percent_data": model_7_results})
+all_model_results = all_model_results.transpose()
+all_model_results
+
+# Reduce the accuracy to same scale as other metrics
+all_model_results["accuracy"] = all_model_results["accuracy"]/100
+
+# Plot and compare all of the model results
+all_model_results.plot(kind="bar", figsize=(10, 7)).legend(bbox_to_anchor=(1.0, 1.0));
+
+# Sort model results by f1-score
+all_model_results.sort_values("f1", ascending=False)["f1"].plot(kind="bar", figsize=(10, 7));
+```
+
+## Save and Load model
+
+```python
+# Save TF Hub Sentence Encoder model to HDF5 format
+model_6.save("model_6.h5")
+
+# Load model with custom Hub Layer (required with HDF5 format)
+loaded_model_6 = tf.keras.models.load_model("model_6.h5", 
+                                            custom_objects={"KerasLayer": hub.KerasLayer})
+
+# How does our loaded model perform?
+loaded_model_6.evaluate(val_sentences, val_labels)
+
+# Save TF Hub Sentence Encoder model to SavedModel format (default)
+model_6.save("model_6_SavedModel_format")
+
+# Load TF Hub Sentence Encoder SavedModel
+loaded_model_6_SavedModel = tf.keras.models.load_model("model_6_SavedModel_format")
+
+# Evaluate loaded SavedModel format
+loaded_model_6_SavedModel.evaluate(val_sentences, val_labels)
+```
+
+## Finding the most wrong examples
+
+```python
+# Create dataframe with validation sentences and best performing model predictions
+val_df = pd.DataFrame({"text": val_sentences,
+                       "target": val_labels,
+                       "pred": model_6_preds,
+                       "pred_prob": tf.squeeze(model_6_pred_probs)})
+val_df.head()
+
+# Find the wrong predictions and sort by prediction probabilities
+most_wrong = val_df[val_df["target"] != val_df["pred"]].sort_values("pred_prob", ascending=False)
+most_wrong[:10]
+
+# Check the false positives (model predicted 1 when should've been 0)
+for row in most_wrong[:10].itertuples(): # loop through the top 10 rows (change the index to view different rows)
+    _, text, target, pred, prob = row
+    print(f"Target: {target}, Pred: {int(pred)}, Prob: {prob}")
+    print(f"Text:\n{text}\n")
+    print("----\n")
+
+# Check the most wrong false negatives (model predicted 0 when should've predict 1)
+for row in most_wrong[-10:].itertuples():
+    _, text, target, pred, prob = row
+    print(f"Target: {target}, Pred: {int(pred)}, Prob: {prob}")
+    print(f"Text:\n{text}\n")
+    print("----\n")
+```
+## Making predictions on the test dataset
+
+```python
+# Making predictions on the test dataset
+test_sentences = test_df["text"].to_list()
+test_samples = random.sample(test_sentences, 10)
+for test_sample in test_samples:
+    pred_prob = tf.squeeze(model_6.predict([test_sample])) # has to be list
+    pred = tf.round(pred_prob)
+    print(f"Pred: {int(pred)}, Prob: {pred_prob}")
+    print(f"Text:\n{test_sample}\n")
+    print("----\n")
+```
+
+## Predicting on Tweets from the wild
+
+```python
+# Turn Tweet into string
+daniels_tweet = "Life like an ensemble: take the best choices from others and make your own"
+
+def predict_on_sentence(model, sentence):
+    """
+    Uses model to make a prediction on sentence.
+
+    Returns the sentence, the predicted label and the prediction probability.
+    """
+    pred_prob = model.predict([sentence])
+    pred_label = tf.squeeze(tf.round(pred_prob)).numpy()
+    print(f"Pred: {pred_label}", "(real disaster)" if pred_label > 0 else "(not real disaster)", f"Prob: {pred_prob[0][0]}")
+    print(f"Text:\n{sentence}")
+
+# Make a prediction on Tweet from the wild
+predict_on_sentence(model=model_6, # use the USE model
+                    sentence=daniels_tweet)
+```

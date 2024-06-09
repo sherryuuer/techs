@@ -860,7 +860,11 @@ Interface功能可以说是VPC Endpoint的一个Extension。
   - 可以被看作是路由器的管理单位，它包含了一组IP地址和一组路由器，这些路由器遵循相同的路由策略来管理这些IP地址。
   - 分为Public和Private：Public的范围是（1-64495），Private的范围是（64512-65534）
   - *所以每一个网络自治域都有自己的编号，并被路由器管理*。
-  - 所以不同的网络系统，域，都是一个自治系统，
+  - 所以不同的网络系统，域，都是一个自治系统
+  - Public ASN（Autonomous System Number）：是由互联网编号分配机构（如IANA、ARIN、RIPE等）分配的ASN。它们是全球唯一的ASN，用于在互联网上唯一标识一个自治系统（AS）。
+  - Private ASN：是预留给内部使用的ASN，通常在私有网络中使用。私有ASN范围是64512至65535，不会在全球互联网上被路由器接受。它们用于在内部网络中模拟BGP路由器，或在BGP实验中使用。
+  - 2Byte ASN：也称为16位ASN，是由两个字节（16位）表示的ASN。在过去的互联网协议版本中，ASN是使用两个字节表示的，范围是1到65535。这种ASN格式现在仍然被广泛使用，但随着互联网规模的增长，ASN号码的数量已经不够用了。
+  - 4Byte ASN：也称为32位ASN，是由四个字节（32位）表示的ASN。由于全球互联网的增长，使用两字节ASN已经不够用，因此引入了4字节ASN。4Byte ASN的范围是65536到4294967295。这使得互联网能够支持更多的自治系统，并解决了ASN用尽的问题。
 
 - 静态路由：手动配置的路由，管理员直接指定数据包的传输路径。
 - 动态路由：通过路由协议自动学习和更新路由表，根据网络变化自动调整数据包的传输路径。
@@ -872,7 +876,8 @@ Interface功能可以说是VPC Endpoint的一个Extension。
 - Path-vector是BGP使用的路由选择算法，它不仅考虑了路径的长度，还考虑了路径上经过的自治系统的情况，以选择最佳路径。
 - 两种类型：
   - iBGP：Routing within 自治系统
-  - eBGP：Routing between 自治系统s
+  - eBGP：Routing between 自治系统
+
 - 自治系统之间的路由选择由多个因素决定，其中一些因素（attributes）包括：
   1. **权重（Weight）**：（*在自治系统内部交换信息*）本地路由器配置的一个用于标识优先级的非标准属性，越高的权重值表示优先级越高。
   2. **AS路径（AS Path）**：路由信息中包含的经过的自治系统的序列，用于避免循环并确定最佳路径。*如果为了选择最高带宽的路径，而不是最短hop跳数量的路径。可以手动使得一个路径的ASpath变长，比如可以对最短路径进行hop跳的增加，比如200，200，200，以使他超过最高带宽的路径，这样就会自动选择最高带宽的路径了。*
@@ -880,6 +885,7 @@ Interface功能可以说是VPC Endpoint的一个Extension。
   4. **自治系统接入点（Origin）**：指示路由信息的来源，如IGP（Interior Gateway Protocol）、EGP（Exterior Gateway Protocol）或Incomplete。
   5. **多路径（Multipath）**：允许路由器选择多个等效的最佳路径，并将流量分配给这些路径。
   6. **MED（Multi-Exit Discriminator）**：用于在同一自治系统内部选择最佳路径的可选属性，表示到达自治系统外部的最佳出口点的优先级。**MED越低，优先级越高**。*MED可以在自治系统之间交换。*
+
 - BGP路由信息交换方法：
   - 每个BGP路由器向*相邻路由器*发送本地路由表中的路由信息，并接收相邻路由器发送的路由信息。（这就是动态路由）
   - 然后根据收到的相邻邻居路由的信息更新自己的路由表。通往一个目标的路径可能有多个，这也是一种failover。
@@ -1129,7 +1135,7 @@ Interface功能可以说是VPC Endpoint的一个Extension。
   - Physical - Physical structure - Coax/Fiber/Wireless/Hubs/Repeaters - *Single Mode Fiber 1G/10G/100G*
 
 - Direct Connet Locations
-  - 网络集线器，第三方协同管理各个数据中心，在AWS Backbone Network层面，这些Location已经和AWS建立了连接
+  - 网络集线器，第三方协同管理各个数据中心，在*AWS Backbone Network*层面，这些Location已经和AWS建立了连接（直插AWS脊梁骨）
   - 全球100多个，选择最近的，建立和本地的私有连接
   - 低延迟和持续带宽
   - 降低数据传输成本，不用在跨VPC，跨区域上产生cost
@@ -1152,3 +1158,177 @@ Interface功能可以说是VPC Endpoint的一个Extension。
   - 自动协商（Auto-Negotiation）是一种网络协议，允许以太网设备在建立连接时自动协商共同支持的最佳传输速度、双工模式（全双工或半双工）和其他相关参数。这个过程在以太网网络中非常重要，因为它确保了设备之间能够以最佳性能进行通信，而无需手动配置。
 - Custom路由必须支持BGP和BGP MD5认证：对每个消息都要验证哈希值，有一些零信任的特征，比如持续验证，但是在范围，管理，策略，细度上还是不及。另外MD5哈希算法已被证明在密码学上不安全，存在碰撞漏洞和破解风险。
 -（Option）Enable BFD（Bidirectional Forwarding Detection，双向转发检测）是一种网络协议，用于快速检测IP网络中的链路故障。
+
+### 类型 connection types
+
+- Dedicated Connections：1Gbps，5Gbps，10Gbps
+  - 物理以太网端口连接
+  - 先向AWS提出要求，然后由AWS Direct Connect Partners进行作业，或者也可以选择自己的Network Provider进行作业
+  - 层级权限：
+    - 在主账户下创建了DX连接connection后，可以自行创建最多50个VIF（同账户）
+    - 在主账户下创建了DX后，可以在组织中其他账户中创建*Hosted VIF*（不同账户）
+    - **1conn = many VIFs，只要拥有一个dedicated conn，就可以创建多个VIF**
+- Hosted Connections：50，100～500Mbps，and 1，2，5，10Gbps
+  - 由Partners来向AWS提出要求，Partners提供作业，分割带宽
+  - Gbps级别的只有selected几个Partners可以提供
+  - 带宽限制，超出的流量会被dropped
+  - 层级权限：这里会有一个Partner账户。**从Partner分割connection：1conn = 1VIF，所以要多少VIF就要多少Hosted Connection**
+
+- VIF vs ENI
+```mermaid
+graph TD
+  subgraph 虚拟化环境
+    VIF1[虚拟接口 (VIF)]
+    VIF2[虚拟接口 (VIF)]
+    VSwitch[虚拟交换机 (vSwitch)]
+    VM1[虚拟机 (VM1)]
+    VM2[虚拟机 (VM2)]
+    VIF1 -- 网络连接 --> VSwitch
+    VIF2 -- 网络连接 --> VSwitch
+    VM1 -- VIF1 --> VSwitch
+    VM2 -- VIF2 --> VSwitch
+    VSwitch -- 网络连接 --> PhysicalNIC[物理网卡]
+  end
+
+  subgraph 云服务环境
+    VPC[VPC]
+    Endpoint[接口端点 (Interface Endpoint)]
+    CloudService[私有云服务 (S3, DynamoDB等)]
+    VPC -- 私有连接 --> Endpoint
+    Endpoint -- 私有连接 --> CloudService
+  end
+```
+
+### 设置步骤 steps
+
+**Dedicated Connection**
+
+- 选择AWS region，DX location，然后提交请求给AWS，通过控制台console，CLI和API
+- AWS会在72小时内提供给你端口Port，并提供给你文件LOA-CFA（letter of authorization - connection facility assignment），用于向APN Partner证明你的Port和应该提供的AWS router
+- LOA包括了在设施中进行端口划界的细节
+- 如果组织已经在该DX Location有物理服务器之类的存在，那么可以直接要求和AWS的device进行cross-connect
+  - 如果没有，则你提供给APN Partner你的LOA的副本，那么APN Partner会帮你进行连接要求
+- 连接UP后，就能够在设备中受到Tx/Rx optical signal
+- 然后就可以创建Public或者Private VIF用于连接你的VPC或者Public AWS服务
+
+**Hosted Connection**
+
+- 不需要LOA，直接连接DX Partner来下单order连接
+- 给Partner提供12位数字的AWS账号
+- 告知需要的带宽
+- Partner会在你的账户中建立Hosted Connection，然后需要你accept它，一旦接受就会开始billing（小时计费和数据传输计费）
+
+*Hosted Connection & Hosted VIF不要混淆*
+
+- Hosted Connection是Partner建立的dedicated connection中分出来的一条带宽
+- Hosted VIF不管是Dedicated Connection还是Hosted Connection，可以被Connection的主账号，分配给组织中的任何账号，作为数据传输的接口。总之，Hosted VIF创建的时候可以选择其他账户，而其他账户必须接受它
+- Hosted VIF可以是Public VIF（接S3等），可以是Private VIF（接私有VPC等）
+
+### 虚拟接口 VIF
+
+**802.1Q VLAN** 是一种技术，用于在单一的物理网络基础设施上创建多个*逻辑上*的隔离网络。这通过给数据帧添加一个*标签（VLAN Tag）*来实现，使得网络设备能够识别和处理属于不同 VLAN 的流量。
+
+基本的 802.1Q VLAN 配置示意图：
+```mermaid
+graph LR
+    A[计算机1] -- Access Port (VLAN 10) --> S1[交换机1]
+    B[计算机2] -- Access Port (VLAN 20) --> S1
+    S1 -- Trunk Port (VLAN 10, 20) --> S2[交换机2]
+    C[服务器] -- Access Port (VLAN 10) --> S2
+    D[计算机3] -- Access Port (VLAN 20) --> S2
+```
+
+**VIF三种类型**：
+
+**Public VIF（公有虚拟接口）：**
+
+- 连接性质：公有连接。尽管使用 Direct Connect 的专用链路。使用 AWS Direct Connect 的 Public VIF 连接到 AWS 的各种公有服务时，不会通过传统的互联网路径。这种连接通过 *AWS Direct Connect 的专用网络链路*，提供了一种更可靠、低延迟且高带宽的连接方式。
+- 适用场景：你希望通过 Direct Connect 访问 AWS 的公有资源，而不通过互联网，以获得更高的性能、可靠性和安全性。
+- 示例：直接访问 S3 存储桶中的数据或通过 Route 53 解析域名，而不使用互联网路径。
+
+- *DXGW 不适用于 Public VIF*，因为他是一种私有连接
+
+- 连接到 AWS 公有服务的公有 IP 地址。
+- 需要提供AWS和自己双方的router的Public IPs with /30 CIDR，如果自己的没有，也可以请求AWS提供/31 CIDR的Public IP ranges
+- 你必须指出你要进行通告（advertise）的IPv4地址prefix（CIDR），AWS则会向注册机构进行验证你对这些地址prefix的所有权。*可以进行advertise的IP prefix的上限是1000个/BGP session，这是一个硬性上限*
+  - Advertise IP prefix 是网络中动态路由协议的核心功能之一，通过发布 IP 地址范围，路由器能够相互通信并建立最优的路由路径。
+- AWS会从BGP session通告所有的Amazon prefixs，从ip-ranges的json文件中的ip指定
+- *ip-ranges.json*：文件路径: https://ip-ranges.amazonaws.com/ip-ranges.json
+  - 用于列出其服务使用的 IP 地址范围。这个文件非常有用，特别是在设置防火墙规则、访问控制列表（ACL）或其他网络安全措施时。它允许用户识别和允许特定服务的流量，而无需手动维护和更新大量的 IP 地址。
+  - 所以可以在customer router可以通过filter这个文件来设置指定区域的ip的防火墙白名单等
+  - AWS 会定期更新这个文件，以反映其 IP 地址范围的变化。可以通过订阅AWS特有的SNStopic来收到更新通知
+- Public VIF可以连接到所有的AWS*全球*服务，*跨区域的*服务。而Private VIF只能接到和DX设置在同区域的VPC，这是一个关键区别
+- ip-ranges脚本例：
+```python
+import requests
+import json
+
+# 下载 AWS ip-ranges.json 文件
+url = "https://ip-ranges.amazonaws.com/ip-ranges.json"
+response = requests.get(url)
+ip_ranges = response.json()
+
+# 解析并打印所有 Amazon S3 服务的 IP 范围
+for prefix in ip_ranges['prefixes']:
+    if prefix['service'] == 'S3':
+        print(f"IP Range: {prefix['ip_prefix']} in region {prefix['region']}")
+```
+
+**Private VIF（私有虚拟接口）：**
+
+- 连接到你自己的 Amazon VPC（虚拟私有云）中的私有资源。
+  - 无法连接到DNS resolver at Base+2
+  - 无法连接到Gateway endpoint（因为他是一个gateway无法transit连接），相对的可以连接到Interface endpoint
+- VPC - （attach）VGW - （associate）PrivateVIF
+- *VGW* 和 Private VIF必须在同一个region
+- *DXGW* 可以和不同的region中的VPCs创建 Private VIF 连接
+- *DX Gateway*可以从一个DX连接多个VPCs
+- 两种Gateway的构架区别：
+  - DC - DX - 多个Private VIF 连接多个 VPCs的VGW （in 同一个region）
+  - DC - DX - 一个Private VIF 连接一个 DXGW - 多个 VPCs （in 不同region不同account中的资源）（多个VPC不能有overlapping的CIDR）
+  - 不像TGW，可以让VPC之间进行通信，DXGW*不允许VPC（和多个DC）之间的通信，只允许DC和VPC的通信*
+  - 一个DXGW（现在）最多可以连接20个VGWs（VPCs），如果你不够，就多创建 n 个Private VIF，就可以多连接 n 个DXGW
+  - DXGW 和 PrivateVIF 必须是同一个账户创建的
+  - 多个DX连接，也可以连接到一个DXGW上，然后连接所有的VPC资源
+  - 可见DXGW有更大的灵活性和更大的范围，多区域多账户
+  - DXGW本身免费，但是通过DX port的每小时流量通信照样要付费
+- 适用场景：你希望通过 Direct Connect 访问托管在 VPC 中的资源，如 EC2 实例、RDS 数据库、ECS 服务等。
+- BGP session的全网通告：Custom Router会收到所有的VPC prefixes / Custom Router可以最多通告100个prefixes给AWS，路由会被自动更新到VPC的subnet路由表中（100个是上限，如果超出，BGP session会go down，解决方案依然是summerize CIDR到一个更高的位）
+- MTU支持默认1500，动态路由支持JumboFrame 9001
+
+**Transit VIF：**
+
+- 通过（一个/多个 本地数据中心）建立*Transit VIF*（现在最多4个），连接到*Direct Connect Gateway*，再连接到（一个/多个）*Transit Gateway*（现在最多6个），可以访问多个 VPC。
+- Transit VIF 和 DXGW 需要是同一个账户下的
+- DX Gateway和Transit Gateway之间属于不同的自治区域，所以*ASN必须是不同的*，不然连接会失败
+- DX Gateway虽然不具有transitive性质，不能让region之间的TGW通信。但是同region的，被TGW连接的VPC之间是可以（设置为）通信的
+  - 不同region之间的VPC连接解决方案：是让跨region的*TGW之间Peering连接*
+  - 不同DC之间的连接的解决方案：*每个DC都有自己的单独的 DXGW 连接 TGW*，然后通过TGW的跨region的Peering，进行DC之间的连接
+- 因为Transit Gateway是*global router*，所以可以通过连接多个不同region的TGW来连接到多个region的不同VPC
+- 连接性质：私有连接，但通过*Direct Connect Gateway*可以连接到多个区域的多个 VPC，适合复杂的多区域部署。
+- 适用场景：需要通过单一 Direct Connect 连接多个 AWS 区域和多个 VPC。
+- MTU支持默认1500，动态路由支持JumboFrame 8500
+
+**DX SiteLink：**
+
+- DC之间的连接一直以来的样子：走公网，固定连接，和网络供应商的长期合约，不灵活，很高的运维费用
+- DC之间的连接通过AWS全球网络Backbone的连接：SiteLink：通过DC和DX Location的连接，直接走AWS的backbone，通过这些DX Location之间的DXGW通信，进行（shortest path）连接。这是一项功能，之需要enable它即可，可以随时on/off，*需要以小时付费的*
+- 很多客户甚至没有使用AWS资源，而是专门为了进行DC之间的连接，而使用这项服务
+- 连接隔离：比如A中心同时可以和B中心和C中心都可以连接，但是B和C不可以连接：在 AB 和 AC 之间用 DXGW 连接，进行DC通信，使用VLAN Tag技术，将流量控制在同虚拟网络中
+
+**General VIF Parameters：**
+
+- VIF Owner：你的AWS account或者其他AWS account（hosted VIF）
+- Gateway Type（只有Private 需要，因为 Public 的VIF不需要 Gateway）
+  - Virtual Private Gateway
+  - Direct Connect Gateway
+- VLAN ID：附加到VIF上的用于虚拟网络分割
+  - 不能在同一个DX Connection上有重复（1-4094）
+  - Hosted Connection：VLAN ID已经被Partner设置好了，只需要继承即可
+- BGP address Family（IPv4 or IPv6）
+- BGP Peer IP Addresses（Public/Private）：BGP Peer IP 地址是指在两个 BGP 路由器之间建立 BGP 邻居关系所使用的 IP 地址。BGP 路由器使用这些 IP 地址来相互通信和交换路由信息。这个概念指定了*BGP路由器之间的通信端点*。分为iBGP和eBGP。
+- BGP ASN（Public/Private）：这里讨论的不是AWS端的各种Gateway，而是指*用户这边的VIF*Public & Private BGP ASN
+- BGP MD5 authentivation Key：是一种机制，用于验证 BGP 邻居之间的通信，防止未经授权的设备发送恶意或伪造的 BGP 报文。自己提供或者AWS提供
+- Prefixes to be Advertised（Public VIF的情况only）：是指一个自治系统（AS）通过 BGP 协议向其他 BGP 邻居（Peers）通告的 IP 地址前缀，这些前缀通常代表这个自治系统拥有的网络或它愿意向其他网络传递的数据路径。
+- Jumbo Frames：支持Private VIF（最高9001 MTU），支持Transit VIF（最高8500 MTU）
+
