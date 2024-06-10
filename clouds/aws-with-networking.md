@@ -601,6 +601,18 @@ Interface功能可以说是VPC Endpoint的一个Extension。
   - NLB+On-premise构架：消费端VPC（ENI）--> PrivateLink --> EdgeVPC（NLB）--> VPN/DX（安全连接On-premise（SAAS））
   - ECS构架：多task多应用 --> ALB --> NLB --> PrivateLink --> ENI-of-VPC/VGW连接的其他VPN网络
   - VPC Endpoint构架：VPC Endpoint interface --> PrivateLink --> S3
+  - *Snowflake的PrivateLink构架*：构架连接的是客户的S3到SF的内部stage（也是一个S3）。步骤如下：
+    - Enable the PrivateLink internal stage feature：这是一个SF的功能，需要开启
+    - Retrieve your snowflake account's internal stage URL：他是一个包含了S3存储桶id的链接
+    - Create an S3 Private Endpoint：选择AWS service类型的endpoint interface类型创建
+    - Record the VPCE DNS name：得到了vpce的那个长串的domain名，这个domain名有一个*.vpce的url连接，**这个通配符表示该终端节点可以连接到的所有的AWS S3服务的所有区域而已，但是你能访问的还是你相关的有权限的bucket**
+    - Summary：下面的步骤要用到这里的SF的internal stage的S3的bucket的name，和上面的vpce端点的domain URL。将*.vpce连接中的通配符替换为你的internal stage的S3桶的name，就是下面要用到的*对象域名*
+    - DNS configuration：
+      - 方法一，创建一个Private Hosted Zone域名为s3.region.amazonaws.com，使用*CNAME*，当你*这个zone中没有别的S3桶需要访问*的时候可以用这个（不然的话用方法二）：record name指向s3桶，然后value是对象域名
+      - 方法二，创建一个Private Hosted Zone域名为bucket_name.s3.region.amazonaws.com，使用*A record*，record name为空，value直接指向vpce的纯ip地址
+      - 方法二中的ip地址必须是静态的，也就是不变的。
+      - 方法二通过指明Snowflake的桶为一个域名，就不会覆盖这个region中其他的你的S3桶了。因为**这确保了该托管区域专门用于解析与snowflake的internel stage相关的DNS请求，而对于其他的S3的域名完全不冲突了，因为他们根本就不是一个域名，也不会存在record冲突了**
+
 
 - **DNS resolution**
   - ENI会在VPC中创建一个private endpoint interface hostname
@@ -1332,3 +1344,4 @@ for prefix in ip_ranges['prefixes']:
 - Prefixes to be Advertised（Public VIF的情况only）：是指一个自治系统（AS）通过 BGP 协议向其他 BGP 邻居（Peers）通告的 IP 地址前缀，这些前缀通常代表这个自治系统拥有的网络或它愿意向其他网络传递的数据路径。
 - Jumbo Frames：支持Private VIF（最高9001 MTU），支持Transit VIF（最高8500 MTU）
 
+### DX 路由策略

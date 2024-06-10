@@ -287,6 +287,9 @@ codelabs：https://codelabs.developers.google.com/codelabs/cloud-bigtable-intro-
 - Publisher > Topic > Message & Storage > Subscription > Subscriber > ACK(应答后会删除message)
 - 如果长时间收不到应答就会多次发送message，要注意
 - delivery方式：push / pull / BQ Subscription(can load table to BQ)/ GCS Subscription
+  - *pull*功能的意思是，client进行pull的请求，subscriber从topic进行拉取，并将message和ackid返回给client，所以pull的不是client，而是subscriber，作为client的我们，还是需要请求，并被推送，还需要返回ack消息
+  - *push*是另一种机制，client要创建Endpoint服务，subscriber会不断的从Topic进行拉取，然后不断的对你的Endpoint进行Http Post，并期望得到2xx响应的机制！
+  - 这在比如实时应用，视频网站发布上很有用。比如和CloudRun联动，使用其Endpiont进行视频的实时推送。
 - ACK功能要手动开启
 - 关键词：Capture Streaming data、Pubsub、Decoupled（解藕），Asynchronous application architecture（异步应用构架）
 - CloudShell：装载了开发工具的虚拟机(list account: `gcloud auth list`;list pjs: `gcloud config list project`)
