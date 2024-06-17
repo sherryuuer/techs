@@ -51,7 +51,7 @@ Relational Model是一种数据库模型，通过二维表格（关系）来组�
 - DQL(data query): select
 - DML(data modification): insert, delete, update, merge, call, explain plan, lock table 
 
-## aggregate functions**（聚合函数）和scalar functions（标量函数）
+## aggregate functions（聚合函数）和scalar functions（标量函数）
 
 聚合函数对一组行进行操作，并返回一个单一的值。它们常用于数据汇总和分析，尤其是在`GROUP BY`子句中，帮助从一组数据中计算总体值。常见的聚合函数有：
 
@@ -100,10 +100,59 @@ Relational Model是一种数据库模型，通过二维表格（关系）来组�
 - **Scalar Functions**: 操作单个值并返回一个单一的值。常用于数据转换和处理。
 - 我觉得聚合函数就像是reduce，标量函数就像是map方法。
 
-## 使用双引号，而不是单引号
+## SQL tips
+
+**使用双引号，而不是单引号**
 
 ```sql
-select first_name as "first name" from "Users";
+select 
+  first_name as "first name" 
+from 
+  "Users"
+;
+```
+
+**where 语句判断顺序：**
+
+1. Parenthesis（括号）
+
+2. Arithmetic Operators（算数运算符）
+
+3. Concatenation Operators（连接运算符）
+
+4. Comparison Conditions（比较运算符）
+
+5. IS NULL, LIKE, NOT IN, etc.
+
+6. NOT
+
+7. AND
+
+8. OR
+
+运算符优先级：From - Where - Select
+
+**NULL的运算结果都是NULL：谨慎使用**
+
+`select * from table where column != null` will return nothing
+
+use *is* instead:
+
+`select * from table where column is not null`
+
+**coalescing**:
+
+返回第一个不是null的值：
+
+```sql
+select coalesce(
+   <column1>,
+   <column2>,
+   <column3>,
+   'Empty'
+) as combined_columns
+from
+  <table>
 ```
 
 

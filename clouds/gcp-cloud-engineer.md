@@ -18,13 +18,7 @@ TensorFlow就是这些技术之一。 TensorFlow 是 Google 的 AI 引擎，也�
 
 超好的官方资源[codelabs](https://codelabs.developers.google.com/)
 
-## 项目-PJ & 权限-IAM
-
-整个GCP层级如下：组织（如果你的账户域名是组织类型比如google workspace账号的话）- 文件夹folder - 项目projects - 资源resource（gmail账号是无组织的）
-
-IAM包括四种账户：Google Account, Service Account, Google Groups, Cloud Identity Domain。
-
-IAM Policy：用json方式写的权限控制方式，成员，角色，资源，以及按需条件。
+### ALL of them are APIs
 
 所有的资源服务都是一种API。从API&Service中就可以查看所有的API。有些服务在创建项目的时候就已经激活，有些则需要在使用的时候手动激活。
 
@@ -32,7 +26,7 @@ API Explorer可以轻松从网页尝试调试API（就算没激活都可以试�
 
 Cloud Operations：Monitoring，Dashboard，Metrics Explorer，Alerting，通过group可以整合资源管理，通过setting可以增加pj和account统一管理。其他还有logging，error report，trace服务。
 
-## 计费 Billing
+### 计费 Billing
 
 **计费账户**:可以为每个部门单位创建计费账户，或者别的什么单位。可以在项目Project上（三个点）设置它的计费账户。或者可以在新建项目的时候选择收费账户。这样就可以查看每个project的总费用。
 
@@ -50,12 +44,102 @@ Command:`gcloud alpha/beta billing accounts list`
 
 价格计算服务：**Pricing Calculator**：keyword：updated prices, latest prices, cost estimation
 
-## 和谷歌云的交互方式
+### 和谷歌云的交互方式
 
 - 通过控制台交互：Google Cloud Console
 - 通过命令行交互：Cloud SDK and Cloud Shell
 - 通过IOS和Android系统：Cloud Mobile App
 - 通过定制化应用（Custom Applications）交互：REST-based API
+
+- Cloud Shell 本质上是在 Google 的基础设施上运行的一个轻量级虚拟机（通常在 Google Kubernetes Engine 上运行的一个 Pod），这使得它能够迅速启动和关闭，同时提供一个完整的 Linux 环境。
+
+## Security & Management
+
+### Resource Manager
+
+整个GCP层级如下：组织（如果你的账户域名是组织类型比如google workspace账号的话）- 文件夹folder - 项目projects - 资源resource（gmail账号是无组织的）
+
+### Data Catalog
+
+- 将BQ，GCS，Pub/Sub，Dataproc Metastore等数据集成
+
+### IAM
+
+basic role，predefined role，custom role
+
+IAM对GCS管理包括均一管理也就是只使用IAM，和细管理，也就是同时使用IAM和ACL的管理。
+
+IAM包括四种账户：Google Account, Service Account, Google Groups, Cloud Identity Domain。
+
+IAM Policy：用json方式写的权限控制方式，成员，角色，资源，以及按需条件。
+
+### VPCSC
+
+- 基于IP的访问控制。
+
+### 数据加密多层防御
+
+- 认证：Cloud Identity - Google workspace - MFA - password
+- 认可：IAM，ACL，columus level control（BQ）- VPCSC - network访问控制
+- table加密：认可UDF（用户定义函数）加密
+- storage加密：Cloud KMS
+- CLoud DLP：Data Loss Prevention 数据损失防止服务
+
+### Cloud Operations suite
+
+### Monitoring
+
+- 监控dashboard，监控，通知，alarts。监察日志。
+- 结合Pub/Sub的filter可以只输出想要的内容
+- Custom Metric（网络连接，diskIO之类的元数据）收集，需要安装特别的agent，比如OpenCensus开源软件
+
+### Logging
+
+- Cloud Operations：Monitoring，Dashboard，Metrics Explorer，Alerting，通过group可以整合资源管理，通过setting可以增加pj和account统一管理。其他还有logging，error report，trace服务。这里讲Logging。
+- 通过Cloud Logging API和Log Router存储和整合。
+- Log viewer 功能可以query log
+- Logs dashboard
+- Logs-based metrics
+- Log Storage：50GB/项目免费配额，审计日志存储在单独的存储桶中，最长保留期为 400 天。对于其余日志，保留期限为 30 天。可以为此创建警报，以便一旦超过 50 GB 就用排除项目删除不必要的日志。
+- 可以输出到GCS作为担保性的archive，*如果需要是随时可以查看的形式，可以输出到BQ*
+
+- 日志流处理构架：
+  Logging -> Pub/Sub -> Dataflow -> Bigquery
+
+- **Security Command Center**：日志异常检测
+  - Security Health Analytics
+  - Event Threat Detection：使用了机器学习以及基于规则的异常检测
+
+- Cloud Audit Logs：记录特定的user，在什么服务，什么时间，做了什么的日志服务
+  - 管理活动监察日志
+  - 数据操作监察日志
+  - 系统活动监察日志：system event log，资源的构成变化
+  - Policy拒否监察日志：违反了安全policy的拒否日志
+
+### Trace
+
+- 追踪端点延迟，检测瓶颈问题
+- 对象服务：
+  - Compute Engine
+  - GKE
+  - APP Engine
+  - Cloud Run
+- codelabs：https://codelabs.developers.google.com/codelabs/cloud-function-logs-traces#6
+
+### Profiler
+
+- Cloud Profiler 是一种统计性、低开销的分析器，可以持续从生产应用程序收集 CPU 使用情况和内存分配信息。
+- 根据不同的编程语言支持不同的分析内容，似乎Go的最多
+- codelabs：https://codelabs.developers.google.com/codelabs/cloud-profiler#0， 这中间有很多模拟程序，很有趣
+
+### Debugger
+
+实时调试云应用程序，无需重新启动或停止
+
+### Error Reporting
+
+自动收集和分析错误和异常
+
 
 ## Compute
 
@@ -271,6 +355,56 @@ codelabs：https://codelabs.developers.google.com/codelabs/cloud-bigtable-intro-
 - 域名系统
 - public&private
 
+## Data Pipeline
+
+### Dataproc
+
+- Spark分布式计算
+- 托管的Hadoop和Spark服务，专门用于在Google Cloud Platform (GCP) 上进行批处理、查询和流式处理数据。
+- 它让用户能够快速简便地运行**分布式计算工作负载**，同时避免复杂的集群管理。
+- 使用Ephemeral Clusters（临时集群），只在需要的时候运作，可伸缩性，灵活性，成本效应
+- 支持Apache Hadoop生态系统中的多种开源工具，如Spark、Hive、Pig 和 MapReduce。
+- 支持通过 Initialization Actions 和 Preemptible VMs 来自定义集群的配置和优化成本。集群任务可以按需启动和停止，这使得资源使用更加高效。
+- 利用 Spark MLlib 或集成 TensorFlow 进行分布式机器学习训练和预测。
+- 适合需要处理大量数据的应用，如**日志处理、数据湖管理、实时数据流处理、复杂数据转换和大数据分析**等。
+- 创建datalake的很好选择（各种形式的大数据存储和分析）
+- DataprocHub：JupyterHub
+
+### Composer
+
+- 托管的 Apache Airflow 服务，专注于工作流编排和任务调度。
+- 支持自动化跨多个系统和服务的任务，如数据传输、API调用、数据处理任务等。
+- 通过重试策略、任务依赖和优先级管理来确保工作流的可靠执行。
+- 适合需要编排和自动化多个步骤或系统之间任务的应用，如定期数据导入、跨服务的ETL流程、数据管道管理、复杂的数据转换和加载过程等。
+
+### 两个服务的区别和结合
+
+**目标和用途:**
+
+- Dataproc 专注于大规模数据处理和分析，适合需要运行分布式计算作业的场景。
+- Composer 主要用于工作流编排和任务自动化，适合需要管理复杂任务链和调度多个系统之间的任务的场景。
+
+**核心技术:**
+
+- Dataproc 基于 Apache Hadoop 和 Spark 技术，处理大规模数据集。
+- Composer 基于 Apache Airflow，用于编排和管理工作流。
+
+**典型使用场景:**
+
+- Dataproc 常用于处理需要大量计算资源的批处理作业、实时数据处理和大规模数据分析。
+- Composer 通常用于管理和自动化跨系统的数据流和任务调度。
+
+**与其他 GCP 服务的集成:**
+
+- Dataproc 常与 Cloud Storage、BigQuery 等数据存储和处理服务结合使用。
+- Composer 通常用于协调跨 GCP 服务的工作流，包括 Dataflow、BigQuery、Cloud Functions 等。
+
+**一个使用流程的案例：**
+
+- 数据收集和预处理:使用 Cloud Composer 编排任务，从多个数据源（如云存储、数据库、API等）收集日志数据。调用 Dataproc 集群来预处理和清洗这些数据，可能需要进行一些转换和格式化。
+- 数据分析和存储:通过 Dataproc 运行复杂的分析作业，如Spark或Hive查询，将处理后的数据存储在 BigQuery 或 Cloud Storage 中。使用 Cloud Composer 调度这些分析作业，以便它们按计划或按需运行。
+- 报告和通知:使用 Cloud Composer 创建和调度将分析结果导出并发送到报告系统或通知团队的任务。自动化报告生成和发送的工作流管理。
+
 ## Event trigger
 
 ### Cloud Functions
@@ -314,41 +448,12 @@ codelabs：https://codelabs.developers.google.com/codelabs/cloud-bigtable-intro-
 
 Dataflow广泛应用于ETL、实时数据处理、数据集成、数据分析等场景。用户可以在托管集群环境或自己的私有集群上运行Dataflow管道。它与BigQuery、Cloud Storage、Cloud Pub/Sub等GCP产品紧密集成。总的来说,Dataflow提供了一种简单、统一且富有弹性的方式来处理大规模数据。
 
-## Monitoring and Logging
+Dataflow vs. Cloud Composer:
 
-### Cloud Operations suite
+- Dataflow 主要用于数据处理和转换，尤其是需要高效处理流数据和批数据的场景。
+- Cloud Composer 是一个工作流编排工具，用于管理和调度复杂的工作流，适合在跨系统或跨服务的任务之间进行协调和自动化。
 
-### Monitoring
-
-### Logging
-
-- Cloud Operations：Monitoring，Dashboard，Metrics Explorer，Alerting，通过group可以整合资源管理，通过setting可以增加pj和account统一管理。其他还有logging，error report，trace服务。这里讲Logging。
-- 通过Cloud Logging API和Log Router存储和整合。
-- Log viewer 功能可以query log
-- Logs dashboard
-- Logs-based metrics
-- Log Storage：50GB/项目免费配额，审计日志存储在单独的存储桶中，最长保留期为 400 天。对于其余日志，保留期限为 30 天。可以为此创建警报，以便一旦超过 50 GB 就用排除项目删除不必要的日志。
-
-### Trace
-
-- 追踪端点延迟
-- codelabs：https://codelabs.developers.google.com/codelabs/cloud-function-logs-traces#6
-
-### Profiler
-
-- Cloud Profiler 是一种统计性、低开销的分析器，可以持续从生产应用程序收集 CPU 使用情况和内存分配信息。
-- 根据不同的编程语言支持不同的分析内容，似乎Go的最多
-- codelabs：https://codelabs.developers.google.com/codelabs/cloud-profiler#0， 这中间有很多模拟程序，很有趣
-
-### Debugger
-
-实时调试云应用程序，无需重新启动或停止
-
-### Error Reporting
-
-自动收集和分析错误和异常
-
-## 其他服务
+## developer
 
 - CI/CD：Deployment Manager
   - yaml文件整合资源
@@ -356,7 +461,7 @@ Dataflow广泛应用于ETL、实时数据处理、数据集成、数据分析等
   - Manifest文件是当前部署的只读主文件。它包含用户定义的资源和配置，以及由部署管理器创建的附加资源，以支持有用资源的创建。
 - Cloud Marketplace：Google Cloud Platform的一键部署解决方案。您可以从云市场部署任何流行的软件、CMS、工具或 API。 比如WordPress 是一个非常流行的内容管理系统。
 
-## 关于网络的一些解释
+## 关于Network的一些解释
 ---
 SSL offload（SSL 卸载）是一种网络安全技术，旨在减轻服务器负载和提高性能。在 SSL offload 中，SSL（安全套接层）和 TLS（传输层安全）的加密和解密操作从服务器转移到专门的硬件设备或者专用的 SSL 加速器中进行处理。
 

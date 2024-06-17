@@ -63,7 +63,7 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [Tensorflow计算机视觉问题](ml/tensorflow-cv.md)
 - [*NLP：词嵌入WordEmbeddings](ml/wordembeddings.md)
 - [*NLP：LSTM语言模型构架](ml/lstm-llm.md)
-- [*NLP：文本分类-灾难文本分类项目<ZTM>](ml/text-classification.md)
+- [*NLP：文本分类-灾难文本分类项目ZTM](ml/text-classification.md)
 - [Pytorch初见就有点爱](ml/pytorch-firsttime.md)
 - [Pytorch框架模板](ml/pytorch-template.md)
 - [迁移学习：站在巨魔的肩膀上](ml/transfer-learning.md)
@@ -86,7 +86,7 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [Databricks-ML-spark](ml/databricks-ml-spark.md)
 - [机器学习系统设计：设计流程，特征工程，和Pipeline技巧](ml/ml-system-design.md)
 
-## Python
+## Python & Programming
 - [编程的历史和分类：声明式和命令式](python/programing-lang.md)
 - [用Python进行统计分析](python/statistics-with-python.md)
 - [网络基础：使用Python实现的套接字编程](python/python-sockets-programming.md)
@@ -95,6 +95,7 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [Python的break和continue如何影响循环](python/break-continue.md)
 - [面向对象编程设计模式Java&Python的Cheatsheet总结](python/oop-design-pattern.md)
 - [*Python自动化Automation](python/python-automation.md)
+- [Java基础学习笔记](python/java-base.md)
 
 ## Clouds
 - [关于云服务构架，系统设计等的上层思考](clouds/high-level-thinking.md)

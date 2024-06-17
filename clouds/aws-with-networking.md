@@ -1162,6 +1162,19 @@ Interface功能可以说是VPC Endpoint的一个Extension。
     - Transit VIF - Transit Gateway
   - *Customer Router*和DC之间的连接是物理连接（比如layer2Link）
 
+- Resilient DX Connection（弹性连接）
+  - Cost考虑，可以设置VPN作为备用连接
+  - Dual device：两条DX Connections（单一Location两条连接（development and test选项），或者分别的Location各设置连接（high resiliency选项））
+  - 四条连接：两个Location，各两条Connections，这是可以设置的最大弹性连接上限（Maximum resiliency选项）
+  - 使用BFD（双向连接检测）将failover的时间减少到1秒内；需要在Customer端router设置；不设置的情况下默认的是BGP keep-alives的hold down90秒
+
+- Security
+  - DX连接本来就是专有连接，也就是内部连接，所以是没有加密的
+  - 实现流量加密的方法：
+    - layer4:TLS加密（传输层，理想的方式）
+    - layer3:VPN加密（网络层）使用Public VIF - VGW（IPSec）
+    - layer2:MACSec加密（链路层）只支持dedicated连接
+
 ### 要求 requirements
 
 - Single-mode Fiber：现在有1G，10G，100G光缆，这是一种*物理设置*而不是逻辑设置。
@@ -1257,6 +1270,7 @@ graph LR
 - 连接性质：公有连接。尽管使用 Direct Connect 的专用链路。使用 AWS Direct Connect 的 Public VIF 连接到 AWS 的各种公有服务时，不会通过传统的互联网路径。这种连接通过 *AWS Direct Connect 的专用网络链路*，提供了一种更可靠、低延迟且高带宽的连接方式。
 - 适用场景：你希望通过 Direct Connect 访问 AWS 的公有资源，而不通过互联网，以获得更高的性能、可靠性和安全性。
 - 示例：直接访问 S3 存储桶中的数据或通过 Route 53 解析域名，而不使用互联网路径。
+- Public VIF支持本地连接到AWS APIs，且低延迟，其他的VIF则需要额外的infra设置，更多的复杂度和延迟
 
 - *DXGW 不适用于 Public VIF*，因为他是一种私有连接
 
@@ -1286,6 +1300,8 @@ for prefix in ip_ranges['prefixes']:
         print(f"IP Range: {prefix['ip_prefix']} in region {prefix['region']}")
 ```
 
+- Public VIF不支持JumboFrames
+
 **Private VIF（私有虚拟接口）：**
 
 - 连接到你自己的 Amazon VPC（虚拟私有云）中的私有资源。
@@ -1306,7 +1322,7 @@ for prefix in ip_ranges['prefixes']:
   - DXGW本身免费，但是通过DX port的每小时流量通信照样要付费
 - 适用场景：你希望通过 Direct Connect 访问托管在 VPC 中的资源，如 EC2 实例、RDS 数据库、ECS 服务等。
 - BGP session的全网通告：Custom Router会收到所有的VPC prefixes / Custom Router可以最多通告100个prefixes给AWS，路由会被自动更新到VPC的subnet路由表中（100个是上限，如果超出，BGP session会go down，解决方案依然是summerize CIDR到一个更高的位）
-- MTU支持默认1500，动态路由支持JumboFrame 9001
+- MTU支持默认1500，*动态路由*支持JumboFrame 9001
 
 **Transit VIF：**
 
@@ -1319,7 +1335,7 @@ for prefix in ip_ranges['prefixes']:
 - 因为Transit Gateway是*global router*，所以可以通过连接多个不同region的TGW来连接到多个region的不同VPC
 - 连接性质：私有连接，但通过*Direct Connect Gateway*可以连接到多个区域的多个 VPC，适合复杂的多区域部署。
 - 适用场景：需要通过单一 Direct Connect 连接多个 AWS 区域和多个 VPC。
-- MTU支持默认1500，动态路由支持JumboFrame 8500
+- MTU支持默认1500，*动态路由*支持JumboFrame 8500
 
 **DX SiteLink：**
 
@@ -1344,4 +1360,502 @@ for prefix in ip_ranges['prefixes']:
 - Prefixes to be Advertised（Public VIF的情况only）：是指一个自治系统（AS）通过 BGP 协议向其他 BGP 邻居（Peers）通告的 IP 地址前缀，这些前缀通常代表这个自治系统拥有的网络或它愿意向其他网络传递的数据路径。
 - Jumbo Frames：支持Private VIF（最高9001 MTU），支持Transit VIF（最高8500 MTU）
 
-### DX 路由策略
+### DX 路由策略（选择优先顺序）
+
+**顺序：**
+
+- Longest prefix优先匹配：拥有最长的mask的CIDR优先，比如/32就优先于/24
+- 静态路由优先于动态路由：
+  - Static：IGW，VPCs（Peering），TGW
+  - Propagated：DX，VPN（静态动态都有）
+- 动态路由中：
+  - DX BGP routes（动态路由）
+  - VPN Static routes
+  - VPN BGP routes（动态路由）
+
+**DX Routing Policies：**
+
+- inbound routing policies：从本地到AWS
+- outbound routing policies：从AWS到本地
+- DX路由策略和BGP community tags，在Public VIF和Private/Transit VIF上是不同的
+  - Public VIF：
+    - *路径选择*使用BGP attributes：
+      - Longest prefix
+      - AS_PATH
+    - *路由传播范围scope*使用的是*BGP community tags*：
+      - BGP 的标准社区标签（Standard Community）是一个灵活的工具，用于在路由器之间传递额外的策略信息。通过将社区标签分为 A:B 的格式：A 通常表示自治系统编号（AS Number），B 是一个由运营商定义的操作标识符，用于指定特定的策略或操作。
+      - inbound:
+        - 7224:9100（Local AWS region）
+        - 7224:9200（所在大陆continent上的所有AWS region）
+        - 7224:9300（Global 所有AWS public regions，这个设置是default的）
+      - outbound:
+        - 7224:8100（和DX连接所在区域的相同区域）
+        - 7224:8200（和DX连接所在区域的相同大陆的区域）
+        - No tag（Global 所有AWS public regions）
+      - NO_EXPORT：你收到的AWS的routes不应该再广播出去
+      - Customer Router可以过滤BGP community tags来接受允许的prefix
+    - *构架*：
+      - active-active连接是指两条连接负载均衡：*必须使用Public ASN*，load balancing两条Public VIF连接，CustomerGateway广播相同的 prefix 和 BGP attributes，*ECMP*协议（equal cost multi-path）
+      - active-passive连接：*可以使用Private ASN*，这个时候load balancing在Public VIF上是不支持的，*也可以使用Public ASN*，通过prefix，AS_PATH进行outbound优先级选择，通过local preference的编号进行inbound优先级控制
+  - Private VIF：
+    - 路径选择使用BGP attributes：
+      - Longest prefix
+      - AS_PATH
+      - Local Preference BGP community tags：7224:7100（low），7224:7200（medium），7224:7300（high）
+    - 关于构架，支持active-passive连接，通过prefix的长度进行控制优先级
+
+### LAG（Link Aggregation Groups）
+
+- 使用单一的逻辑连接Single Logical Connection实现多条连接，从而达到*增加带宽和failover*的目的
+- 使用LACP协议（Link Aggregation Control Protocol）
+- 所有的连接都必须是dedicated connection，拥有1，10，100Gbps带宽
+- LAG中的所有connections必须有相同的带宽bandwidth
+- 带宽的算法是一条的带宽 x connection数量，但是当你一条100Gbps的时候你不能四条400，因为上限是200Gbps，所以只能来两条连接
+- LAG中的所有connections必须terminate到同一个DX Endpoint
+- 集合（aggregate）上限 4 connections（active-active mode）
+- 支持所有的VIF类型：public，private，transit
+- 支持MACsec enable（数据链路层帧加密）
+
+### Billing
+
+- 连接类型（Dedicated，Hosted）和带宽的不同port hour付费
+  - 付费主体是*DX的拥有者*
+- DTO（Data transfer out）数据传输费用，per GB，根据DX的location和源AWS region（这种传输是从AWS region -> DX Location，而从DX到AWS的传输，没有费用），根据两个region的距离等因素可能导致费用不同
+  - 付费主体是*拥有资源的账户*
+- 想要停止billing唯一的方法就是删除DX Connection
+
+### Troubleshooting
+
+- 这也是一个重新理解各个层网络连接条件的部分
+- *物理连接问题（layer1）*
+  - 完成了Cross连接
+  - Ports正确
+  - 路由器打开
+  - Tx/Rx optical signal可以被收到
+  - CloudWatch的metric有计数
+  - 联系AWS支持
+- *VIF连接问题（layer2）*
+  - IP地址正确
+  - VLAN IDs正确
+  - 路由MAC地址在ARP表中
+  - 尝试清空ARP表
+  - 联系AWS支持
+- *BGPsession问题（layer3/4）*
+  - Both ends BGP ASN
+  - 对接IP正确
+  - MD5的格式正确（没有多余的空格和字符）
+  - Private VIF小于100个 prefixs连接
+  - Public VIF小于1000个 prefixs连接
+  - 防火墙没有屏蔽TCP179连接
+  - BGP logs检查
+  - 联系AWS支持
+- *路由问题*
+  - 广播本地路由的prefixs
+  - Public VIF应该是公共的IP prefixs
+  - 安全组SG和NACL是否限制
+  - 检查VPC route table
+
+## AWS Cloud WAN（wide area network）
+
+- 创建，管理，监控wide area network
+- 通过*AWS Network Manager*中的*Global Network*管理，提供一个dashboard，可视化地理视图，拓扑图等
+- Network attachments：VPC，VPN，AWS DX，AWSS2SVPN，SD-WAN（Software-Defined Wide Area Network）等
+- 它要*解决的问题*，是到此为止的复杂连接，都用Cloud WAN统一为一个中心化的广域网络连接：
+  - 复杂连接：VPCs - Transit Gateway（Peerings）- DX Gataways - DX - SD-WAN
+  - Cloud Wan省略了中间的layers复杂连接，将VPCs，本地DC，SD-WAN中心化为一个广域网
+- 是一个全球服务，但是它的设置，元数据等都存放在Home region中（Oregon（us-west-2））
+
+### Components & config
+
+- Global Network = Core Networks + Transit Gateway Network
+- Core Networks：
+  - Core Network Edge（分布于各个region）：各个VPC的路由表设置为指向Core Network ARN
+  - **Core Network Policy（用于部署Edge的json格式设置）**：这是最主要的设置部分
+    - Network policy有版本管理功能，如果感觉现在的设置有问题，可以回跳到原来的版本
+    - *Network Configurations：*
+      - ASN ranges
+      - Region（Core Network Edge）
+      - Inside CIDR blocks：为了设置Transit Gateway Connect GRE and Tunnels
+      - ECMP：（equal cost multi-path support）为了设置VPN attachment的选项设置
+    - *Segments：*
+      - Name，Regions，Require acceptance，Sharing between segments，Static Routes
+      - 目的是添加分segments，比如dev，prod，shared，之类的，然后设置segments之间的白名单，允许哪个分区访问本分区
+    - *Attachment Policies：*
+      - Rules：规定可以被哪些tag的其他attachment访问
+      - accociate the attachments to segments：（accociation method）Constant or Tag
+      - Reguire Acceptance（只有在segments层级的reguire acceptance为false的时候才起作用，否则就只是继承ture）
+      - Logic Conditions：AND & OR
+        - AWS accounts，Region，TagKey，TagValue，Resource ID
+    - 设置完以上内容后要验证变更内容，并应用到当前环境
+- Network Segments：
+  - Routing Segments，用于各个region之间的通信，比如开发和产品路由连接组等，使用*TAG*
+  - Segment Actions
+- Attachments：*添加各个区域的attachments资源*
+  - 在配置好的Core Network Edge中就可以进行attachments的设置了比如添加如下组件
+  - VPC，VPN，Connect&Connect Peer（冗余设置），TGW Route table
+  - attachments policies
+- 对于*各个VPC要配置路由*，允许目标的CIDR通过core network进行访问
+- Peering（exsit TGWs）
+
+### Cloud WAN 和 TGW 的连接
+
+- 首先创建TGW到Cloud WAN之间的Peering连接
+- 然后创建TGW的路由表的attachments（依据segments的TAGs）
+
+- 目前Cloud WAN还不能直接和DX连接，所以中间可以通过TGW连接到DX的本地中心，比如创建一个叫做 hybrid 的 segments 用于进行混合连接
+
+## Cloud Front
+
+- CDN服务，静态内容缓存服务
+- 215个edge locations，13个region的层级，存储从最popular到不popular的内容，以降低origin的访问压力
+  - fetch url resource --> Edge locations --> Region edge Cache --> Origins(on-premise/S3)
+- 网络层和应用层的数据保护，防止DDos攻击
+- 集成Route53，AWS Shield，AWS WAF
+- 可以和外部以及内部的backbone进行HTTPS通信
+- 可以适用于大部分的网络应用，因为他支持Websocket协议
+- Objects Expire time：24小时
+- CloudFront 的 Invalidation 功能是指允许用户立即使某些或全部已缓存的内容失效（即无效化），从而迫使 CloudFront 边缘节点在下一次请求时重新获取最新内容的过程。
+- S3到CloudFront之间的数据传输不会收取费用
+
+### Components
+
+- Distribution
+  - domain标识，用于website访问，也可使用Route53的CNAME或者Alias
+- Origin
+  - 源，资源获取点，包括S3，ALB，HTTP Server，API Gateway等，包括如下：
+  - S3：分布式文件系统，OAC安全保护（只允许从CloudFront访问S3资源），OAC要和distribution相关联，还需要编辑S3 bucket policy
+  - S3配置的静态网站为源
+  - MediaStore Container & MediaPackage Endpoint：传输流式媒体文件
+  - Custom Origin（HTTP）：
+    - EC2 Instance：必须是public，SG需要允许Edgelocation的public IP的访问
+    - ELB（CLB&ALB）：ALB（SG允许Edge的public访问）必须是public，后面的EC2就可以是private的（SG允许LB的SG访问）
+    - API Gateway，任何你的HTTP backbone
+- Cache Behavior
+  - cache configurations（TTL，Object过期时间，Cache invalidations）
+  - 根据不同的URL可以引向不同的Origin服务比如/api，/*可以分别引向API Gateway或者S3桶
+  - *Origin Group*：设置后可以提供高可用性和failover
+
+### 访问限制 OAC & Custom header
+
+- Origin Custom Header：
+  - 源Header：判断是从哪个distribution或者Cloud Front来的requests
+  - Viewer Device Type Header（based-on User-Agent）：判断client的访问device类型
+  - Viewer Location Header（based-on IP address）：判断client地理位置
+  - Viewer Request Protocol & HTTPVersion
+
+- S3的OAC源访问控制
+  - 设置（Header：X-Origin-Verify：xxxxx）
+  - 开启OAC控制，只允许从Cloud Front访问S3资源
+  - OAC 和distribution相关联
+  - 修改S3 bucket policy，只允许从Cloud Front（distribution）的访问
+
+- ALB和Custom Origins（HTTP端的源访问控制）
+  - 在CloudFront的Origin中，设置（Custom HTTP Header：X-Custom-Header：xxxxx）
+  - 在ALB的监听listener选项中，设置http80监听规则，以此header的键值对，作为过滤器，拒绝没有该header的请求
+  - 当然上述的Header的key和value要确保加密，不然会被利用
+  - 还有一个双重保护：AWS的Cloud Front服务是有一个ip列表的，可以限制只允许从这个列表中的ip来的请求
+
+- 使用WAF（web application firewall）和Secrets Manager的安全增强
+  - 设置在Cloud Front前的WAF可以进行访问的第一层过滤，比如IP地址等
+  - 设置在ALB前的第二层WAF则可以通过过滤header进行源控制访问的第二层过滤
+  - 使用SecretsManager进行定期Custom Header的键值对定期更新，并通过驱使Lambda function，进行CloudFront的header更新，和ALB前的WAF的过滤规则更新
+
+- GEO地理访问限制，国家限制
+  - 使用第三方GeoIP database进行国家IP的过滤
+  - 设置白名单allow list或者黑名单block list
+  - 应用到整个CloudFront distribution
+
+### 安全和加密
+
+- CloudFront和HTTPS
+  - Viewer Protocol Policy
+    - 使用HTTP或者HTTPS
+    - redirect HTTP 到 HTTPS连接
+    - 限制只能用HTTPS
+  - Origion Protocol Policy（HTTP or S3）
+    - HTTP only（对S3静态网站是默认选项，因为他只能用HTTP）
+    - HTTPS only
+    - 或者match viewer的protocol
+  - 在CloudFront和你的Origion之间必须使用有效的SSL/TLS安全证书
+
+- Alternate Domain Name（CNAME）设置选项
+  - 不是使用CloudFront的domain而是使用自己定义的domain的设置
+  - 必须对自定义的domain名字，绑定有效的SSL/TLS证书
+  - 自定义domain可以使用*等wildcards
+
+- SSL Certificates
+  - 默认是：*.cloudfront.net
+  - Custom SSL Certificate
+    - 使用Alternate Domain Name的情况下
+    - HTTP request，推介使用SNI（Server Name Indication）
+    - 证书可以使用ACM或者第三方证书，但是第三方你需要手动更新
+    - 证书必须在US East弗吉尼亚region创建或者导入，因为这是一个全球服务
+
+- 实现 End-to-end 加密：CloudFront，ALB，EC2
+  - CloudFront：
+    - Origion协议必须是HTTPS
+    - Custom Origion则需要安装SSL/TLS证书
+    - 证书必须包含origion domain filed（CloudFront中设置的）或者host header中的domain
+    - 不支持自定义的证书，必须是ACM或者是第三方证书
+  - ALB：
+    - 必须使用ACM中提供的，或者import到ACM中的证书
+  - EC2：
+    - ACM 并不支持直接为EC2实例生成或管理证书，在EC2实例上，需要使用你自己的自定义证书或从第三方证书机构获取的证书，才能实现从ALB到EC2的加密
+
+### Edge Function
+
+- 在distribution的edge进行代码的执行，降低延迟，没有缓存机制
+- 目的只是为了对请求request和回复response进行变更
+- 两种类型：Cloud Front Functions（Edge Locations）& Lambda@Edge（Regional Edge Cache）
+  - Cloud Front Functions：
+    - Javascript脚本
+    - 低延迟高速启动
+    - 可处理million reqests/秒
+    - 处理viewer的request和response
+    - process-based isolution（进程隔离）
+    - CloudFront的本地native功能，完全在CloudFront中进行manage
+    - 有free tier费用区间
+    - 可应用于JWT token认证功能
+  - Lambda@Edge：
+    - Nodejs or Python
+    - scales to 1000s requests/秒
+    - VM-based isolution（操作系统隔离）
+    - 处理viewer和origin的request和response
+    - 没有free tier费用区间
+    - 可集成Cognito或者第三方OICD
+  - 使用方式1:可以在Edge location中使用CloudFront Function处理Viewer请求和响应，在Regional Edge Cache中使用Lambda@Edge处理Origin请求和响应
+  - 使用方式2:仅在Regional Edge Cache中使用Lambda@Edge，在Cache的左边处理针对Viewer的请求和响应，在Cache的右边处理针对Origin的请求和响应
+
+
+- Use Case：
+  - 操作或者过滤request和response
+  - 用户认证authentication和认可authorization
+  - 在Edge生成Http响应
+  - A/B测试
+  - Bot mitigation at the edge：拦截恶意机器人流量
+  - 基于user-agent（device类型）的内容响应
+  - Global Application：比如通过Lambda@Edge，对DynamoDB进行query抽取回复内容
+
+### AWS Global Accelerator
+
+- Use Case：面向全球用户的application
+- 是一个全球服务，会直接跳到Oregon Region
+- Anycast IP：同一 IP 地址可以分配给多个服务器或节点。当请求发送到这个 IP 地址时，网络会自动将请求路由到距离最近或最适合处理请求的服务器。这种方式可以提高服务的可靠性和性能，因为它能够减少响应时间并提供负载均衡。
+- 通过Anycast ip，将用户请求引到最近的Edge Location，然后通过AWS internal network，将用户流量送达application
+- 支持ElasticIP，EC2，ALB，NLB，public or private
+- 低延迟，高failover
+- 不需要client缓存，因为IP不变
+- 使用AWS internal network，安全性高
+- Application Health check功能，在一分钟之内发现不健康立刻failover
+- 强大的灾难恢复性能
+- 安全性高，只需要将两个extarnal IP添加到白名单
+- 通过AWS Shield进行DDoS保护
+
+- 和CloudFront的相同点：
+  - 都使用了Edge Location
+  - 都有AWS Shield的DDoS保护功能
+
+- 和CloudFront的不同：
+  - CF是为了，提高静态和动态内容，服务的性能，并且内容会从边缘缓存进行服务
+  - GA服务于更广泛的application包括TCP和UDP协议
+  - GA可以用于non-HTTP的比如游戏（UDP），IoT（MQTT），Voice over IP
+  - GA适用于HTTP的静态IP，deterministic，fast failover（可预测的快速的）
+  - 个人总结：CF是一个内容分发服务，GA是一个使用AWS内部网络进行路由加速的高级功能
+
+## Elastic Load Balancer
+
+- AWS托管的负载均衡
+- 对下游的server流量分流，从private流量到public流量
+- Application单点服务暴露
+- 针对server的Health Check，无缝处理下游server故障
+  - 基于端口port和路由route进行健康检查，如果response不是200，就会被判断为非健康
+- 为网站提供SSL termination
+- Cookies粘性会话
+- 跨AZ的高可用性
+
+- 集成服务：
+  - EC2，AutoScaling，AmazonECS
+  - ACM，CloudWatch
+  - Route53，AWS WAF，AWS Global Accelerator
+
+### ELB类型
+
+- **ALB**（HTTP/HTTPS/gRPC（谷歌开发的开源远程过程调用框架）/WebSocket）是应用层layer7的，静态DNS-URL
+
+  - 负载均衡目标（Target Group）可以是多个machines，支持weighted指定设置，蓝绿发布
+    - EC2（HTTP）
+    - ECS tasks（HTTP）micro servers，Docker，同时具有Port mapping feature，可以redirect到ECS动态端口
+    - Lambda Functions（HTTP请求通过json event传入lambda function）
+    - IP address：私有IP，坐落于peered VPC，DX/VPN to 本地DC
+  - 负载均衡目标也可以是一个machine的多个port端口或者应用，例如Containers
+
+  - 支持从client返回的HTTP responses
+  - 支持redirects，比如HTTP - > HTTPS
+  - Health Check支持HTTP和HTTPS，不支持WebSocket
+  - 每一个Subnet的CIDR最小/28，需要8个free的ip地址
+  - 每一个ALB只能用于100个IP地址（所有的subnet加起来）
+
+  - Routing目标类型：
+    - URL Path（/user，/posts）
+    - Hostname
+    - Querying String，HTTP Headers，Source IP Address
+  
+  - 集成Cognito，可以进行user认证，也可以使用AD，OICD，OpenID等外部集成认证方式
+
+  - Listenr Rules
+    - 按照rules顺序进行Target Group的匹配，最后一个是default rule，当所有的rule都不匹配的时候会使用默认rule
+    - 支持的Actions：forward，redirect（比如HTTP到HTTPs），fixed-response（比如404response）
+    - Rule Conditions：
+      - host-header
+      - http-request-method
+      - path-pattern
+      - source-ip
+      - http-header
+      - query-string
+
+  - ALB完全支持gRPC协议
+    - 该协议支持HTTP/2，以及microservice集成
+    - 当ALB背后的服务是Microservice Auto Scaling Group的时候，client使用gRPC HTTP/2协议，从ALB到服务也会使用该协议进行流量引导
+    - 监听协议只能是HTTPS
+    - 支持所有的gRPC通信
+    - 支持Health Check
+    - NLB也可以支持该协议，但是不具有很多HTTP-specific features
+
+- **NLB**（TCP/UDP/TLS）是传输层 layer4，*静态IP*（ElasticIP）
+
+  - 它的LB目标是EC2或者IP，还可以是ALB（HTTP/HTTPS），以及ECS tasks的应用和端口
+  - 每一个Subnet的CIDR最小/28，需要8个free的ip地址
+  - 如果EC2是属于另一个VPC的（即使是PeeringVPC也不行），*不能用EC2的instance ID*来将server注册进target group，但是可以用IP地址进行register
+  - 支持WebSocket协议
+  - Health Check支持TCP/HTTP/HTTPS协议。
+    - Active health check：定期发送request进行检查
+    - Passive health check：观察response进行检查（不能disable和configured）
+  - 在传输流量之前必须启用AZ（enable AZ是指选择和启用 NLB 支持的可用区），在创建NLB之后也可以启用，但是一旦添加就不能移除，只能重建创建NLB。Cross Zone负载均衡，也是基于启用AZ的设置的基础上的
+
+  - 在每一个AZ都有一个Static IP
+  - IP Preservation（IP保留功能），instanceID和ECS，以及IP address UDP&TCP_UDP类型的 Target Group 默认开启（但是IP address TCP/TLS默认关闭）该功能可以在流量进来的时候，获取ClientIP地址，关闭则获得的是NLB的私有IP地址。
+  - 现在ALB和NLB都支持绑定SG，这很方便，因为可以更精细的控制流量（比如NLB的SG被EC2的SG允许），SG之间具有控制传递，我的理解SG就像联通门，NACL就像是双向电网。
+
+  - DNS resolution
+    - Regional NLB DNS name是NLB的domain名，会返回所有node的IP地址
+    - Zonal DNS name是各个AZ的DNS，一般是NLB的DNS前面加上了一个region的表示方法
+    - 使用Zonal DNS的好处是降低延迟和降低数据传输费用，这需要在app中加入logic用于指定zone
+
+- **GLB**（Gateway-IP，GENEVE协议）是网络层，GENEVE（Generic Network Virtualization Encapsulation）协议是一种用于网络虚拟化的封装协议。该LB将流量引向EC2防火墙，有针对 IP Packets 的入侵检测功能。
+
+- **CLB**已经不推介使用，他使用 layer7 的 HTTP，HTTPS，和 layer4 的 TCP，SSL 传输协议，除了HTTP不需要安装证书，其他都是需要加密的协议需要证书
+  - 针对后端EC2的HTTPS和SSL加密，被叫做Backend Authentication
+  - TCP -> TCP：2-way (Mutual) SSL认证，也叫双向SSL/TLS认证，是一种增强的安全通信机制，双方在建立连接时都需要进行身份验证。与传统的单向SSL认证（服务器验证客户端）不同，双向SSL认证要求双方（客户端和服务器）都提供并验证对方的数字证书，以确保双方的身份和通信的安全性。
+
+
+### ELB设置选项
+
+- Connection Idle Timeout：连接空间状态超时，client和ELB之间是60秒，ELB和EC2之间是60秒
+  - CLB和ALB可以自己设置这个时间，默认是60秒
+  - NLB不可以设置，TCP是350秒超时，UDP是120秒超时
+  - 防止超时的办法是enable EC2的HTTP keep-alive
+
+- Request Routing Algorithm
+  - Least Outstanding Requests：选择拥有最少pending/unfinished请求的server（ALB/CLB HTTP/HTTPS）
+  - Round Robin：等效选择下一个server（ALB/CLB TCP）
+  - Flow Hash：维持一个TCP/UDP连接的整个life time，当一个连接开始的时候，该算法会看它的protocol，ip，port，TCP sequence号码，然后通过hash选择server，并维持连接（NLB）
+
+- Sticky Session（Session Affinity）：CLB和ALB和NLB支持粘性会话。
+  - 在ELB的Target Group中设置edit attributes
+  - 两种cookies：Application-based cookies（客户端生成或者LB生成，需要设置App cookie name），Duration-based cookies（LB生成Cookies，设置过期时间duration）。
+
+- Cross-zone Load balancing
+  - 可以使得requests数量在所有zone的*所有EC2上*均匀分布（requests_num/ ec2_num），如果不开启则是根据zone（ELB）的数量均匀分布（requests_num / elb_num）
+  - ALB中该功能默认开启，所以跨AZ的数据传输是免费的，在ALB页面无法关闭功能，但是可以针对特定的Target Group在attributes编辑页面关闭该功能
+  - NLB和GWLB默认不开启，所以如果你开启了，你跨AZ数据是要付费的
+  - CLB默认不开启，但是如果你开启了，却是免费的
+
+- 传输中安全：User - HTTPS - LB - HTTP - PraviteEC2
+  - TLS 和 TCP Listeners：TLS监听会在LB就终止443端口安全通信然后解密数据（use SSL certificates key）通过私网传递到target服务器。如果想要端到端的加密，需要TCP监听，从而实现私网中也是加密的状态，但是target服务器需要有解密流量的功能。总之TLS监听的加密在LB结束，TCP的监听方式是全程加密的。
+- LB的的HTTPS安全协议用的是X.509 Certificates(TLS/SSL Certificates)，可以通过ACM设置，也可以自己上传。
+- SNI（Server Name Indication）
+  - 是一种 TLS（Transport Layer Security）协议扩展：在单个服务器上托管多个域名的 HTTPS 网站的时候，服务器就可以根据主机名选择合适的证书来建立加密连接，而不再受到 IP 地址的限制。
+  - 支持 ALB 和 NLB。
+  - 当背后有多个Target Group的时候，就可以使用不同的域名访问了。
+
+- Connection Draining
+  - 在CLB中叫Connection Draining，在ALB和NLB中叫做Deregistration Delay
+  - 在要删除一个instance之间允许完成现有的connetion请求，并且不会再发送新的request到这个instance
+  - 设置时间，默认300秒，可以设置1-3600秒
+  - 可以设置为0秒，也就是立刻切断连接，适用于请求request和处理过程非常短暂的情况
+
+- X-Forwarded-Headers（HTTP）
+  - instance收到请求的ip一般是ELB的ip，如果想要获取client的ip的情况下，需要该功能
+  - 支持*CLB（HTTP/HTTPS）和ALB*
+  - HTTP-Headers
+    - X-Forwarded-for：client ip address
+    - X-Forwarded-Proto：client to ELB protocol
+    - X-Forwarded-Port：client to ELB port
+  - 当在Instance中的log format中设置写入上述HTTP-Headers的内容的时候，就会在日志中看到client的ip等信息了
+
+- NLB Proxy-Protocol
+  - 适用情况：*NLB*，以*IP地址为Target Group*，*TCP/TLS协议*的情况下，需要获取client的IP的时候
+  - NLB使用Proxy-Protocol version2
+  - 当Target Group为Instance ID或者ECS Tasks的时候，不需要设置，直接可以获取clientIP
+  - 当协议是UDP/TCP_UDP的情况下也不需要设置，直接是可以获取的
+  - NLB也不应该再坐在其他Proxy的后面，而是直接是Proxy的情况
+  - 需要在控制台attribute的地方开启这个，然后还需要在EC2中，设置：RemoteIPProxyProtocol On，然后就可以在日志中看到client的IP地址了
+
+- 混合构架：ELB的backend服务器类型
+  - VPC
+  - Peered VPC中的服务
+  - VPN（VGW）到本地DC的服务集群
+  - DX（VGW）到本地DC的服务集群
+
+## Route 53
+
+- 域名概念：https://www.example.com
+  - example.com是root domain
+  - com是top level domain
+  - example是domain name
+  - www是subdomain
+  - https是超文本传输协议
+
+
+- Record types：
+  - A：hostname to IPv4
+  - AAAA：hostname to IPv6
+  - CNAME：hostname to another hostname 从一个域名指向另一个域名，只能用于*非根域名*
+  - Alias：hostname to AWS resource 从一个域名指向一个AWS资源
+    - 用于*根域名和非根域名*，免费，且有native health check功能
+    - 可用于根域名比如example.com
+    - 自动识别资源中的ip地址
+    - record type只能是A/AAAA也就是IPv4或者IPv6
+    - 你无法设置TTL，它会被route53自动设置
+    - target可以是：
+      - ELB
+      - CloudFront distributions
+      - API Gateway
+      - Elastic Beanstalk environments
+      - S3 Websites
+      - VPC Interface Endpoints
+      - Global Accelerator accelerator
+      - Route53 record in the same Hosted Zone
+    - target不能是EC2 DNS name
+      - 每个EC2实例启动后，AWS会为其分配一个公共DNS名称和一个私有DNS名称
+      - EC2实例的公共IP和相应的DNS名称可能会改变，尤其是在实例停止和启动时。
+      - EC2实例的DNS名称不能作为Alias记录的目标是因为这些名称可能会变化，而且它们不具备稳定的高可用性特征。最佳实践是使用弹性IP地址或者负载均衡器作为目标来设置DNS记录。
+    - 和CNAME不同，这里的设置是从A和AAAA选择后，选择Alias的服务的
+  - NS：Name servers for the Hosted Zone
+
+- Hosted Zone
+  - 分为Public和Private Hosted Zone，Public的管理公共IP域名解析，Private的管理VPC内的私有IP的域名解析
+
+- Register Domain
+  - Route53不仅仅是DNS解决的方案，还可以注册付费域名
+  - 注册的域名的例子：somedomainname.com
+
+- Create records
+  - 针对注册的域名，可以创建records
+  - 比如针对：<something>.somedomainname.com创建它的A记录为你的subnet的ip地址
+
+- Record TTL（time to live）
+  - 当向DNS服务器请求了结果后，会收到ip地址以及TTL时间，它代表这个结果会在client中的cache中存在的时间
+  - High TTL：意味着设置了很长的时间，比如24小时，会降低和Route53之间的流量，省钱，但也可能造成client的记录过期而没有被更新
+  - Low TTL：意味着设置了很短的时间，比如60秒，会增加和Route53之间的流量，费用增加，但是会降低client的记录过期的时间，同时更方便随时更改你设置的records，指向新的ip地址
+  - 以上两者是一种权衡
