@@ -34,3 +34,10 @@ Java从设计之初就强调安全性。它的安全机制包括：
 ## Java Application Structure
 
 Java应用程序结构包括包、类和接口、方法、成员变量、构造函数、主方法、异常处理、文件结构、外部依赖和配置文件。理解这些组件及其组织方式是构建和维护Java应用程序的基础。
+
+层级：
+
+- class，对象object=实例instance
+- class members
+- package 用于将类和接口分组到逻辑命名空间中，通常对应于物理文件系统中的目录结构，相当于python的模块和包，包可以包含子包和模块，提供类似于文件夹的层次结构，java创建包要在顶部生明，`package com.example.myapp;`，使用的时候要用如此，`import java.util.List;`，相对的python的import：`from mypackage import submodule`，他们的目的都是为了，便于组织，唯一的命名，和import方便
+

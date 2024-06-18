@@ -1817,32 +1817,6 @@ for prefix in ip_ranges['prefixes']:
   - https是超文本传输协议
 
 
-- Record types：
-  - A：hostname to IPv4
-  - AAAA：hostname to IPv6
-  - CNAME：hostname to another hostname 从一个域名指向另一个域名，只能用于*非根域名*
-  - Alias：hostname to AWS resource 从一个域名指向一个AWS资源
-    - 用于*根域名和非根域名*，免费，且有native health check功能
-    - 可用于根域名比如example.com
-    - 自动识别资源中的ip地址
-    - record type只能是A/AAAA也就是IPv4或者IPv6
-    - 你无法设置TTL，它会被route53自动设置
-    - target可以是：
-      - ELB
-      - CloudFront distributions
-      - API Gateway
-      - Elastic Beanstalk environments
-      - S3 Websites
-      - VPC Interface Endpoints
-      - Global Accelerator accelerator
-      - Route53 record in the same Hosted Zone
-    - target不能是EC2 DNS name
-      - 每个EC2实例启动后，AWS会为其分配一个公共DNS名称和一个私有DNS名称
-      - EC2实例的公共IP和相应的DNS名称可能会改变，尤其是在实例停止和启动时。
-      - EC2实例的DNS名称不能作为Alias记录的目标是因为这些名称可能会变化，而且它们不具备稳定的高可用性特征。最佳实践是使用弹性IP地址或者负载均衡器作为目标来设置DNS记录。
-    - 和CNAME不同，这里的设置是从A和AAAA选择后，选择Alias的服务的
-  - NS：Name servers for the Hosted Zone
-
 - Hosted Zone
   - 分为Public和Private Hosted Zone，Public的管理公共IP域名解析，Private的管理VPC内的私有IP的域名解析
 
@@ -1859,3 +1833,190 @@ for prefix in ip_ranges['prefixes']:
   - High TTL：意味着设置了很长的时间，比如24小时，会降低和Route53之间的流量，省钱，但也可能造成client的记录过期而没有被更新
   - Low TTL：意味着设置了很短的时间，比如60秒，会增加和Route53之间的流量，费用增加，但是会降低client的记录过期的时间，同时更方便随时更改你设置的records，指向新的ip地址
   - 以上两者是一种权衡
+
+- Traffic flow
+  - 可视化的路由决定树编辑工具
+  - 适合大型和复杂的设置
+
+### Record types
+- A：hostname to IPv4
+- AAAA：hostname to IPv6
+- CNAME：hostname to another hostname 从一个域名指向另一个域名，只能用于*非根域名*
+- Alias：hostname to AWS resource 从一个域名指向一个AWS资源
+  - 用于*根域名和非根域名*，免费，且有native health check功能
+  - 可用于根域名比如example.com
+  - 自动识别资源中的ip地址
+  - record type只能是A/AAAA也就是IPv4或者IPv6
+  - 你无法设置TTL，它会被route53自动设置
+  - target可以是：
+    - ELB
+    - CloudFront distributions
+    - API Gateway
+    - Elastic Beanstalk environments
+    - S3 Websites
+    - VPC Interface Endpoints
+    - Global Accelerator accelerator
+    - Route53 record in the same Hosted Zone
+  - target不能是EC2 DNS name
+    - EC2 实例的 DNS 名称不能作为 Alias 记录的目标，主要因为这些名称及其对应的 IP 地址可能会在实例重启或其他操作时发生变化，且 EC2 实例本身缺乏高可用性特征。最佳实践是使用弹性 IP 地址（Elastic IP）或负载均衡器（Elastic Load Balancer, ELB）作为 DNS 记录的目标，这样可以确保解析目标的稳定性和高可用性。而且本身就无法设置Alias指向EC2的DNS name
+  - 和CNAME不同，这里的设置是从A和AAAA选择后，选择Alias的服务的
+- NS：Name servers for the Hosted Zone
+
+### Routing Policy
+- DNS的Routing不是负载均衡的那种routing，它不走流量traffic，只回复client的query
+
+- HTTP Health Check只针对public resources，这个功能意味着自动化的DNS failover
+  - 在设置records的时候，选择绑定Health Checker，来监控对象端点
+  - 监控endpoint服务：application，server，和其他AWS resource
+    - 通过15个global health checkers进行不断监控
+    - 可以设置监控间隔时间
+    - 支持各种协议，HTTP，HTTPS，TCP
+    - if > 18%的健康检查结果比例，checkers判定该endpoint没问题
+    - 当回复的codes是2xx或3xx的时候判定为没问题
+    - 需要设置你的代理的路由或者防火墙允许Route53的health checkers的incoming request的IP ranges
+  - 监控其他health checks：calculated health checks
+    - 整合很多child health checkers的结果到一个parent health checker
+    - 最多可以监视256个child health checkers
+    - 可以使用逻辑运算AND，OR，NOT
+    - 自主设定多少child health check通过才允许parent health check通过
+  - 监控CloudWatch alarms，对于私有资源的监控很有用
+    - 因为health checker无法监控Private Hosted Zones的私有资源，所以无法接触私有endpoint，比如私有VPC，或者私有的on-premise服务
+    - 所以可以为私有资源设置CloudWatch Metrics然后设置CW Alarms，health checker可以监控这些Alarms，从而监控资源状况
+  - Health Checks集成CloudWatch Metrics
+
+- 各种Policies：
+- Simple：
+  - 针对一个query回复一个或者多个ip records（根据你的设置）
+  - 当回复多个ip的时候，client会从中随机选择一个
+  - 当Alias有效的时候，会回复一个AWS resource
+  - 无法使用Health checks功能
+- Weighted：
+  - 针对特定的资源比如EC2，分配不同的权重比例，使得query的结果，会对不同的资源，回复不同的权重
+  - 计算方法上，从的权重不需要加起来等于100，只需要比例换算
+  - DNS Records必须有相同的name和type
+  - 可以和Health Checks相关联
+  - Use Case：比如对服务器的负载均衡，对测试环境和生产环境的测试比例调试
+  - 如果针对一个resource的权重为0则停止回复他的ip records，也就是不再使用它了
+  - 如果针对所有的resource的权重都为0，则意味着每个资源的权重都相等（没有停用）
+- Latency：
+  - 返回具有最低延迟的资源
+  - 依据users和AWS Region之间的traffic判定延迟大小
+  - 和Health Checks相关联，有failover能力
+- Failover（Active-Passive）：
+  - Primary和Secondary两个端点，Primary通过Health Checker强制使用，Secondary则为灾难恢复
+  - 当Primary恢复健康状态后，系统则检测到健康状况，然后重新将query指向Primary端点
+- Geolocation：
+  - 和延迟策略不同，它基于地理位置，大陆，国家，US State
+  - 需要设置一个Default record，以防止没有可以match的record
+  - Use Case：限制内容分发，负载均衡
+  - 可以和Health Checker相关联使用
+- Geoproximity：
+  - 基于用户地理位置和资源的region位置
+  - 根据定义的bias大小来分配流量，1～99的bias意味着更多的流量，-1～-99意味着更少分配流量
+  - 对象资源：AWS的基于Region的资源，基于地理经纬度的非AWS资源
+  - 必须使用Route53 Traffic Flow（advanced）来使用这个feature
+  - 通过Traffic Policy UI（Traffic Flow可视化工具）可以很清晰的看到设置的地理范围
+
+- IP-based Routing Policy：CIDR collections to Records
+  - 将一组CIDR blocks路由到同一个端点：比如CIDR为230.113.10.11/24的范围的用户都路由到12.34.56.78
+  - Use case：将特定的ISP的用户路由到一个特定的endpoint，目的是为了网络优化和，降低网络传输成本
+
+- Multi-Value Routing Policy
+  - 需要将流量导向多个资源的时候
+  - Route53会返回多条value或者resources
+  - 关联Health Checker
+  - 最多可以返回8个健康records
+  - 注意它不是ELB的代替品，它是一个*客户端负载均衡*，由客户端决定将请求发送到哪一个服务器进行处理。客户端在请求之前选择一个合适的服务器。
+
+### 第三方注册域名和DNS服务器
+
+- 一般来说，当你从一个Domain Register注册了一个域名，这个第三方一般会提供一个DNS Service，但是这不意味着你必须用
+- 可以从其他Register注册域名，然后使用Route53的DNS Server也是可以的
+- 如何DNS Migration（将已有域名迁移到Route53的DNS服务器）
+  - 首先获取现有的 DNS configuration（records to duplicates）
+  - 在Route53中创建一个Public Hosted Zone
+  - 在该zone中重新创建records，也可以使用Route53的import功能
+  - 将NS record的缓存时间TTL设置为15分钟（以便万一想rollback），这一步是为了让NS record尽快生效
+  - 等待两天以确保新的NS record TTL已经被全球DNS系统传播，这是因为原有的NS record的缓存过期时间是两天
+  - 更新你的NS record，使用Route53的name server
+  - 监控流量情况，确保正常
+  - 将Route53的NS record TTL设置到最大值两天
+  - 将domain registration转移到Route53（optional）
+
+- NS records
+  - NS记录的主要作用是告诉DNS系统哪个服务器是该域名的权威名称服务器，即哪个服务器包含有关该域名的所有DNS记录。这些权威名称服务器会响应对该域名的查询，返回正确的DNS记录给请求者。
+  - 当你在域名注册商（如GoDaddy、Namecheap等）注册一个域名时，你通常需要指定NS记录，这些记录会指向你想要用来管理该域名的DNS服务器。
+  - 如果你使用第三方DNS提供商（如Amazon Route 53、Cloudflare等），你需要在注册商的控制面板中更新这些NS记录为提供商指定的名称服务器。
+  - 通常一个域名会有多个NS记录（名称服务器），以提供冗余和高可用性。如果一个名称服务器不可用，查询可以被转发到另一个服务器。
+  - NS记录在全局的DNS系统中会有一定的缓存时间（TTL），这决定了记录更新后的生效时间。NS记录的TTL通常设置为较长时间比如两天，以减少全球DNS解析的负载。
+  - 没有显式的优先级，DNS查询通常会随机选择一个可用的名称服务器进行查询。
+  - 假设你在Route 53中创建了一个托管区域来管理example.com，AWS会自动生成如下的NS记录：
+    - example.com.    IN    NS    ns-123.awsdns-12.org.
+    - example.com.    IN    NS    ns-456.awsdns-34.co.uk.
+    - example.com.    IN    NS    ns-789.awsdns-56.net.
+    - example.com.    IN    NS    ns-012.awsdns-78.com.
+
+- 所以这是一个让你的域名的权威服务器从其他的服务器变成AWS的权威服务器的过程，NS记录是可以进行负载均衡的，所以等于是添加了AWS的NS记录，通过原有的NS记录过期，来让AWS成为你的新的权威服务器。
+
+### Scenario
+
+- EC2 instance
+  - A记录指向一个EC2的Public ip或者Elastic IP
+  - 之前也提到过Alias不能指向EC2，但是使用CNAME就可以指向EC2的Public DNS name
+    - Alias更像是AWS提供的一个特性，他指向ELB，Cloud Front分配的S3静态网站等，会自动解析IP，以指向资源
+    - Alias记录的设计则是为了更好地支持和简化指向特定AWS资源的需求，并且特别适合用于根域（类似于example.com）但是CNAME不能指向根域
+    - Alias 记录的设计和优化是针对 AWS 内部资源的，而 EC2 实例的 Public DNS 名称（如 ec2-203-0-113-25.compute-1.amazonaws.com）虽然是 AWS 提供的，但它并不是一个单一的、自动管理的 DNS 解析服务目标。
+    - Alias 记录特别适合那些具有自动伸缩和动态 IP 地址分配的 AWS 资源（如 ELB），这些资源的 IP 地址可以随时变化，且可能会有多个 IP 地址（比如 ELB 有多可用区的 IP）。
+    - CNAME只是域名指向域名，只要是有效域名就可以，比如EC2的Public DNS
+    - 当从Public访问（比如从AWS Cloud Shell）Public DNS（或者CNAME指向的新的域名），就会解析到EC2的Public IP，从内部比如其他EC2访问Public DNS（或者CNAME指向的新的域名），就会解析到EC2的Private IP
+
+- ALB
+  - 可以使用根域名或者非根域名
+  - 根域名example.com指向ALB连接，只能用Alias
+  - 非根域名alb.example.com指向ALB连接，用Alias或者CNAME都可以
+
+- CloudFront构架
+  - 可以使用根域名或者非根域名
+  - 根域名example.com指向Front distribution连接，只能用Alias
+  - 非根域名cdn.example.com指向Front distribution连接，用Alias或者CNAME都可以
+  - 在CloudFront后就可以指向多个Origin资源，比如/application/指向ALB，/images/*指向S3，这是一种很好的构架
+
+- API Gateway
+  - 指向API Gateway Regional/Edge Optimized DNS name
+  - 比如使用Alias将域名example.com指向API Gateway的DNS name
+  - API Gateway的背后指向Lambda Function和ALB资源
+
+- RDS
+  - RDS 具有动态特性、高可用性和故障转移能力
+  - RDS 提供的 DNS 名称（如 mydatabase.123456789012.us-west-2.rds.amazonaws.com）是一个稳定的域名，这个域名会解析为当前主实例的 IP 地址。
+  - 使用 CNAME 记录有助于实现这种动态的指向，因为 CNAME 指向的是另一个域名，而不是固定的 IP 地址。因此，当 RDS 后端实例发生变化时，只需要更新该域名指向的新实例，外部的 CNAME 指向保持不变。
+
+- S3 bucket
+  - domain name -- > S3 static websit endpoint
+  - ALias 设置是必须选项
+  - bucket name必须和 domain name一致，例如：
+    - 存储桶名称：myblog.com
+    - S3 静态网站 URL：http://myblog.com.s3-website-us-east-1.amazonaws.com
+
+- VPC Interface Endpoint（PrivateLink）
+  - 使用Alias record
+  - 域名 - vpce - AWS PrivateLink - NLB - Sevices
+
+### Hosted Zone
+
+- Hosted zone 可以理解为域名的 DNS 数据库，负责该域名下所有 DNS 查询的解析。
+- 每个 hosted zone 对应一个域名及其所有的子域名。例如，一个域名 example.com 会有一个对应的 hosted zone 管理 example.com 及其子域名（如 www.example.com、api.example.com 等）。
+- 如果有多个域名，每个域名需要单独的 hosted zone，例如，example.com 和 anotherexample.com 需要各自的 hosted zone。
+- 当创建了Hosted Zone，Route53会自动创建它的NS和SOA records
+
+- NS 不是解析地址的record，而是name server的简称，比如example.com的DNS name server的集合，类型就是前面说的NS record，这也是一种record，但是和之前的域名对照record不一样，要区分开，它类似于`example.com NS ns123.awsdns-45.com`
+
+- 当你拥有多个Public/Private Zones的时候，如果他们之间的namespaces有重复的部分，那么Route53 resolver会自动匹配，match的字段最多的那个Zone
+
+- Subdomains
+  - 将流量印象subdomain的情况
+  - 设置：
+    - 为subdomain创建新的Hosted Zone（sub.example.com）指向他所有的域名服务器列表
+    - 从主的Hosted Zone（example.com）创建指向该subdomain的NS record（他也是一个record创建选项）同样设置，subdomain的所有域名服务器列表
+  - Use Case：不同的subdomain由不同的team管理，使用IAM permission进行权限管理
+    - IAM权限，是附加在用户、组或角色上的策略，这些策略定义了可以执行的操作。它们是 IAM 框架的一部分，用于细粒度控制谁能做什么。
