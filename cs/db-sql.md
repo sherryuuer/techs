@@ -155,6 +155,26 @@ from
   <table>
 ```
 
+**timezone**：
+
+```sql
+SET timezone = 'America/New_York';
+
+-- 设置会话时区为 UTC+2
+SET timezone = '+02:00';
+
+-- 插入一个时间戳
+INSERT INTO events (event_time) VALUES ('2024-06-22 10:00:00');
+
+-- 检索时间戳
+SELECT event_time FROM events;
+```
+
+- + 符号：在 timezone 设置中，+ 表示时区相对于 UTC 的正向偏移。例如，+02:00 表示时区是东二区，时间比 UTC 提前 2 小时。
+- - 符号：负向偏移则表示时区比 UTC 晚。例如，-05:00 表示西五区，时间比 UTC 晚 5 小时。
+- 使用偏移量：timezone 选项中的偏移量直接影响时间戳的解释和显示方式。
+- 区域名称：更推荐使用时区区域名称，如 America/New_York 或 Europe/London，因为它们能自动处理夏令时转换。
+
 
 ## resources
 

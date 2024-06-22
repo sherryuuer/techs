@@ -1809,13 +1809,16 @@ for prefix in ip_ranges['prefixes']:
 
 ## Route 53
 
+- Amazon Route 53 使用了两种技术（Shuffle Sharding 和 Anycast Striping）来避免停机
+  - Shuffle Sharding 是一种分片策略，用于将请求随机分配到不同的服务器组（或资源子集），以减少资源之间的重叠，从而增加系统的弹性和可靠性
+  - Anycast 是一种网络地址分配和路由方法，其中同一个 IP 地址分配给多个服务器。这些服务器分布在不同的地理位置，网络会根据距离或负载将请求路由到最近或最优的服务器
+
 - 域名概念：https://www.example.com
   - example.com是root domain
   - com是top level domain
   - example是domain name
   - www是subdomain
   - https是超文本传输协议
-
 
 - Hosted Zone
   - 分为Public和Private Hosted Zone，Public的管理公共IP域名解析，Private的管理VPC内的私有IP的域名解析
@@ -2011,6 +2014,17 @@ for prefix in ip_ranges['prefixes']:
 
 - NS 不是解析地址的record，而是name server的简称，比如example.com的DNS name server的集合，类型就是前面说的NS record，这也是一种record，但是和之前的域名对照record不一样，要区分开，它类似于`example.com NS ns123.awsdns-45.com`
 
+- SOA 记录是任何 DNS 区域的第一条记录，它定义了该区域的全局配置和基本信息。
+  ```arduino
+  example.com.    IN SOA   ns1.example.com. admin.example.com. (
+                    2024061901 ; Serial
+                    3600       ; Refresh
+                    600        ; Retry
+                    1209600    ; Expire
+                    86400 )    ; Minimum TTL
+  ```
+- 最小生存时间（Minimum TTL）：这是区域内所有记录的默认 TTL（Time to Live）值，表示记录在 DNS 缓存中的存活时间。
+
 - 当你拥有多个Public/Private Zones的时候，如果他们之间的namespaces有重复的部分，那么Route53 resolver会自动匹配，match的字段最多的那个Zone
 
 - Subdomains
@@ -2020,3 +2034,443 @@ for prefix in ip_ranges['prefixes']:
     - 从主的Hosted Zone（example.com）创建指向该subdomain的NS record（他也是一个record创建选项）同样设置，subdomain的所有域名服务器列表
   - Use Case：不同的subdomain由不同的team管理，使用IAM permission进行权限管理
     - IAM权限，是附加在用户、组或角色上的策略，这些策略定义了可以执行的操作。它们是 IAM 框架的一部分，用于细粒度控制谁能做什么。
+
+### DNSSEC
+
+- Route53的该功能支持Public Hosted Zone
+- 支持域名注册和签名的DNSSEC
+- DNSSEC Signing确保了记录从Route53而来，不是被投毒的
+- Route53会用非对称公钥安全加密每一条记录，客户用私钥解密确认真实性
+- 两个key：
+  - 用户管理key：Key-signing-key（KSK）基于KMS的非对阵CMK
+  - AWS管理key：Zone-signing-key（ZSK）
+
+- 如何在Hosted Zone开启DNSSEC功能
+  - 准备工作：通过用户反馈确保zone的可用性，将records的TTL降低比如1小时，降低SOA minimum 到5分钟
+  - 使用控制台或者CLI开启该功能
+  - 使用Route53创建一个KSK，并绑定到客户管理CMK
+  - 创建信任链chain of trust：通过在parent级的hosted zone中创建DS（delegation signer）record 指向child zone
+    - 它包含了用来进行record加密的公钥的hash值
+    - 你的register可以是Route53也可以是第三方
+  - 好的做法使用CW的alarms进行监控，创建如下alarms：
+    - DNSSECInternalFailure
+    - DNSSECKeySigningKeysNeedingAction
+
+
+- DNSSEC（Domain Name System Security Extensions） 是一组协议，用于为互联网的域名系统（DNS）添加安全性。它旨在保护 DNS 信息的完整性和真实性，防止一些常见的 DNS 攻击，例如 DNS 欺骗和缓存投毒。
+
+- DNSSEC 的基本功能
+- 数据完整性验证：
+- DNSSEC 通过使用数字签名来验证 DNS 响应的真实性。这些签名确保 DNS 数据在传输过程中未被篡改。例如，当用户查询某个域名的 IP 地址时，DNSSEC 可以验证返回的 IP 地址是否来自授权的 DNS 服务器。
+- 防止缓存投毒：DNS是一种UDP协议，容易被攻击
+- 在未使用 DNSSEC 的系统中，攻击者可能向 DNS 服务器注入虚假信息（例如，将合法网站的域名指向恶意 IP 地址）。DNSSEC 通过验证响应数据的数字签名，防止这种类型的攻击。
+- *信任链建立*：
+- DNSSEC 建立了一种信任链，从根域名服务器（Root DNS Servers）到各个子域名服务器。这种信任链使得每个域名服务器的签名都可以通过上级服务器的签名进行验证，从而确保整个 DNS 查询路径上的安全性。
+  - Root - TLD - Route53 - Hosted zone - sub Hosted Zone
+
+
+- **DNS层级**：
+  - 根名称服务器（Root Name Servers）指向顶级域名（TLD）
+  - 顶级域名服务器（Top-Level Domain Servers, TLD Servers）如 .com、.org、.net、.edu 以及各国代码顶级域名如 .cn、.uk的信息，并指向次级的权威名称服务器。
+  - 权威名称服务器（Authoritative Name Servers）AWS 对应服务：Amazon Route 53
+  - 递归解析器（Recursive Resolvers）AWS 对应服务：Amazon Route 53 Resolver
+  - 缓存服务器（Caching Servers）AWS 对应服务：Amazon Route 53 Resolver 在进行递归解析时，它会缓存查询结果，根据 DNS 记录的 TTL 值决定缓存的有效期，减少重复查询，提升解析速度。Amazon CloudFront的边缘位置会缓存 DNS 解析结果（例如 CNAME 记录），提升 Web 应用的响应速度。
+  - 转发器（Forwarders）AWS 对应服务：Amazon Route 53 Resolver可以配置为将 DNS 查询请求转发到其他 DNS 服务器。这在混合云环境中特别有用，允许 AWS 内的查询请求转发到本地数据中心的 DNS 服务器，或反之。
+
+- DNSSEC 使用公钥加密系统对 DNS 数据进行签名。每个 DNS 区域（Zone）都有一对公钥和私钥。私钥用于对区域内的数据进行签名，而公钥则发布在 DNS 中，供解析器用来验证签名的有效性。
+
+### Route53 resolver & Hybrid DNS
+
+- 混合构架：VPCself，PeeredVPC，On-premise DC
+- Resolver Endpoint
+  - inbound endpoint：从本地DC到VPC的DNS查询，可以查询AWS资源或者 Private Hosted Zone 中的records
+  - outbound endpoint：Resolver可以根据条件将查询forward到本地DC中的 DNS resolver（通过*resolver rules*）
+  - 每个endpoint可以支持每个ip每秒10000次查询
+  - 每个endpoint可以通过在两个subnet AZ中创建ENI来提供高可用性服务
+
+- hands-on笔记：很复杂，多看几次
+  - VPN端的DNS行为就像是一个router
+  - VPN端的inbound firewall需要开启，同时VPC端的SG的outbound许可也需要开启
+  - VPC端SG规则：UDP端口为53，从VGW来的Public IP端口是UDP 500端口（如果VPN坐落在NAT后面，那么UDP端口为4500）
+  - 需要创建两端的虚拟网关VGW和CGW，并链接安全的VPN（DX或者S2SVPN）
+  - 配置VPN的实践还是很复杂
+  - 为了允许从VPN来的流量，只需要在VPC端的subnet*开启route propegated（to VGW）*，VPN端的IP就会自动添加到subnets的route table了
+  - 路由表的意思*想要去A，就要经过B！*
+  - 路由表是驿站（告诉流量怎么走），SG和NACL是双层城墙（让不让流量走的防火墙规则）
+  - VPC端的DNS需要创建Private Hosted Zone
+  - 用nslookup测试resolution成功
+  - VPN（用VPC模拟的）中的各个subnet和server的功能：
+    - Public Subnet中的服务器，用来模拟VPN连接，需要各种复杂的VPN设置
+    - Private Subnet1中的服务器，yum安装DNS服务器packages
+    - Private Subnet2中的服务器，安装的是app后端
+
+### Logging
+
+**DNS Query Logging：**
+- 是指Route53 resolver收到的所有public DNS queries
+- 只有*Public Hosted Zones*有该功能
+- 可以发送到CloudWatch的logs中，也可export到S3中
+
+**Resolver Query Logging：**
+- 是指你的VPC中的resources发起的DNS queries
+- 针对：Private Hosted Zones，Resolver Inbound&Outbound Endpoints，Resolver DNS Firewall
+- 可以发送到CloudWatch logs，S3，或者Kinesis Data Firehose
+- 同样的log设置可以通过AWS Resource Access Manager（RAM）分享给其他的AWS account
+
+### Resolver DNS Firewall
+
+- 是AWS托管的服务，过滤的是从VPC中的资源，比如EC2，outbound的DNS query，当查询经过Route53 resolver的时候，或通过firewall过滤黑名单恶意的域名，或者通过白名单放行域名
+- 可以通过AWS Firewall Manager进行设置
+- 集成CloudWatch Logs，和Route53 Resolver Query logs
+- DNS firewall configuration：当DNS firewall down的时候的举动设置
+  - Fail-Close：当Query没从firewall收到回应，则关闭查询，这是一种安全高于可用性的需求设置
+  - Fail-Open：当Query没从firewall收到回应，则放行查询，这是一种可用性高于安全的需求设置
+
+### DNS相关构架
+
+**Split-View DNS：**
+- 是指针对VPC内和外的用户使用相同的domain
+- Public Hosted Zone和Private Hosted Zone使用相同的名字
+- 这使得VPC内外的用户使用相同的domain name但是得到的是不同的资源，总归是有这种需求
+
+**Route53 Resolver 的多账户DNS管理：**
+- 多个子AWS账户的VPC创建 sub Private Hosted Zone --> 关联到一个中心的AWS账户的VPC 的Private Hosted Zone --> 该中心账户和本地On premise之间建立有VPN连接
+- inbound查询，从本地DC到AWS账户，通过inbound endpoint IP可以简单的进行查询，因为中心账户的record记录中有各个子账户的索引信息
+- outbound查询，需要每个子AWS账户的VPC中的Private Hosted Zone有Forwarding Rules，如此就可以通过中心VPC中的endpoint ip进行forward查询了，同时forwarding rules是可以通过中心AWS RAM进行config分享的，很方便，不需要为每个子账户手动设置
+
+### Route53总结
+
+Amazon Route 53 是一个综合的域名系统（DNS）服务，具备多种功能，能够支持不同类型的 DNS 操作。然而，主要来说，它的确可以被视为一个**权威 DNS 服务器**，但它的功能不仅限于此。
+
+Amazon Route 53 的角色和功能
+
+1. 权威 DNS 服务器（Authoritative DNS Server）
+
+作为权威 DNS 服务器，Route 53 负责托管域名，并提供这些域名的权威 DNS 记录。这意味着，当用户在互联网上查询一个由 Route 53 管理的域名时，Route 53 将返回该域名的最终 DNS 记录。
+
+功能：
+- **域名托管**：管理和托管域名，提供域名的 DNS 记录。
+- **DNS 记录配置**：支持多种 DNS 记录类型，包括 A、AAAA、CNAME、MX、TXT、NS 等。
+- **健康检查和故障转移**：监控资源的健康状态，并在检测到故障时自动将流量重定向到健康的备用资源。
+- **地理位置路由**：基于用户的地理位置将流量路由到不同的服务器。
+- **延迟路由**：根据用户与服务器的网络延迟，将流量路由到延迟最低的服务器。
+- **权威响应**：Route 53 作为权威服务器，返回的 DNS 响应是被认证和最终的。
+
+2. 递归 DNS 解析器（Recursive DNS Resolver）
+
+虽然 Route 53 主要作为权威 DNS 服务器，但它也提供了一个名为 "Amazon Route 53 Resolver" 的递归解析服务。作为递归 DNS 解析器，Route 53 Resolver 接收和处理客户端的 DNS 查询请求，执行完整的递归查询过程，查找所请求的域名的 IP 地址。
+
+功能：
+- **递归查询处理**：接受客户端的 DNS 查询请求，执行从根服务器到最终权威服务器的完整递归查询。
+- **查询转发**：可以将查询转发到其他 DNS 服务器，类似于转发 DNS 解析器。
+- **缓存**：存储查询结果以加速后续的请求处理。
+- **内网和外网查询**：支持在 VPC 内部和外部互联网之间的 DNS 查询解析。
+
+3. DNS 路由器和流量管理器
+
+除了作为权威 DNS 服务器和递归解析器，Route 53 还提供丰富的流量管理功能，以优化和控制 DNS 查询的路由方式。
+
+功能：
+- **基于权重的路由**：将流量按指定的权重分配到不同的资源。
+- **地理位置路由**：根据用户的地理位置将流量定向到特定的区域服务器。
+- **延迟优化路由**：将用户的请求路由到延迟最低的服务器。
+- **Failover 路由**：在主要资源不可用时自动切换到备用资源。
+- **多值响应**：返回多个 IP 地址，让客户端选择最佳的连接路径。
+
+4. Route 53 的健康检查和故障转移
+
+Route 53 的健康检查功能可以定期检查网络资源的状态，并在检测到故障时将流量重定向到健康的资源。这使得 Route 53 能够动态调整流量路径，确保服务的连续性。
+
+## Network Security Services
+
+- *Preventive Services*：
+- SG
+- NACL
+- WAF
+- ACM
+- Shield
+- Firewall Manager
+- Gateway Load Balancer（IPS入侵检测系统的需求）
+- Network Firewall
+- DNSSEC Validation
+- *Detective Services*：
+- CloudWatch
+- CloudTrail
+- VPC Flow Logs
+- GuardDuty
+- Traffic Mirroring
+- Route53 Resolver Query Logs
+
+这些服务可以单独和组合使用：
+
+- 需要保护layer7的网络应用：WAF
+- 防止DDos攻击：Shield Advanced
+- 需要为VPC资源的流量进出设置复杂的托管防火墙IPS/IDS：Network Firewall
+- 需要监控和为VPC资源的流量进出设置复杂的第三方防火墙IPS/IDS：Gateway Load Balancer
+- 需要保护跨账户防火墙的中心化管理方式：Firewall Manager
+
+### SG & NCAL
+
+- SG：
+- 绑在ENI，EC2，RDS，Lambda in VPC上的
+- stateful，可以通过CIDR或者SG id参照
+- 支持PeeringVPC中的SG
+- 默认：inbound denied，outbound all allowed
+- NACL：
+- 绑在subnet层的
+- stateless，inbound和outbound使用于所有的流量进出
+- 只能通过CIDR参照（no hostname）
+- 默认：inbound denied，outbound all denied
+
+- **ip限制**：可以用SG进行允许的ip的白名单设置，使用NACL对ip进行block
+- **ALB**：ALB可以设置SG，EC2可以设置SG，二者之间可以设置白名单，EC2允许ALB来的流量，在二者的外面，设置subnet，进行ip的block
+- **NLB**：NLB和ALB不同，它无法设置自己的SG，所以只能，设置subnet，设置NACL进行ip限制
+- NLB 直接将流量转发（基于IP和TCP/UDP）到目标实例的网络接口（ENI），这使得应用安全组规则在 NLB 层面变得不现实和复杂。因此，NLB 的安全控制主要依赖于目标实例上的安全组。ALB 终止客户端连接（基于HTTP/HTTPS）并在负载均衡器层应用安全组规则，这样可以更精细地控制和管理进入的 HTTP/HTTPS 流量。
+- **CloudFront**：当ALB前有CF的时候，如果在ALB外面套NACL，对于block ip是不起作用的，因为block的将会是CF的public ips，而不是client ip，想要限制client ip，需要在CF设置*WAF*，进行ip address filtering。
+
+### WAF
+
+- *Endpoint level*的保护
+- 可以坐在以下服务之前：CloudFront，ALB，API Gateway，AppSync
+- 限制方式：黑白名单
+- 防御攻击：SQLi，XSS，HTTP Flood，Scanner&Probe，IP Reputation Lists，Bad Bot
+- layer 7 的防火墙
+- 定义Web ACL：IP addresses，HTTP Headers，HTTP body，URI Strings，Size constraints，Geo match，String/Regex match等
+- Web ACL支持rate-based rules：是一种用于控制和限制特定类型流量的规则。它们通过监控一段时间内的流量速率（如每秒的连接数、数据包数或字节数），来防止网络资源被过度使用或滥用，从而保护系统免受拒绝服务攻击（DoS/DDoS）、暴力破解攻击或其他流量激增导致的威胁。
+- 当你evaluate request body的时候，只有最开始的8192字节（8kb）被评估
+- 对于恶意流量，WAF会返回一个HTTP403状态码
+- WAF rules的传播之需要不到一分钟，比如CloudFront的全球八个服务器的rules传播
+
+### AWS Shield
+
+- 服务对应：CloudFront，ALB，API Gateway
+- Shield/Shield Advanced - AWS WAF（optional）- 保护的服务
+
+**Shield Standard**：
+
+- 免费服务
+- 自动有效：ELB，CloudFront，Route53
+- 提供如下保护：SYN/UDP Floods，Reflection attacks和其他*layer3/4*attacks
+
+**Shield Advanced**：
+
+- 付费服务，每月3000美刀，在Organization层级，需要订阅business or enterprise支持plan
+- 保护服务：EC2，ELB，CloudFront，AWS Global Accelerator and Route53
+- SRT（Shield Response Team）全天候支持：事件分类，确定比如layer7发生攻击的根本原因，实施缓解措施，比如在WAF上，设置Web ACL rules，需要你给他们相应的IAM权限
+- DDos使用高峰期间，防止更高的服务使用费用
+
+**DDos攻击**：
+
+- 分布式拒绝服务攻击
+- 常见的攻击方式和layer分类
+  - 应用层攻击（application/presentation layer attacks）：unit：data，攻击方式：HTTP floods，DNS query floods，TLS abuse
+  - 基础设施层攻击（infrastructure transport/network layer attacks）：unit：segments，packets，攻击方式：SYN floods，UDP reflection attacks
+
+**各种常见攻击方式**：
+
+- SYN Flood attack：太多半开放的TCP连接，不给服务器发送连接结束的同步信号
+- UDP Flood attack：太多的UDP请求
+- UDP Reflection attack：伪造受害者服务器ip作为UDP数据包的来源，受害者服务器收到意外响应
+- DNS Flood attack：DNS请求过多导致合法用户无法找到该网站
+- Slow Loris attack（layer7）：太多的HTTP连接被打开和维护
+
+### AWS Network Firewall
+
+- VPC level based on routes
+  - IGW：通过Internet Gateway的所有流量
+  - NAT Gateway
+  - VPN
+  - DX
+- domain nama filtering功能：只针对AWS service endpoints
+- 对进出VPC的流量，进行deep packet inspection
+- protocol detection/filter like HTTPS
+- layer 3-7保护
+- AWS Network Firewall服务，会在VPC中有一个*Firewall Endpoint*，所有从internet来的流量会通过该endpoint，然后通过Network Firewall服务（PrivateLink），进行内容检测，比如packet内容或者header信息（SG和NACL只能针对IP进行过滤）
+
+- 多VPC部署，提高可用性
+- 使用TGW连接Firewall endpoint可以中心化流量审查
+
+**路由设置**：
+
+*inbound & outbound*：
+
+- IGW：protected subnet -> vpce-xxxx（firewall endpoint）
+- Firewall Subnet：外网流量 -> IGW
+- Protected Subnet：外网流量 -> vpce-xxxx（firewall endpoint）
+- 构架的重点在通过firewall endpoint和AWS Network Firewall，以及内部的Subnet进行交流
+
+**Components**：
+
+- Firewall本身
+- Rule group：stateless和stateful各自拥有Rule group
+  - stateless rule：单独检查每一个packet，使用5-tuple格式检查，同时包括优先级，用户action等
+  - stateful rule：根据上下流量方向检查包
+  - stateful rule - domain list rule：匹配方式domain list和protocol，HTTPS使用SNI来决定hostname或者domain name，HTTP则使用HTTP host header来得到name
+  - stateful rule - Suricata rule/signature：包括Action，Header，Options，是一个开源的rule
+  - Rule Engine的过滤方式：先走stateless（pass/drop/forward），然后forward到statefull的规则，决定（drop/alert/pass）
+- Firewall policy：包括stateless和statefull的所有rule groups
+- 在hands-on中也可以确认到，先创建stateful和stateless的rule之后，创建policy，将rule加入进policy中
+
+### Gateway Load Balancer
+
+- 在云环境中，企业通常需要在不同的网络路径上部署安全设备来保护其基础设施和数据。这些设备（appliances）可能包括防火墙、IDS/IPS、Web 应用防火墙 (WAF) 等
+- Gateway Load Balancer 通过负载均衡机制，可以动态分配流量到多个后端设备，这不仅增强了流量处理的可扩展性，也提高了系统的容错能力和高可用性。
+- 通过GWLB的Endpoint，PrivateLink实现
+
+- 将GWLB创建在客户的设备网络中
+- GWLB是layer3（Network layer），ALB是layer7（Application layer），NLB是layer4（Transport layer）
+
+- TargetGroup：
+  - EC2 instances
+  - IP addresses：private ip only
+
+- GWLB和他的targets之间的通信使用GENEVE protocol on UDP port 6081
+- 它会维护和特定目标设备之间的stickiness，通过5-tuple（TCP/UDP flows）或者3-tuple（没有port，只有ip和protocol）（non TCP/UDP flows）
+- HTTP，HTTPS，TCP支持Health Checks
+- 不支持public的GWLB，只支持internal，没有public DNS
+- 不支持dual stack mode（IPv4 only），Dual Stack Mode，即双栈模式，是一种网络配置方式，使得网络设备和应用同时支持 IPv4 和 IPv6 协议。在双栈模式下，设备能够使用这两种协议发送和接收数据包，从而能够在支持 IPv4 和 IPv6 的网络上进行通信。
+- GWLB不支持设置SG，所以你的targets必须允许GWLB的IP addresses来允许流量inbound
+- 支持MTU 8500字节大小
+
+### ACM
+
+- HTTPS通信加密数字证书，用私钥加密，将公钥发送给client，由更高的CA机构认证
+- AWS CA：AWS的证书认证机构，被各种浏览器信任
+- AWS Private CA：私有证书
+  - PKI：public key infrastructure
+  - Use case：比如员工智能卡中嵌入公钥登陆系统用，或者IoT系统中，将证书嵌入各个设备中。
+
+- ACM：公有证书
+  - EC2，ECS，EKS：作为SSL/TLS终点，*无法使用ACM证书加密*，如果要这么做需要你的self-signed证书
+    - 在 EC2 实例上，证书管理是用户的责任，涉及到操作系统级别的配置和应用级别的安全防护。
+    - 将 ACM 证书的私钥暴露给 EC2 实例意味着需要提供 API 或工具来提取这些密钥，这样的做法可能会削弱 ACM 的安全模型，并增加潜在的攻击面。
+    - ACM 证书的私钥是由 AWS 管理的，并且不对用户可见。为了在 EC2 上使用 ACM 证书，私钥必须提取和安装在实例上。这不仅复杂，而且容易引发安全问题。
+    - ACM 提供了证书的自动续期功能，这在与 ELB、CloudFront 和其他托管服务集成时是自动处理的。如果在 EC2 实例上使用 ACM 证书，自动续期后的证书需要手动提取和更新，这增加了运维的复杂性。
+  - ALB/NLB/CloudFront/API Gateway/ElasticBeanstalk：作为SSL/TLS的终点，后面的EC2等服务器收到保护，集成ACM，优化托管服务
+
+- Public证书的有效期是13个月，Private证书可以自己设置有效期
+- Public证书是免费使用的，但是Private证书不是免费
+- domain validated的Public证书是由ACM自动更新的，如果你使用自己import的证书，就需要手动更新。AWS的ACM证书不会给你私钥，但是你自己的证书你可以自己管理私钥，这是区别
+
+- ACM证书需要在每个region中生成，但是CloudFront证书需要在us-east-1中request，因为它是一个全球服务
+- 生成证书时候的网站domain可以使用*，但是不能放在中间，只能在开头，比如*.example.com
+
+### AWS Firewall Manager
+
+- 跨多个账户和资源的防火墙管理服务
+- 管理以下服务的rules：
+  - AWS WAF
+  - AWS Shield Advanced
+  - VPC Security Group
+  - AWS Network Firewall
+  - Amazon Route53 Resolver DNS Firewall
+  - 其他第三方防火墙
+- 中心化防火墙策略，当新的账户被添加，策略会自动生效
+- 在Organization层级，提供中心化的DDos攻击监控
+- 可以将findings等发现发送通知到Security Hub
+
+- 需要以下服务有效
+  - AWS Organization
+  - AWS Config
+  - AWS Resource Access Manager（RAM）
+
+- 流程：
+  - 指定策略policy和规则rules
+  - 定义scope：AWS的账户和资源
+  - 定义actions：自动补救措施和行动
+
+## AWS EKS Networking
+
+### containers，microservices and Kubernetes
+
+- 容器（containers）是一种轻量级、可移植的软件包装方式，它将应用程序及其所有依赖项打包在一起，确保它们能够在任何环境中一致地运行。容器利用操作系统级的虚拟化技术，使多个容器可以在同一个操作系统内核上高效地运行。
+  - Docker（单一容器）和 Kubernetes
+- 微服务（Microservices）架构是一种软件设计模式，它将应用程序分解为一组小的、独立的服务，每个服务专注于一个单一的业务功能。这种架构风格相对于传统的单体应用具有更好的灵活性和可扩展性。
+  - Spring Boot、Django、Express.js：用于开发微服务的框架。
+  - API 网关（如 Kong、Nginx）：管理和路由微服务请求的工具。
+  - 消息队列（如 RabbitMQ、Kafka）：用于微服务之间的异步通信。
+- Kubernetes 是一个开源的平台，用于自动化容器化应用的部署、扩展和管理。它被广泛认为是容器编排的标准工具，可以处理大规模的容器化应用集群。
+
+### Kubernetes Architecture
+
+**Kubernetes building blocks**
+
+- Kubernetes Cluster
+  - Control Plane
+    - 主要是一个Master Node(host set of control processes)
+    - 重要组件：
+      - kube-apiserver：外界用户和kube交互的api，是控制台的前端
+      - etcd：是用于维护state of cluster的key-value store（manifest文件）
+      - kube-scheduler：控制新创建的pods该被分配到哪个node
+      - kube-controller-manager：运行控制进程，Node Controller，Replication Controller，Namespace Controller，Job Controller，EndpointSlice Controller等
+      - cloud-controller-manager：将kubernetes cluster和云供应商等provider的api连接，用于决定node/instance是否要被删除，服务的云负载均衡的配置等
+  - Data Plane
+    - Worker Nodes
+      - kubelet是node中的agent，和api进行交互，确保container在pod中运行，可以将node的状态报告给控制plane，从而更新cluster的状态数据，同时与容器运行时交互，以管理节点上的 Pod 和容器
+      - kube-proxy是pods的代理，是pod的expose方式，类似于使用负载均衡来暴露EC2一样
+      - container runtime容器运行时，管理和执行容器的底层软件组件。它负责拉取和存储容器镜像，创建和运行容器实例，资源管理，日志监控等
+      - Pods(host one or more application containers)
+        - Containers
+
+**使用Kubernetes发布应用的流程**
+
+- code，dockerfile，build，push到云的docker registery服务
+- k8s deployment manifest文件
+- 使用kubectl和k8s的api进行交互，使用上面的manifest开始部署，比如`kubectl apply -f deployment.yaml`
+- 部署后，用户就可以通过kube-proxy和应用进行交互了
+
+### AWS EKS
+
+- AWS的EKS，将control plane的部分，交给AWS管理，用户只需要关心data plane的部分
+- 通过kubectl就可以和EKS交互进行部署
+- nodes的部分：
+  - self-managed nodes：比如你想自己创建EC2作为节点，要创建auto scaling group还要确保他们注册到k8s的集群中
+  - managed-node group：是托管的node集群服务，虽然背后依然是EC2，和images
+  - AWS Fargate：AWS的serverless容器部署解决方案，只需要定义计算类型和内存，就可以快速发布分布式应用了
+
+### EKS Cluster networking
+
+- control plane和data plane的交互方式
+  - control plane是由EKS服务控制的，坐落在AWS的VPC中
+  - 通过在customer的VPC中的ENI，与data plane进行communication，workers坐落在自己的subnet中
+  - EKS的ENI创建时，就会有自己的EKS subnet，同时有SG，SG默认允许本地VPC进行交互
+  - EKS可以为pods分配IPv4或者IPv6的ip地址，但是不能同时设置（dual-stack）
+- Public access： （默认）
+  - K8s的API默认通过internet访问（这里讨论的不是EKS的API）
+  - workers则也要坐落在public subnet中，通过IGW和进入公共互联网，和AWS的EKS进行交流
+  - AWS提供CIDR blocks白名单
+- Public & Private：
+  - K8s的API同样从public的internet访问
+  - workers坐落在private subnet中，通过和EKS的ENI的private IP进行交互
+  - AWS提供CIDR blocks白名单
+- Private access：
+  - 创建从本地DC到CostomerVPC的VPN/DX私有连接
+  - 进入CostomerVPC，和EKS的ENI进行交互，以和EKS通信
+- EKS API private access（PrivateLink）：（eksctl）
+  - 通过VPC Interface Endpoint（PrivateLink）和EKS进行交互
+  - 不管是从本地DC的私有连接还是从VPC中，这都是一种安全的私有访问
+- K8s的应用expose使用Load Balancer（public subnet）
+- Nodes的Public访问，使用NAT Gateway（IPv4）或者Egress Only IGW（IPv6）
+
+### EKS Pod networking
+
+**Kubernetes Network Model**
+
+- 每个Pod都有自己的IP
+- Pod中的Container共享同一个IP
+- 不需要NAT，Pod可以和其他的Pod交流
+- 不需要NAT，Node可以和所有的Pods进行交流
+- Pod自己的IP对于其他Pod来说也是同一个IP
+- Kubernetes 的网络模型假设所有的 Pods 都在一个扁平的网络空间中。也就是说，任意一个 Pod 可以直接访问任何其他 Pod 的 IP 地址。这种模型消除了需要 NAT 的场景，因为没有重叠的 IP 地址空间和需要进行地址转换的情况。
+
+- Amazon VPC CNI（容器网络接口插件）管理 Pod 网络。常见的 CNI 插件（如 Flannel, Calico, Weave）都实现了 Pod 到 Pod 的直接通信能力，这些插件在集群节点之间建立一个覆盖网络，确保 Pods 可以跨节点相互访问
+- CNI创建和附加ENIs到worker nodes上
+- ENIs分为Primary和Secondary的ENIs，每个ENI都有一个Primary IP和多个Secondary IPs，这些Secondary IPs会被附加到Pods上
+  - VPC Address Space
+
+- Pods的数量：
+  - 每种instance类型都有interface的最大数量，和每个interface的IPv4和IPv6地址数量
+  - max_pods = num_interface x (max_ips - 1) + 2：其中1是primary IP，2是host networking和kube-proxy
+- 如何增加每个Node的Pods数量：（提高pods density）
+  - Prefix delegation：将CIDR附加给ENI（而不是单一的IP）
+  - 仅支持AWS Nitro-based node
