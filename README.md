@@ -1,6 +1,6 @@
 Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-apps/)❤️
 
-## Algorithms & data structure
+## Algorithms & Data structure
 - [数组结构：静态动态数组和堆栈](algo/arrays.md)/[栈stack相关问题](algo/stack.md)
 - [数组算法：Kadane算法](algo/kadane.md)
 - [数组算法：滑动窗口](algo/sliding-window.md)/[SlidingWindow相关问题](algo/sliding-window-problems.md)
@@ -39,7 +39,7 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [位运算：bit操作](algo/bit-operations.md)/[bit运算相关问题](algo/bit-problems.md)
 - [自定义数据结构：数据结构的调整和组合](algo/custom-ds.md)
 
-## Machine learning
+## Machine Learning
 - [对大语言模型的简单解释](ml/ai-4-prompt.md)/[日文版](ml/ai-4-prompt-jp-version.md)
 - [Prompt-Engineering-Framework](ml/prompt-engineering.md)
 - [LangChain大模型框架](ml/langchain.md)
@@ -135,6 +135,8 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [网络安全：Cyber Security foundation](cs/cybersecurity.md)
 - [道德黑客：Ethical Hacking Technology](cs/ethical-hacking.md)
 
+> 当我学习计算机网络，那些概念就像是一个一个的点，散落一地，我想我需要一本书或者一些方法，比如计算机网络自顶向下，将他们串联起来，形成一个故事。我想所有的学习体系都是这样，直到将每一个点都搞清楚，并将他们串联起来，并将串联起来的东西都串联起来，世界才是一棵真正的树。
+
 ## Interesting Posts
 - [*WEB3：初步接触比特币，元宇宙，以太坊，智能合约等概念](morefun/web3.md)
 - [G检定深度学习考试相关日语词汇和概念解释](morefun/gtest.md)
@@ -150,7 +152,7 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 
 - [UMAP](concepts/umap.md)
 
-## logbooks
+## Logbooks
 - [数据工程师的思考模型，我为什么总有思维盲点](principals/data-engineer-thinking-model.md)
 - [项目过程心得总结-不定期添加](principals/pj-thinking.md)
 - [航海日志：定期思维检修1-202404](principals/checkmind1.md)
