@@ -1,3 +1,5 @@
+学习[菜鸟教程](https://www.runoob.com/java/java-tutorial.html)！
+
 ## Java特征
 
 Java编程语言有许多显著的特征，使其成为广泛应用的语言。以下是Java的五个最主要特征：
@@ -71,6 +73,8 @@ Java应用程序结构包括包、类和接口、方法、成员变量、构造�
 - 引用和操作：程序中的数据和操作都是通过对象和对对象的操作实现的。即使基本数据类型也可以通过包装类来被视为对象。
 - 对象的生命周期：对象从创建到销毁都遵循一定的生命周期管理，通过堆内存和垃圾收集器（Garbage Collector）来管理。
 - 多态性：对象可以根据它们的类和子类的关系，表现出不同的行为（多态性）。
+- 但是它不能多重继承。
+- 垃圾收集功能。
 
 *对象的广泛使用*
 - 对象创建和使用：大部分程序都是通过创建和操作对象来实现功能的。例如，new Car("Toyota", 2020) 创建了一个新的 Car 对象。
@@ -90,3 +94,233 @@ Java应用程序结构包括包、类和接口、方法、成员变量、构造�
 - 在函数式编程中，函数可以像其他数据类型一样被传递、赋值和返回。
 - 惰性计算指的是在需要的时候才进行计算。惰性计算允许定义无限数据结构和延迟计算的值。
 - Scala
+
+## 变量
+
+在 Java 编程语言中，变量可以分为两种主要类型：**基本类型**（Primitive Types）和**引用类型**（Reference Types）。
+
+### 1. 基本类型（Primitive Types）
+
+基本类型是 Java 中最简单的数据类型。它们存储的是实际的值，而不是指向值的引用。Java 提供了 8 种基本数据类型，每一种类型都有固定的大小和范围：
+
+根据bit位数：
+
+- **整数类型**：
+  - `byte`：8位，表示范围为 -128 到 127。
+  - `short`：16位，表示范围为 -32,768 到 32,767。
+  - `int`：32位，表示范围为 -2^31 到 2^31 - 1。
+  - `long`：64位，表示范围为 -2^63 到 2^63 - 1。
+
+- **浮点类型**：
+  - `float`：32位，单精度浮点数。
+  - `double`：64位，双精度浮点数。
+
+- **字符类型**：
+  - `char`：16位，表示一个单一的 Unicode 字符，范围为 0 到 65,535。
+
+- **布尔类型**：
+  - `boolean`：表示真 (`true`) 或假 (`false`) 两个值。
+
+这些基本类型都具有直接存储的值，并且内存消耗固定且较小，因此它们是效率最高的数据存储方式之一。
+
+### 2. 引用类型（Reference Types）
+
+引用类型用于存储对象的引用，而不是对象的值本身。Java 中的引用类型包括：
+
+- **类（Class）**：
+  - 类是创建对象的蓝图。每个对象都是一个类的实例。例如，`String` 是 Java 中的一个类，当你创建一个 `String` 类型的变量时，它实际上是对 `String` 对象的引用。
+  - 示例：
+    ```java
+    String text = "Hello, World!";
+    ```
+
+- **接口（Interface）**：
+  - 接口是 Java 中一种特殊的类型，它定义了类必须实现的方法，而不包含这些方法的实现细节。
+  - 示例：
+    ```java
+    List<String> list = new ArrayList<>();
+    ```
+
+- **数组（Array）**：
+  - 数组是一种特殊的引用类型，它保存同类型数据的集合。
+  - 示例：
+    ```java
+    int[] numbers = {1, 2, 3, 4, 5};
+    ```
+
+- **枚举（Enum）**：
+  - 枚举类型是一种特殊的类，表示一组常量（例如，方向、状态）。
+  - 示例：
+    ```java
+    enum Day { MONDAY, TUESDAY, WEDNESDAY }
+    Day today = Day.MONDAY;
+    ```
+
+引用类型变量实际存储的是对象在内存中的地址，而不是对象本身。对象的操作通过这些引用来间接地访问实际的对象。
+
+### 基本类型与引用类型的区别
+
+1. **内存分配**：
+   - 基本类型的值直接存储在栈内存中，分配固定大小的内存空间。
+   - 引用类型的引用（地址）存储在栈内存中，而对象本身存储在堆内存中，引用指向对象的实际内存地址。
+
+2. **操作方式**：
+   - 基本类型的变量是对实际值的直接操作。
+   - 引用类型的变量是通过引用来间接操作对象。
+
+3. **默认值**：
+   - 基本类型有明确的默认值（如 `int` 默认值是 `0`，`boolean` 默认值是 `false`）。
+   - 引用类型的默认值是 `null`，表示它们没有指向任何对象。
+
+### 示例代码
+
+以下示例展示了基本类型和引用类型的使用：
+
+```java
+public class Main {
+    public static void main(String[] args) {
+        // 基本类型
+        int num = 10; // 整型基本类型
+        double pi = 3.14; // 双精度浮点型基本类型
+
+        // 引用类型
+        String greeting = "Hello, World!"; // String 类
+        int[] numbers = {1, 2, 3}; // 数组类型
+        MyClass obj = new MyClass(); // 自定义类的对象
+        
+        System.out.println("Number: " + num);
+        System.out.println("Pi: " + pi);
+        System.out.println("Greeting: " + greeting);
+        System.out.println("First number in array: " + numbers[0]);
+        System.out.println("Object reference: " + obj);
+    }
+}
+
+class MyClass {
+    // 自定义类
+}
+```
+### homebrew install
+
+```bash
+# 更新
+brew update
+# 搜索
+brew search openjdk
+# 开始安装
+brew install openjdk@17
+# 根据安装后的提示，run了如下命令
+If you need to have openjdk@17 first in your PATH, run:
+  echo 'export PATH="/opt/homebrew/opt/openjdk@17/bin:$PATH"' >> ~/.zshrc
+
+For compilers to find openjdk@17 you may need to set:
+  export CPPFLAGS="-I/opt/homebrew/opt/openjdk@17/include"
+
+# 使更新生效
+source ~/.zshrc
+# 验证版本
+java -version
+
+# 确认安装路径
+brew --prefix openjdk@17
+# /opt/homebrew/opt/openjdk@17
+
+# found the home
+/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
+```
+
+编辑VScode的配置文件setting.json
+```json
+  "java.configuration.runtimes": [
+    {
+      "name": "JavaSE-17",
+      "path": "/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home",
+      "default": true
+    }
+  ]
+```
+
+为了配置项目根目录，我配置了如下设置：
+```json
+  "java.project.sourcePaths": ["src"],
+```
+### javac
+
+在 Java 中，通过 `javac` 编译后生成的文件通常是字节码文件（bytecode files），而不是二进制文件。Java 编译器 (`javac`) 将 Java 源代码编译成 Java 字节码，而不是将其编译成本地机器的二进制代码。
+
+Java 字节码是一种中间代码（intermediate code），它不直接运行在计算机的硬件上，而是运行在 Java 虚拟机（JVM）上。这种中间代码的好处是跨平台性，即你可以将同样的字节码文件在不同的操作系统上运行，只要这些系统都安装了相同版本的 Java 运行时环境（JRE）或 Java 开发工具包（JDK）。
+
+Java 字节码文件的扩展名是 `.class`，每个 `.class` 文件对应一个 Java 类。例如，编译后生成的 `Main.class` 文件就是一个 Java 字节码文件。
+
+运行方法：
+
+```bash
+javac Main.java
+java Main
+```
+
+复杂一点的：
+
+**编译代码**
+
+从项目的根目录（`project_root`）下执行编译命令。编译器会根据 `src` 目录下的包结构生成对应的类文件。
+
+1. **打开终端（命令行）**。
+2. **导航到项目根目录**。假设你的项目目录是 `project_root`：
+
+   ```bash
+   cd /path/to/project_root
+   ```
+
+3. **执行编译命令**：
+
+   ```bash
+   javac -d out src/main/MainAccount.java src/bank/BankAccount.java
+   ```
+
+   这个命令的解释：
+   - `javac` 是 Java 编译器命令。
+   - `-d out` 表示将编译后的类文件输出到 `out` 目录，并保持包结构。
+   - `src/main/MainAccount.java` 和 `src/bank/BankAccount.java` 是需要编译的 Java 源文件。
+
+   编译完成后，目录结构应为：
+
+   ```
+   project_root/
+   ├── out/
+   │   ├── main/
+   │   │   └── MainAccount.class
+   │   └── bank/
+   │       └── BankAccount.class
+   ├── src/
+   │   ├── main/
+   │   │   └── MainAccount.java
+   │   └── bank/
+   │       └── BankAccount.java
+   ```
+
+**运行代码**
+
+编译完成后，你可以运行 `MainAccount` 类。确保你在项目的根目录下执行运行命令：
+
+1. **在终端中**：
+
+   ```bash
+   java -cp out main.MainAccount
+   ```
+
+   这个命令的解释：
+   - `java` 是 Java 运行时命令。
+   - `-cp out` 指定类路径为 `out` 目录，Java 虚拟机会从这个目录加载编译后的类文件。
+   - `main.MainAccount` 是类的全限定名，`main` 是包名，`MainAccount` 是类名。
+
+2. **输出结果**：
+
+   运行后，你应该看到如下输出：
+
+   ```
+   Account number: 78986
+   Account holder: Saally
+   Account balance: 1.0E12
+   ```
+

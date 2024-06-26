@@ -103,6 +103,7 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [*AWS安全专家认证考试相关内容](clouds/aws-with-security.md)
 - [AWSSysOps运维考试内容整理](clouds/aws-with-sysops.md)
 - [*AWS高级网络专家相关内容整理](clouds/aws-with-networking.md)
+- [*AWS专业构架师资格相关内容整理](clouds/aws-with-sap.md)
 - [AWS-Bedrock项目实践1：Code Generation (APIGateway,S3,bedrock)](clouds/bedrock-pj1.md)
 - [AWS-Bedrock项目实践2-3：Notes Summarisation & Image Generation & 模型评估 & RAG](clouds/bedrock-pj2-3.md)
 - [Google-Gimini-API上手体验和要点总结：目前最爱Gemini](clouds/gemini-api.md)
@@ -125,6 +126,7 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [Git和Github复习手册](cs/git.md)
 - [*网络安全分类：访问控制、身份管理、数据加密与网络防护的清晰分类](cs/network-security-tree.md)
 - [数据库：Database&SQL-AtoZ](cs/db-sql.md)
+- [网络基础：基础概念和组件CompTIA](cs/internet-comptia.md)
 - [网络基础：构架，协议栈，应用层，HTTP，DNS](cs/internet-base-app-layer.md)
 - [网络基础：传输层，TCP/UDP](cs/internet-base-transport-layer.md)
 - [网络基础：网络层，IP，ARP，DHCP，ICMP，firewall，nat](cs/internet-base-network-layer.md)
@@ -149,6 +151,7 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [UMAP](concepts/umap.md)
 
 ## logbooks
+- [数据工程师的思考模型，我为什么总有思维盲点](principals/data-engineer-thinking-model.md)
 - [项目过程心得总结-不定期添加](principals/pj-thinking.md)
 - [航海日志：定期思维检修1-202404](principals/checkmind1.md)
 - [航海日志：定期思维检修2-202405](principals/checkmind2.md)

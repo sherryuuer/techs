@@ -382,9 +382,9 @@ imputer_model = imputer.fit(doubles_df)
 # 保留了缺失指示列信息c_na列，并对其他的列进行了变换
 imputed_df = imputer_model.transform(doubles_df)
 ```
-- Describe the process of one-hot encoding categorical features.
+**Describe the process of one-hot encoding categorical features.**
   - 独热编码将分类变量转换为二进制形式，其中每个类别都被表示为一个新的特征，而每个特征只有一个元素为1，其余为0。
-- Describe why one-hot encoding categorical features can be inefficient for tree-based models.
+**Describe why one-hot encoding categorical features can be inefficient for tree-based models.**
   - 当应用独热编码于基数较高（high cardinality）的分类变量（具有许多不同类别值的变量）时，可能会导致效率降低。特别是在基于树的机器学习方法中（如随机森林或梯度提升），由于虚拟变量化导致连续变量更容易被重视，因此特征的重要性顺序可能变得不清晰，从而可能导致模型性能下降。
 ### Training
 - Perform random search as a method for tuning hyperparameters.
@@ -412,19 +412,19 @@ clfgs = GridSearchCV(svc, parameters)
 searchgs = clfgs.fit(iris.data, iris.target)
 ```
 
-- Describe the basics of Bayesian methods for tuning hyperparameters.
+**Describe the basics of Bayesian methods for tuning hyperparameters.**
   - 在贝叶斯方法中，我们利用贝叶斯定理从先前获得的组合结果中寻找候选组合，其中某个值的概率变得较小，然后选择具有最高精度（评估指标）的组合。这种方法允许我们基于先前观察到的结果来动态地调整超参数，并且不断地寻找更好的组合，以提高模型的性能。
   - 当我们尝试调整模型的超参数时，传统的方法是通过在一个预定义的参数空间中进行网格搜索或随机搜索来尝试不同的参数组合，然后选择表现最好的组合。这种方法的缺点之一是它需要大量的计算资源和时间，尤其是当参数空间较大时。
   - 贝叶斯方法通过利用之前的试验结果来指导下一次尝试的参数选择，从而在参数空间中寻找到可能更优的区域。具体来说，它使用贝叶斯定理来更新先验概率分布，将先前的试验结果转化为对参数空间的后验概率分布。这意味着在选择下一个参数组合时，更有可能选择那些已经显示出良好性能的区域，而不是随机地在整个参数空间中进行搜索。
   - 在贝叶斯优化的过程中，我们首先根据先验概率选择一个参数组合，然后评估该组合的性能，并利用这个结果来更新参数空间中参数组合的后验概率分布。通过这种迭代过程，我们可以逐步地缩小搜索空间，并集中在可能性能更高的参数组合上。这种方法通常比传统的网格搜索或随机搜索更高效，特别是在高维参数空间或需要大量计算资源的情况下。
 
-- Describe why parallelizing sequential/iterative models can be difficult.
+**Describe why parallelizing sequential/iterative models can be difficult.**
   - 梯度提升（Gradient Boosting）算法是一种迭代的算法，当构建弱学习器（小型模型）时，会使用先前模型的误差。因此，如果试图将处理分布到不同的节点上，节点之间就需要交换误差信息，这就变得很困难。
 
-- Understand the balance between compute resources and parallelization.
+**Understand the balance between compute resources and parallelization.**
   - 要注意到并行化并不是万能的解决方案。有时候，串行算法可能比并行算法更简单、更稳定、更易于理解和维护。因此，在考虑并行化时，需要综合考虑*任务的特性、计算资源的可用性以及额外开销*，并做出合适的决策。
 
-- Parallelize the tuning of hyperparameters using Hyperopt and SparkTrials.
+**Parallelize the tuning of hyperparameters using Hyperopt and SparkTrials.**
 ```python
 # single-machine hyperopt with a distributed training algorithm (e.g. MLlib)
 # SparkMLのモデルでhyperoptを使う場合は以下の通り
@@ -449,8 +449,7 @@ best_hyperparam = fmin(fn=objective_function,
                        rstate=np.random.default_rng(42))
 ```
 
-- Identify the usage of SparkTrials as the tool that enables parallelization for
-tuning single-node models.
+**Identify the usage of SparkTrials as the tool that enables parallelization for tuning single-node models.**
   - 使用SparkTrials作为工具，它能够为调整单节点模型提供并行化功能。
   - SparkTrials是一个工具，用于在Apache Spark中并行化地进行调整单节点模型的超参数搜索。通过使用SparkTrials，可以同时评估多个超参数设置，从而加速整个调参过程。这样可以利用Spark的并行计算能力，在分布式环境中更高效地执行超参数搜索。
   - parallelism，指定了同时评估的最大试验数量。增加parallelism能够允许同时测试更多的超参数设置，从而提高搜索的效率。默认情况下，parallelism的值等于`SparkContext.defaultParallelism`，这个值是Spark上下文中默认的并行度。
@@ -501,8 +500,8 @@ cv = CrossValidator(estimator=pipeline, evaluator=evaluator, estimatorParamMaps=
 - Recall（召回率）：召回率是指在所有实际正例中，模型成功预测出的正例的比例。召回率衡量了模型在识别所有真实正例方面的能力，也就是模型能够捕捉到多少真正的正例。召回率的计算公式为：Recall = TP / (TP + FN)，其中 TP 是真正例数，FN 是假负例数。召回率越高，表示模型能够更好地捕捉到正例，但有可能导致更多的假正例。
 - F1 分数：F1 分数是精确率（Precision）和召回率的调和平均值，它综合考虑了模型的精确性和召回率。F1 分数的计算公式为：F1 = 2 * (Precision * Recall) / (Precision + Recall)，其中 Precision 表示模型预测的正例中真正的正例比例。F1 分数同时考虑了模型的准确性和全面性，是一个综合评估模型性能的指标。F1 分数越高，表示模型在精确性和召回率之间取得了更好的平衡。
 - 召回率更侧重于模型对正例的覆盖能力，而 F1 分数则更全面地评估了模型的性能，包括精确性和全面性。在某些场景下，召回率可能更为重要，例如在医学诊断中需要尽可能少地漏诊；而在其他场景下，如垃圾邮件过滤，精确性和全面性都很重要，因此 F1 分数可能更为合适。
-- Identify the need to exponentiate the RMSE when the log of the label variable is used.
-- Identify that the RMSE has not been exponentiated when the log of the label variable is used.
+**Identify the need to exponentiate the RMSE when the log of the label variable is used.**
+**Identify that the RMSE has not been exponentiated when the log of the label variable is used.**
 ```python
 # 目的変数の分布が歪んでいるときに、logをとって正規分布に近づけることでモデルの精度が向上する場合がある
 # RMSEはrootをとって単位を合わせるので、正しくRMSEを解釈するために、logではなく、実数に戻す必要あり。そのときにexponentiateする
@@ -738,9 +737,58 @@ pandas_df = psdf.to_pandas()
 print(f'pandas df <= pandas api on spark: {type(pandas_df)}')
 ```
 ### Pandas UDFs/Function APIs
-- Identify Apache Arrow as the key to Pandas <-> Spark conversions.
-- Describe why iterator UDFs are preferred for large data.
-- Apply a model in parallel using a Pandas UDF.
+**Identify Apache Arrow as the key to Pandas <-> Spark conversions.**
+- Apache Arrow 是一个跨语言的内存数据格式，用于高效地处理大数据，尤其是在数据分析和科学计算中。它是 Pandas 和 Spark 之间转换的关键，允许这两者之间进行高效的数据传输和计算。
+- Apache Arrow 是一个内存中的列式数据格式，设计用于支持高效的分析操作。它的主要特点包括：
+  - 列式存储：数据按列存储，这样在处理数据时可以高效地访问和操作所需的列。
+  - 跨语言支持：Arrow 数据格式能够在多种编程语言（如 Python、Java、C++）之间高效共享数据，而无需数据复制或转换。
+  - 零（去）序列化成本：使用 Arrow 进行数据传输时，避免了数据的序列化和反序列化，减少了开销和延迟。
+  - 内存效率高：Arrow 旨在最大限度地利用现代内存架构，提供高性能的数据操作。
+
+- Pandas UDFs：在 Spark 2.3 及之后的版本中，Spark 支持 Pandas UDFs（用户定义函数），这是一种利用 Pandas 和 Arrow 的新型 UDF（用户定义函数），它大幅提高了 UDF 的性能。Pandas UDF 的特点是：
+  - 向量化操作：与传统的 UDF 不同，Pandas UDF 处理的是 Pandas 的 Series 或 DataFrame，而不是单个的标量值，这允许在 UDF 内部使用 Pandas 的高效操作。
+  - 简化代码：利用 Pandas 提供的丰富 API，可以更简洁地编写数据处理逻辑。
+  - 性能优化：通过 Arrow 实现数据的快速传输和操作，Pandas UDF 提供了比传统 UDF 更高的性能。
+
+- Apache Arrow 是 Pandas 和 Spark 之间高效转换的核心。具体作用如下：
+  - 数据格式统一：Arrow 提供了一个统一的内存数据格式，这意味着在不同的系统（如 Spark 的 JVM 和 Python 的 Pandas）之间，可以直接共享 Arrow 格式的数据，而不需要复杂的转换或复制。
+  - 高效的数据传输：使用 Arrow，可以将数据从 Spark 的 JVM 直接传输到 Python 环境中的 Pandas，而不需要进行数据序列化和反序列化，显著减少了传输的开销。
+  - 减少延迟：由于 Arrow 几乎不需要（去）序列化成本，数据在不同系统之间的传输延迟被大幅降低。
+  - 内存中计算：Arrow 支持高效的内存计算，这使得在 Spark 中执行的数据处理操作能够以更低的内存开销和更高的速度进行。
+
+**Describe why iterator UDFs are preferred for large data.**
+- 在处理大数据时，特别是在使用 Spark 进行数据处理时，Iterator UDFs 相较于传统的 Pandas UDFs 更有优势。以下是这些优势的详细解释。
+- Pandas UDFs（用户定义函数）是 Spark 2.3 引入的一种功能，允许在 Spark 中使用 Pandas 操作。在处理数据时，Pandas UDFs 能够利用 Pandas 的强大数据操作能力和 Apache Arrow 的高效数据传输。
+- 然而，对于非常大的数据集，特别是需要在每个批次中加载大型模型或进行复杂初始化的情况，Pandas UDFs 可能会遇到性能瓶颈。在这种情况下，Iterator UDFs（迭代器 UDFs）提供了一种更有效的解决方案。
+- 使用 Iterator UDFs 时，可以在迭代器的范围内只加载一次模型，然后在整个迭代器的生命周期内重用该模型。这减少了频繁的加载开销。
+```python
+import pandas as pd
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import pandas_udf
+from typing import Iterator
+
+# 创建 SparkSession
+spark = SparkSession.builder.appName("Iterator UDF Example").getOrCreate()
+
+# 创建示例 DataFrame
+df = spark.range(0, 1000000).toDF("id")
+
+# 定义一个 Iterator UDF
+@pandas_udf("double")
+def multiply_by_two(iterator: Iterator[pd.Series]) -> Iterator[pd.Series]:
+    for batch in iterator:
+        yield batch * 2
+
+# 使用 Iterator UDF 进行计算
+result_df = df.withColumn("value_multiplied", multiply_by_two(df.id))
+
+# 显示结果
+result_df.show()
+```
+- Iterator UDFs 允许一次性处理多个批次的数据，而不是逐个批次地处理。这种批处理方式减少了函数调用的次数和上下文切换的开销。
+- 当处理的数据量超出 Spark 的配置（例如 spark.sql.execution.arrow.maxRecordsPerBatch 默认值 10,000）时，Iterator UDFs 能够更高效地处理这些数据。
+
+**Apply a model in parallel using a Pandas UDF.**
 - Identify that pandas code can be used inside of a UDF function.
 - Train / apply group-specific models using the Pandas Function API.
 ## Section 4: Scaling ML Models

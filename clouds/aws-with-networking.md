@@ -577,6 +577,8 @@ pl-xxxxxxxxxxxxx| vpce-12345678 (Gateway Endpoint)
 - **Remote Network**（VPN/DX或者PeeringVPC）连接问题
   - 结论是*不能*。因为Gateway是VPC和AWS的VPC之间的网关（两个网络的边界点），只能处理路由表所在的私有子网的通信。VPN/DX或者Peering的信息进来后，他们没有路由指示，找不到要跳的点。
 
+- 网关端点不会实施传输中加密。使用*aws:SecureTransport IAM*的策略，可以强制传输安全。
+
 ### VPC Interface Endpoint（PrivateLink）
 
 Interface功能可以说是VPC Endpoint的一个Extension。
@@ -925,6 +927,8 @@ Interface功能可以说是VPC Endpoint的一个Extension。
 - VGW使用BGP，支持静态和动态路由。
 - 对于BGP可以自己设置自治系统编号，如果自己不设置，AWS会为他设置default的编号64512。
 - VGW的数据加密算法：AES-256，SHA-2
+- AWS Site-to-Site VPN 在 Direct Connect 连接中提供加密的隧道。
+- 本地部署网络和 AWS 区域之间的 Direct Connect 连接是专用连接，但未进行加密。尽管每个 VPC 可能在 Direct Connect 连接中具有私有 VIF，但该解决方案未提供加密。
 
 - *创建步骤*简要包括：
   - 在控制台创建VPC端和本地端端VGW和CGW
@@ -2463,6 +2467,8 @@ Route 53 的健康检查功能可以定期检查网络资源的状态，并在�
 - Pod自己的IP对于其他Pod来说也是同一个IP
 - Kubernetes 的网络模型假设所有的 Pods 都在一个扁平的网络空间中。也就是说，任意一个 Pod 可以直接访问任何其他 Pod 的 IP 地址。这种模型消除了需要 NAT 的场景，因为没有重叠的 IP 地址空间和需要进行地址转换的情况。
 
+**VPC CNI**
+
 - Amazon VPC CNI（容器网络接口插件）管理 Pod 网络。常见的 CNI 插件（如 Flannel, Calico, Weave）都实现了 Pod 到 Pod 的直接通信能力，这些插件在集群节点之间建立一个覆盖网络，确保 Pods 可以跨节点相互访问
 - CNI创建和附加ENIs到worker nodes上
 - ENIs分为Primary和Secondary的ENIs，每个ENI都有一个Primary IP和多个Secondary IPs，这些Secondary IPs会被附加到Pods上
@@ -2474,3 +2480,227 @@ Route 53 的健康检查功能可以定期检查网络资源的状态，并在�
 - 如何增加每个Node的Pods数量：（提高pods density）
   - Prefix delegation：将CIDR附加给ENI（而不是单一的IP）
   - 仅支持AWS Nitro-based node
+
+**Pod to external network**
+
+- external network:Internet, Transit Gateway, OnPremise
+- Pod和外界沟通的方式：将Pod的IP转换为Node的Primary ENI的Primary IP，这只适用于IPv4，因为IPv6不具有网络转换功能
+- 当Node在Public Subnet：
+  - Source NAT enabled（EXTERNALSNAT=false）
+  - Node进行NAT转换
+  - Pod IP -> Node ENI -> NODE Public IP -> IGW
+  - 对于TGW和VPN/DX和PeeredVPC，只能出不能进，因为使用的是Node的IP，进来的时候找不到Pod的IP
+- 当Node在Private Subnet：
+  - Source NAT enabled（EXTERNALSNAT=true）
+  - NAT Gateway进行NAT转换，Node不再进行该步骤
+  - Pod IP -> NAT IP -> NAT Elastic IP -> IGW
+  - 对于TGW和VPN/DX和PeeredVPC，可以进出，因为没NAT转换，IP地址保持可见
+
+- 另外，Multi-homed Pods表示一个Pods可以attach多个interfaces，with Multus CNI，这使得一个Pod可以有多个IP
+
+### EKS Security Group
+
+- 当创建了EKS Cluster，会自动创建SG，默认inbound为self，outbound为全网，该SG应用于Customer VPC中的ENIs和他们的Nodes
+- 为了限制outbound流量建议做以下修改：
+  - TCP 443：Control Plane的api
+  - TCP 10250：kubelet api
+  - TCP/UDP 53：DNS
+  - 以及其他通信端口比如HTTP/HTTPS等
+- 但是SG是针对ENI的scope设置的防火墙，Pods的IP是ENI的Secondary IPs，无法拥有自己的SG，解决方案是*Trunk and Branch ENIs*
+- *Trunk and Branch ENIs*是一种在EKS中对每个Pod直接添加SG的方法：Trunk是ENI的主节点，可以分支成更多的子ENI，也就是Branch，Branch ENI会自动创建和附加到Trunk上，如此一来每个Pod就会有自己的ENI并可以定制SG规则了
+  - 注意，windows系统的nodes无法对Pods定义SG
+  - 如果Cluster使用的是IPv6，那么这个功能只对Fargate nodes有效
+  - 对于可用的EC2 type有限制，在官方的Github的limits.go文件中可以确认到
+  - 主要支持AWS Nitro based system，但是t-instance不支持
+
+### EKS Service Expose
+
+- Pods是不适合暴露的，因为他们在扩展，销毁，复制，变更nodes位置中，IP会不断变更
+- EKS服务主要是将一组Pods作为一个网络服务集合
+- 支持的连接方式：
+  - 只能从Cluster内部通过ClusterIP进行访问：通过Cluster的DNS名访问
+  - 使用NodePort（Node IP & Port）可以从外部访问Node的static pods：一个Node是一个Service（Pod的集合），这意味着，要在一个node中放入所有static Pod集合，它的内部使用ClusterIP作为路由
+  - 最佳方法1：layer4，load balancer节点（CLB（layer4/7）/NLB（layer4））从外部访问
+    - instance访问mode
+    - ServiceType = LoadBalancer
+    - 通过Kubernetes Controller Manager进行控制
+    - 推介使用*NLB*，它支持新的*AWS Load Balancer Controller*进行管理
+  - 最佳方法2：layer7，*ALB*，从外部访问
+    - 支持instance&IP访问mode
+    - ServiceType = Ingress
+    - 使用*AWS Load Balancer Controller*进行管理
+    - 构架：
+      - ALB(Listener:HTTP/HTTPS) -> 
+      - TargetGroup(service)有各自的routing rules和服务的endpoint -> 
+      - Group中的服务是分布在各个Nodes中的Pods
+      - alb-ingress-controller也是其中一个pod，负责收集情报，以及和Cluster的API server交互
+
+*Preserving Client IP*
+
+- NLB使用*externalTrafficPolicy*选项进行控制
+  - 当选项设置为*Cluster*的时候，由于流量会从一个pod被传送到另一个node中的pod，这样client的IP会被pod的IP替代
+  - 当选项设置为*Local*的时候，流量只会在一个node中的传播，这就可以确保获得client IP了，但这会导致cluster中的node的流量分布不均匀，所以这是一个需要权衡的问题
+- ALB使用HTTP Header X-Forwarded-For 来简单获取Client IP
+
+## Network Management & Governance
+
+### IPAM（IP Address Management）
+
+- 流程：plan -> set rules -> track -> automate IP allocation
+- Scope（Public/Private）
+  - Pools
+    - Sub Pools
+      - VPCs
+- 可以是account level，也可以是organization level
+- 可以和Organization层级集成，创建一个组织子账户用于IPAM管理
+- 通过使用IPAM创建SCP，来限制组织成员对IP地址的使用，这可以防止ip地址的overlapping
+- 和CloudFormation集成：当需要创建新的网络架构，可以通过CF自动对IPAM进行API请求，获得可用的IP地址
+- 可以tracking&monitoring IP地址的使用情况，通过historical insights，Dashboard，以及CloudWatch（AWS/IPAM）等
+- 注意，管理PrivateIP pools是需要Advanced tier（付费）的
+- 创建IPAM管理Pools后可以设置合规条件，比如通过resource tag来限制资源创建时候的IP分配只能通过贴tag来被自动分配IP
+
+### Cloud Formation
+
+- 版本控制
+- 完全代码控制
+- 历史变更记录可查
+- 价格策略：
+  - 每一个stack都有一个tag，所以可以很方便的看到每一个stack的费用情况
+  - 可以使用CloudFormation Template预估费用
+  - 在开发环境，可以自动在每天下午5点删除资源然后在早上8点重新创建资源
+- 可视化开发工具：CloudFormation Designer
+- ChangeSets：在应用新的变更之前，Generate&Preview工具
+- StackSets：跨多账户多区域deploy一个 CF stack
+- StackPolicies：防止突然更新和删除资源，保护数据库等
+- CrossStacks：当需要跨栈传递输出结果的情况：Outputs Export & Fn::ImportValue
+- Nested Stacks：嵌套栈，在一个栈中通过 AWS::CloudFormation::Stack resource 使用其他的栈，但是这种栈不可分享
+- DependsOn：在栈中定义资源的依存关系，从而可以按照顺序创建资源
+- WithCondition：会等待栈之外的一些设置结束，比如接收EC2的user data安装应用并启动实例
+  - 通过接收 success/failure 信号或者等待timeout发生，timeout的时间可以定义
+  - 对象资源必须有访问CF相关的S3的权限，因为CF会提供一个S3的URL给对象，对象会对URL发送signal
+  - 该功能内部有DependsOn（对象resource）功能
+
+- **AWS Cloud Development Kit (CDK)**是一种开源的软件开发框架，用于通过代码定义和配置云基础设施。它使开发人员能够使用熟悉的编程语言（如Python、JavaScript、TypeScript、Java 和 C#）来定义云资源，而不是通过传统的JSON或YAML模板来编写AWS CloudFormation的配置。
+  - 提供高级构造 (Construct) 来表示云资源，比如S3存储桶、DynamoDB表，并且可以分享你的Construct
+  - cdk流程：cdk init -> npm run build -> cdk synth（生成template）-> cdk diff（查看变化生成ChangeSets）-> cdk deploy
+
+### AWS Service Catalog
+
+- 是CloudFormation的一个wrapper
+- AWS Service Catalog 是一种管理和部署云资源的服务，专门用于帮助企业创建和管理符合其标准的云服务目录。它允许组织预先配置和控制AWS资源的访问，从而确保符合安全、合规和最佳实践的要求。
+- 产品Product：代表一个或多个AWS资源的集合，通常由*AWS CloudFormation*模板定义。可以是简单的资源（如一个S3存储桶）或复杂的应用程序架构（如包含多个VPC、EC2实例和RDS数据库的架构）。
+- 产品可以通过组织或者账户分享。
+- 产品组合 (Portfolio)：一组相关的产品，通常基于部门、项目或应用程序类型进行分类。它们可以包括产品的版本和配置。
+- 版本控制：允许对产品进行版本管理，使组织能够控制哪些版本可以使用，从而确保稳定性和安全性。
+
+- 访问控制和权限管理 (Access Control)：
+  - 基于role的访问控制 (RBAC)：通过IAM角色和策略来控制谁可以访问哪些产品和产品组合。
+  - 组User Group和用户User管理：可以将访问权限分配给特定的User Group或个人用户User，限制他们只能访问特定的产品组合或产品。
+
+- 从用户视角，只需要浏览产品，选择产品，launch产品
+
+### AWS Config
+
+- 持续监控和评估其AWS资源的配置，包括网络设置
+- 可视化和自动化的方式来审计、评估和记录AWS资源的配置历史，记录的信息包括资源的属性、关联和当前状态
+- 审计：可以设置rule，当资源违反了规则，可以通知（Config Dashboard/API，CW，SNS，S3）
+- 自动修复功能：当rule审查失败，可以通过SystemManager的SSM document进行自动修复
+- 注意，它没有阻止变更的功能，只能检测，通知，和通过其他服务进行修复
+- Config是一个区域服务，但是它可以聚合多区域和多账户的数据：CMDB（configuration management database of infra）
+
+### CloudTrail
+
+- 默认有效enabled
+- 记录accounts的所有活动，通过*API calls*记录（云中资源皆是API）
+  - Console，SDK，CLI，AWS Services
+- 如果有资源被删除了，可以先检查CloudTrail
+- 记录过去90天的记录
+- 可以存储日志到CW或者S3
+  - CW -> filter -> alarm -> SNS
+  - S3 -> Athena/Opensearch -> 3rd party tools
+- 它可以是一个region服务，也可以是一个global服务，比如就可以收集IAM的API calls，也可以将多个region的CloudTrail的log收集到一个S3中
+
+## Additional Topics
+
+### VPC Sharing
+
+- 组织中的不同账户，分享同一个VPC来launch resources
+  - 意味着其他账户不需要创建VPC，而在被分享的VPC中使用services
+  - 依赖于 AWS Resource Access Manager (RAM) 进行配置和管理。
+- VPC拥有者为owner，被分享者为participant
+  - 他们之间不能互相干涉对方的flow logs（创建删除等操作）
+- 需要组织中的管理账户enable resource sharing功能
+- default VPC无法被分享
+- resource分享，需要将它们创建在一个subnet中进行分享：通过使用子网来实现跨账户的资源共享的设计，有助于确保网络隔离和安全、简化权限管理和资源分配、保持架构一致性，增强资源的可见性，降低成本，因为只需要一个VPC。
+
+- 简化了VPC和CIDR的管理，网络配置的责任可以只放在主账户上，被分享的账户只需要负责开发等
+- 重复利用NAT和ENI等，降低成本
+- 减少IP使用限制和复杂度
+- 缺点：其他账户创建资源可能会混杂（noisy neighbor）/主账户发生问题，印象范围是所有账户，这是一个双方权衡的问题
+- 针对noisy neighbor问题，可以为每个账户创建subnet，进行资源隔离，但这会增加IP密度
+
+**AZ之间的数据传输data transfer费用问题**
+
+- 账户需要在同一个AZ中才会没有传输费用
+- 关于AZ的考虑：
+  - 同一个AZ name在不同的账户中可能是不同的AZ，因为AWS的AZ映射方式根据账户而不同，所以要看*AZ ID*（like use1-az1）而不是AZ name
+
+**一些好的实践**
+
+- 为VPC interface endpoints，firewall endpoints，NAT gateway只在owner的VPC中创建资源，而不是被分享
+- 通过SCP限制participant的资源创建权限，比如VPC endpoints，Client VPN等
+- 拒绝participant账户创建Private Hosted Zone，如果非要创建，则独自创建并通过资源共享，和owner账户的VPC绑定
+
+### Private NAT Gateway
+
+- 将Private IP转换为Private IP，两个私有网络之间的IP转换功能
+
+**Private IP 不足的问题**
+
+- 根据RFC1918，Private IP是有range限制的
+- 不同的business单元需要有不同的IP ranges，不能有overlapping
+- 更多的Microservice出现，也要求有更多的private IPs
+
+**解决overlapping range问题的一些方案**
+
+- 使用AWSPrivateLink
+  - 主要用于AWS服务和混合构架，将服务在其他VPC映射为一个ENI，而不需要去管对方的IP配置情况
+- 使用IPv6地址，但是它没有Private IP
+- 使用自己管理的NAT网络设备
+- 本主题的**Private NAT Gateway**
+
+- 它可以连接VPCs和VPC-On-premise构架，而允许有overlapping CIDRs
+- 网络可以通过VGW和TransitGateway进行连接
+
+- 如何连接两个有overlapping CIDR的VPCA -> VPCB
+  - 这真是太复杂了！
+  - 最终来说还是需要各自的VPC中有两个没有overlapping的扩张的CIDR在创建可路由的子网
+  - 在两个VPC之间设置VPN或者TransitGateway，在两边的扩张CIDR的subnet中坐落TGW的ENI
+  - 在源VPC的可路由子网中设置Private NAT进行私有地址的转换，以便通过TGW到达对方VPC的可路由子网
+  - 在目的地VPC的可路由子网中，通过ALB访问不可路由子网的EC2
+  - 反过来的流量也要经历一样复杂的设置
+  - non-routable subnet -> routable subnet(private NAT -> TGW ENI) -> TGW -> routable subnet(TGW ENI -> ALB) -> non-routable subnet
+
+### AWS Workspaces/Appstream networking
+
+- 他们是AWS托管的远程桌面，或者远程应用托管服务，用户可以通过自己的桌面或者应用界面使用AWS的资源
+- 网络构架：
+  - AWS的VPC：Auth/SessionGateway和StreamingGateway，以及Workspace和Appstream
+  - Customer的VPC：通过DX/VPN到本地的AD认证服务和Auth/SessionGateway交互，VPC中的EC2，RDS等资源，则通过ENI和AWS的Workspace/Appstream交互，在AWS中他们则和StreamingGateway交互，用户则和该Gateway交互
+  - 连接流程：
+    - user -> internet -> auth/sessionGateway -> ADconnect -> DX/VPN -> OnPremiseAuth
+    - user -> internet -> streamingGateway -> workspace/appstream -> customerVPC's ENIs -> AWS resources(EC2/RDS/other interface endpoint -> S3)
+
+### AWS WaveLength
+
+- 5G网络中的基础设施建设服务，将AWS的服务置于5G网络edge
+- 边缘，需要低延迟的设备的应用场景
+- 通过5G供应商的CarrierGateway，连接到WaveLength Zones，在里面部署EC2等，同时该Zone还可以连接到远程的AWS主regionVPC进行更多的安全配置，如在线游戏、AR/VR、实时视频流和工业自动化
+- 与5G网络的高带宽能力相结合，WaveLength节点可以处理大数据量的实时传输需求，如高清流媒体、物联网设备数据等。
+
+### AWS Local Zones
+
+- 缩短用户和VPC的物理距离，是一种AZ数据中心的拓展，比如本来美国区的region是在弗吉尼亚，通过local zone，将region扩展到波士顿，芝加哥等更细度的城市zone，从而降低延迟，提供具有特殊需求的app服务
+- 当Enable一个LocalZone后就可以在Subnet中选择其作为AZ了
+- AWS 会为 Local Zone 提供一组建议的 CIDR 块，用户可以根据需要进行配置。例如，如果在创建子网时选择 Local Zone，必须指定一个不与 VPC 中其他子网冲突的CIDR块。
+- Local Zone 可能部署在不同的城市或国家，每个地点的网络环境和配置可能不同。指定不同的 CIDR 块可以帮助更好地管理这些局部网络，使其能够有效地路由和处理本地流量。
