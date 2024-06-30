@@ -44,7 +44,7 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [Prompt-Engineering-Framework](ml/prompt-engineering.md)
 - [LangChain大模型框架](ml/langchain.md)
 - [机器学习以及它的分类总结](ml/mltypes.md)
-- [*机器学习算法之线性回归：特征选择方法，评估方法，非常用回归模型](ml/regression.md)
+- [机器学习算法之线性回归：特征选择方法，评估方法，非常用回归模型](ml/regression.md)
 - [*机器学习算法之分类问题：逻辑回归，集成算法](ml/classification.md)
 - [*机器学习算法之无监督学习：聚类和降维](ml/unsupervised.md)
 - [*图像识别技术：使用Tensorflow和PIL库的ImageRecognition流程](ml/image-recognition.md)
@@ -110,6 +110,7 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [GCP的ID认证服务：WorkloadIdentity是什么，如何让外部ID可以在GCP内作业](clouds/workloadidentity.md)
 - [关于云上的CI/CD服务，以及IaC服务的总结](clouds/cloud-cicd-tools.md)
 - [GCP-cloud-Engineer学习笔记](clouds/gcp-cloud-engineer.md)
+- [IaC工具Terraform部署Bigquery表的心得笔记](clouds/terraform_bq.md)
 
 ## Principal & Base
 - [程序员原则](principals/whats-not-change.md)
@@ -151,6 +152,7 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 ## Concepts Seeds
 
 - [UMAP](concepts/umap.md)
+- [terraform](concepts/terraform.md)
 
 ## Logbooks
 - [数据工程师的思考模型，我为什么总有思维盲点](principals/data-engineer-thinking-model.md)

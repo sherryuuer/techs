@@ -18,7 +18,24 @@
 - 授权（Authorization）：接下来，Workload 使用从身份提供商获取的认证凭据，向 Google Cloud Platform（GCP）的安全令牌服务（Security Token Service）请求一个短暂的访问令牌（Access Token）。这个访问令牌允许 Workload 代表特定的服务账号（Service Account）执行对资源的操作。
 - 然后workload就可以使用这个token披上SA的外衣，进行对resource的操作了。
 
-设置流程：（code例子）
+设置流程：
+（GUI界面）
+
+- ID说明等没必要多说
+- provider填写Github
+- URL使用Github官方的：https://token.actions.githubusercontent.com
+- 属性主要需要填写：
+  - attribute.repository : assertion.repository 是这里要用的
+  - google.subject : assertion.sub 是原有必须项目
+- 条件CEL：
+  - assertion.repository == "<repository-onwer>/<repository-name>"
+- 系统开始创建pool
+- 结束后在页面上方点击许可连接，添加服务账号，填写principal为：
+  - repository和<repository-onwer>/<repository-name> 这里很重要
+- 到此就结束了，注意服务账号提前创建并且要授予他比如上传GCS文件的权限等，上面的principal会自动被添加到服务账号使用者列表中，可以通过确认来看自己设置成功了没有。在actions测试，成功。
+
+
+（code例子）
 
 - 在GCP的项目中创建workload-identity-pools。
 ```bash
