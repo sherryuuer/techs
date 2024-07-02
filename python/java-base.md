@@ -202,7 +202,7 @@ class MyClass {
     // 自定义类
 }
 ```
-### homebrew install
+## homebrew install
 
 ```bash
 # 更新
@@ -326,3 +326,18 @@ java Main
    Account balance: 1.0E12
    ```
 
+## Static
+
+是静态方法的意思，如果一个函数有static，那么可以在类中直接使用该方法，如果没有static关键字，则需要对类进行实例化。
+
+Python中也有staticmethod修饰符。表示就是可以直接靠类使用的方法。
+
+## extends
+
+继承其他的class，对于变量可以直接使用，对于方法需要是public/protected属性。
+
+## 构造方法（constructor）
+
+构造方法重载指的是在一个类中可以定义多个构造方法，它们具有相同的名字（类的名字），但参数列表不同（参数的类型、数量或顺序不同）。通过这种方式，可以根据不同的需求初始化对象，提供灵活性和方便性。
+
+相当于Python中的初始化函数，但是Python的初始化函数不能有多个，只能靠类方法等实现。

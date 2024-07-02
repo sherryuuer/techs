@@ -120,6 +120,7 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [数学思维模型](principals/math-theory.md)
 
 ## Computer Science
+- [操作系统的基础知识和学习笔记](cs/c-operating-system.md)
 - [软件开发和程序员基础知识/基础情报技术](cs/programming-base.md)
 - [系统设计概念：System Design concepts](cs/system-design.md)
 - [系统设计模式思考：System Design Interview](cs/system-design-interview.md)
@@ -127,7 +128,7 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [Git和Github复习手册](cs/git.md)
 - [*网络安全分类：访问控制、身份管理、数据加密与网络防护的清晰分类](cs/network-security-tree.md)
 - [数据库：Database&SQL-AtoZ](cs/db-sql.md)
-- [网络基础：基础概念和组件CompTIA](cs/internet-comptia.md)
+- [网络基础：自顶向下，基础概念和组件CompTIA](cs/internet-comptia.md)
 - [网络基础：构架，协议栈，应用层，HTTP，DNS](cs/internet-base-app-layer.md)
 - [网络基础：传输层，TCP/UDP](cs/internet-base-transport-layer.md)
 - [网络基础：网络层，IP，ARP，DHCP，ICMP，firewall，nat](cs/internet-base-network-layer.md)
@@ -152,9 +153,10 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 ## Concepts Seeds
 
 - [UMAP](concepts/umap.md)
-- [terraform](concepts/terraform.md)
+- [Terraform](concepts/terraform.md)
 
 ## Logbooks
+- [关于知识树的上层思考和总结：视角，应用，抽象，底层原理的重要性](principals/thinking.md)
 - [数据工程师的思考模型，我为什么总有思维盲点](principals/data-engineer-thinking-model.md)
 - [项目过程心得总结-不定期添加](principals/pj-thinking.md)
 - [航海日志：定期思维检修1-202404](principals/checkmind1.md)
