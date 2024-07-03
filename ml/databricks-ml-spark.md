@@ -27,7 +27,7 @@ Databricks数据洞察包含以下组件：
 - Spark Core API
   支持R、SQL、Python、Scala、Java等多种语言。
 
-# 2 - Azure Databricks 
+# 2 - Azure Databricks
 
 创建一个分布式的cluster环境后就可以打开笔记本了，整个环境是在一个workspace中的，虽然自己对Azure接触的不多，但是从公司提供的环境看，接入环境，启动环境集成服务器，以及进入笔记本都非常方便。
 
@@ -98,14 +98,14 @@ summary = automl.regress(train_df, target_col="price", primary_metric="rmse", ti
 
 1. 回归评估指标:
 - 均方根误差 (RMSE):衡量预测值与实际值之间的平均误差。
-- 平均绝对误差 (MAE): 衡量预测值与实际值之间的平均绝对误差。 
+- 平均绝对误差 (MAE): 衡量预测值与实际值之间的平均绝对误差。
 - R-squared (R^2): 解释了模型能够解释数据集中总变化的比例，介于0到1之间，越接近1模型拟合效果越好。
 
 2. 分类评估指标:
 
 - 准确率 (Accuracy): 正确预测的实例数与总实例数的比率。
 - 精确率 (Precision): 对于每个类别，正确预测为正的实例数与所有预测为正的实例数的比率。
-- 召回率 (Recall): 对于每个类别，正确预测为正的实例数与所有实际为正的实例数的比率。 
+- 召回率 (Recall): 对于每个类别，正确预测为正的实例数与所有实际为正的实例数的比率。
 - F1分数: 精确率和召回率的调和平均值。
 - ROC曲线和AUC: 绘制真正率和假正率曲线，AUC越接近1模型分类性能越好。
 
@@ -222,7 +222,7 @@ with mlflow.start_run() as run:
 - Score a model using features from a feature store table.注意这里的score_batch方法。
 ```python
 batch_input_df = inference_data_df.drop("price") # Exclude true label
-predictions_df = fs.score_batch(f"models:/feature_store_airbnb_{DA.cleaned_username}/1", 
+predictions_df = fs.score_batch(f"models:/feature_store_airbnb_{DA.cleaned_username}/1",
                                   batch_input_df, result_type="double")
 display(predictions_df)
 ```
@@ -305,7 +305,7 @@ with mlflow.start_run(run_id=run_id) as outer_run:
 
       artifact_uri = f"runs:/{run.info.run_id}/{device_id}"
       # Create a return pandas DataFrame that matches the schema above
-      return_df = pd.DataFrame([[device_id, n_used, artifact_uri, mse]], 
+      return_df = pd.DataFrame([[device_id, n_used, artifact_uri, mse]],
                               columns=["device_id", "n_used", "model_path", "mse"])
 ```
 - Locate the time a run was executed in the MLflow UI.
@@ -430,9 +430,9 @@ searchgs = clfgs.fit(iris.data, iris.target)
 # SparkMLのモデルでhyperoptを使う場合は以下の通り
 num_evals = 4
 trials = Trials()
-best_hyperparam = fmin(fn=objective_function, 
+best_hyperparam = fmin(fn=objective_function,
                        space=search_space,
-                       algo=tpe.suggest, 
+                       algo=tpe.suggest,
                        max_evals=num_evals,
                        trials=trials,
                        rstate=np.random.default_rng(42))
@@ -441,9 +441,9 @@ best_hyperparam = fmin(fn=objective_function,
 # sklearnのモデルでhyperoptを使う場合は以下の通り
 num_evals = 4
 spark_trials = SparkTrials(parallelism=2)
-best_hyperparam = fmin(fn=objective_function, 
+best_hyperparam = fmin(fn=objective_function,
                        space=search_space,
-                       algo=tpe.suggest, 
+                       algo=tpe.suggest,
                        trials=spark_trials,
                        max_evals=num_evals,
                        rstate=np.random.default_rng(42))
@@ -468,14 +468,14 @@ best_hyperparam = fmin(fn=objective_function,
 stages = [string_indexer, vec_assembler, rf]
 pipeline = Pipeline(stages=stages)
 evaluator = RegressionEvaluator(labelCol="price", predictionCol="prediction")
-cv = CrossValidator(estimator=pipeline, evaluator=evaluator, estimatorParamMaps=param_grid, 
+cv = CrossValidator(estimator=pipeline, evaluator=evaluator, estimatorParamMaps=param_grid,
                     numFolds=3, seed=42)
 cv_model = cv.fit(train_df)
 
 # pipelineにcvを含める場合
 # pros: 変換後にfoldのdatasetに分割するため、処理速度向上が見込める
 # cons: データ漏洩の可能性がある
-cv = CrossValidator(estimator=rf, evaluator=evaluator, estimatorParamMaps=param_grid, 
+cv = CrossValidator(estimator=rf, evaluator=evaluator, estimatorParamMaps=param_grid,
                     numFolds=3, seed=42)
 stages_with_cv = [string_indexer, vec_assembler, cv]
 pipeline = Pipeline(stages=stages_with_cv)
@@ -492,8 +492,8 @@ param_grid = (ParamGridBuilder()
               .addGrid(rf.numTrees, [5, 10])
               .build())
 evaluator = RegressionEvaluator(labelCol="price", predictionCol="prediction")
-cv = CrossValidator(estimator=pipeline, evaluator=evaluator, estimatorParamMaps=param_grid, 
-                    numFolds=3, seed=42)   
+cv = CrossValidator(estimator=pipeline, evaluator=evaluator, estimatorParamMaps=param_grid,
+                    numFolds=3, seed=42)
 ```
 
 **Describe Recall and F1 as evaluation metrics.**
@@ -509,7 +509,7 @@ cv = CrossValidator(estimator=pipeline, evaluator=evaluator, estimatorParamMaps=
 log_train_df = train_df.withColumn("log_price", log(col("price"))) #学習データ
 log_test_df = test_df.withColumn("log_price", log(col("price"))) #テストデータ
 
-r_formula = RFormula(formula="log_price ~ . - price", featuresCol="features", labelCol="log_price", handleInvalid="skip") 
+r_formula = RFormula(formula="log_price ~ . - price", featuresCol="features", labelCol="log_price", handleInvalid="skip")
 
 lr.setLabelCol("log_price").setPredictionCol("log_pred")
 pipeline = Pipeline(stages=[r_formula, lr])
@@ -789,15 +789,30 @@ result_df.show()
 - 当处理的数据量超出 Spark 的配置（例如 spark.sql.execution.arrow.maxRecordsPerBatch 默认值 10,000）时，Iterator UDFs 能够更高效地处理这些数据。
 
 **Apply a model in parallel using a Pandas UDF.**
-- Identify that pandas code can be used inside of a UDF function.
-- Train / apply group-specific models using the Pandas Function API.
+```python
+spark_df = spark.createDataFrame(X_test)
+
+@pandas_udf("double")
+def predict(iterator: Iterator[pd.DataFrame]) -> Iterator[pd.Series]:
+    model_path = f"runs:/{run.info.run_id}/model"
+    model = mlflow.sklearn.load_model(model_path) # Load model
+    for features in iterator:
+        pdf = pd.concat(features, axis=1)
+        yield pd.Series(model.predict(pdf))
+
+prediction_df = spark_df.withColumn("prediction", predict(*spark_df.columns))
+display(prediction_df)
+```
+
+**Identify that pandas code can be used inside of a UDF function.**
+**Train / apply group-specific models using the Pandas Function API.**
 ## Section 4: Scaling ML Models
 ### Model Distribution
-- Describe how Spark scales linear regression.
-- Describe how Spark scales decision trees.
+**Describe how Spark scales linear regression.**
+**Describe how Spark scales decision trees.**
 ### Ensembling Distribution
-- Describe the basic concepts of ensemble learning.
-- Compare and contrast bagging, boosting, and stacking
+**Describe the basic concepts of ensemble learning.**
+**Compare and contrast bagging, boosting, and stacking**
 
 ## 学习笔记本补充参考内容
 
@@ -942,7 +957,7 @@ with mlflow.start_run(run_name="LR-Single-Feature") as run:
     mlflow.log_param("features", "bedrooms")
 
     # Log model
-    mlflow.spark.log_model(pipeline_model, "model", input_example=train_df.limit(5).toPandas()) 
+    mlflow.spark.log_model(pipeline_model, "model", input_example=train_df.limit(5).toPandas())
 
     # Evaluate predictions
     pred_df = pipeline_model.transform(test_df)
@@ -1026,11 +1041,11 @@ cv_model = cv.setParallelism(4).fit(train_df)
 - 以上为止都是在 pipeline 中进行 cv 操作，反过来在 cv 中也可以加入 pipeline。前者更安全但是开销更大，每一步都会被评估，后者虽然减少了代码重复，但是有可能会数据泄露（因为某些特征处理或数据预处理步骤可能使用了整个训练数据集）。使用交叉验证和 Pipeline 的组合通常能够更准确地评估模型的性能，但在使用时需要注意计算开销和潜在的数据泄露问题。选择合适的方法取决于具体的问题和数据集特征。
 ```python
 cv = CrossValidator(
-   estimator=rf, 
-   evaluator=evaluator, 
-   estimatorParamMaps=param_grid, 
-   numFolds=3, 
-   parallelism=4, 
+   estimator=rf,
+   evaluator=evaluator,
+   estimatorParamMaps=param_grid,
+   numFolds=3,
+   parallelism=4,
    seed=42
 )
 stages_with_cv = [string_indexer, vec_assembler, cv]
