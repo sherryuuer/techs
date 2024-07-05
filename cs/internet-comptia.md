@@ -408,6 +408,16 @@ vNIC扮演了连接虚拟机与网络之间的桥梁角色，负责将虚拟机�
   - **MAC Reservation（MAC地址保留）**：一种网络配置方法，将设备的唯一MAC地址与特定的IP地址关联，使得该设备在连接网络时总是获得相同的IP地址，通常用于DHCP服务器中。MAC Reservation（MAC地址保留） 实际上是 IP Reservation（IP地址保留） 的一种具体实现方法。它通过将设备的唯一 MAC地址 与一个固定的 IP地址 绑定，使得该设备每次连接网络时都能获得相同的 IP 地址。这种方法特别适用于需要稳定 IP 地址的设备，如服务器、打印机或其他关键网络设备。
 - **NTP（网络时间协议）**：是一种用于同步计算机时钟的协议，通过分层次的服务器与参考时间源进行时间对比和调整，确保网络中所有设备的时间一致性。
 
+- **Spanning Tree Protocol (STP)**: Spanning Tree Protocol (STP) 是一种网络协议，旨在防止网络环路，通过自动关闭冗余链路来维持以太网拓扑的无环性，确保网络的稳定性和高效性。
+
+- **Carrier Sense Multiple Access (CSMA)**: Carrier Sense Multiple Access (CSMA) 是一种用于控制网络设备访问共享通信媒介的方法，设备在传输前会检测媒介是否空闲，以减少碰撞和提高传输效率。
+
+- **ARP（地址解析协议）**是一种网络协议，用于将IP地址解析为对应的物理MAC地址，以便在本地网络中实现数据包的正确传输。
+
+- **NDP（Neighbor Discovery Protocol）**是一种在*IPv6网络中*使用的协议，用于执行邻居发现、路由器发现、地址自动配置和重定向等功能，以确保网络设备间的高效通信。
+
+- **SNMP（Simple Network Management Protocol）**是一种用于监控和管理网络设备（如路由器、交换机和服务器）性能和状态的协议，通过简单的请求-响应机制收集和交换信息。
+
 ### DNS
 
 - **DNS Resolver（DNS解析器）**：是负责接收客户端的域名查询请求，并递归地查找正确的IP地址的*系统组件或服务*。
@@ -687,69 +697,41 @@ vNIC扮演了连接虚拟机与网络之间的桥梁角色，负责将虚拟机�
    - 根据设备的MAC地址划分VLAN。
    - 提供更细粒度的控制，适用于需要对特定设备进行管理的网络环境。
 
-#### VLAN配置示例
+### Port
 
-以Cisco交换机为例，以下是一些常见的VLAN配置命令：
+**Port tagging** 是一种*网络技术*，用于在同一条物理网络链路上，通过在数据帧中添加标签（通常是VLAN标签），来区分和管理不同的虚拟局域网（VLAN），从而使得多种网络流量可以共存而不会相互干扰。
 
-1. **创建VLAN**：
+**Port aggregation** 是一种将多个网络端口组合成一个逻辑链路，以增加带宽、提高冗余性和实现负载均衡的*网络技术*。
 
-   ```shell
-   // 创建VLAN 10
-   Switch(config)# vlan 10
-   Switch(config-vlan)# name HR_Department
-   ```
+**Duplex** 是一种*通信模式*，定义了数据传输的方向性，可以是单向（半双工）或双向同时（全双工），影响网络设备之间的数据交换效率。
 
-2. **配置Access Port**：
+**Port mirroring** 是一种网络技术，用于将一个或多个端口上的数据流量复制到另一个端口，以便进行实时监控或分析，而不会影响原始流量的传输。
 
-   ```shell
-   // 将端口配置为Access Port并分配到VLAN 10
-   Switch(config)# interface FastEthernet 0/1
-   Switch(config-if)# switchport mode access
-   Switch(config-if)# switchport access vlan 10
-   ```
+**Jumbo Frames** 是指大于标准MTU（通常为1500字节）的以太网帧，通常用于优化网络性能，特别是在高带宽和低延迟的网络环境中，可以减少处理开销和提高传输效率。
 
-3. **配置Trunk Port**：
+### Wifi
 
-   ```shell
-   // 将端口配置为Trunk Port，允许VLAN 10和VLAN 20通过
-   Switch(config)# interface GigabitEthernet 0/1
-   Switch(config-if)# switchport mode trunk
-   Switch(config-if)# switchport trunk allowed vlan 10,20
-   ```
+想象一个音乐会（频段），音乐会的整个场地内有多个舞台（信道）。每个舞台在同一时间段内演奏不同的音乐。音乐会场地是频段，所有的演奏舞台都是这个频段的一部分，但每个舞台是独立的演奏空间，即信道。多个信道可以在同一频段内同时工作，但它们必须在不同的频率范围内，以避免干扰。
 
-4. **配置Native VLAN**：
+- **频段（Frequency Band）**: 是较宽的频率范围，包含多个信道。
+- **信道（Channel）**: 是频段内的具体频率子集，用于无线通信设备之间的实际数据传输。
+- 在 Wi-Fi 中，我们选择特定的信道来传输数据，而这些信道属于特定的频段。每个频段有不同的物理特性，适合不同的使用场景。
 
-   ```shell
-   // 配置Native VLAN为VLAN 99
-   Switch(config)# interface GigabitEthernet 0/1
-   Switch(config-if)# switchport trunk native vlan 99
-   ```
+**SSID**是无线网络的唯一标识符，用于帮助设备识别和连接到特定的 Wi-Fi 网络。当你打开设备的 Wi-Fi 功能时，设备会扫描周围的无线网络，并显示这些网络的 SSID，用户可以根据 SSID 选择要连接的网络。
 
-#### VLAN和VLAN间路由
+无线加密技术比较：
 
-- **VLAN间路由（Inter-VLAN Routing）**：
-  - 不同VLAN之间的通信需要通过路由器或三层交换机来实现。
-  - 可以配置路由器的子接口或使用三层交换机的SVI（Switch Virtual Interface）进行VLAN间路由。
+| 加密协议 | 简介  | 安全性 | 适用场景 |
+|-------|------|------|--------|
+| WEP   | 早期的加密标准，易被破解 | 弱  | 不推荐 |
+| WPA   | WEP的改进版，动态密钥 | 中  | 过渡期设备 |
+| WPA2  | 目前主流标准，采用AES加密 | 强  | 现代无线网络 |
+| WPA3  | 最新标准，更强加密和安全性 | 最强 | 未来网络 |
 
-  ```shell
-  // 在路由器上配置VLAN间路由
-  Router(config)# interface GigabitEthernet 0/0.10
-  Router(config-subif)# encapsulation dot1Q 10
-  Router(config-subif)# ip address 192.168.10.1 255.255.255.0
+- **家庭Wi-Fi网络**：通常使用WPA2-Personal加密。
+- **企业网络**：常使用WPA2-Enterprise或WPA3-Enterprise，提供更强的安全性和用户管理。
+- **公共Wi-Fi热点**：未来将逐步采用WPA3增强安全性。
 
-  Router(config)# interface GigabitEthernet 0/0.20
-  Router(config-subif)# encapsulation dot1Q 20
-  Router(config-subif)# ip address 192.168.20.1 255.255.255.0
-  ```
-
-  ```shell
-  // 在三层交换机上配置SVI进行VLAN间路由
-  Switch(config)# interface Vlan10
-  Switch(config-if)# ip address 192.168.10.1 255.255.255.0
-
-  Switch(config)# interface Vlan20
-  Switch(config-if)# ip address 192.168.20.1 255.255.255.0
-  ```
 
 ## 自顶向下
 

@@ -189,7 +189,7 @@ public class Main {
         String greeting = "Hello, World!"; // String 类
         int[] numbers = {1, 2, 3}; // 数组类型
         MyClass obj = new MyClass(); // 自定义类的对象
-        
+
         System.out.println("Number: " + num);
         System.out.println("Pi: " + pi);
         System.out.println("Greeting: " + greeting);
@@ -341,3 +341,17 @@ Python中也有staticmethod修饰符。表示就是可以直接靠类使用的�
 构造方法重载指的是在一个类中可以定义多个构造方法，它们具有相同的名字（类的名字），但参数列表不同（参数的类型、数量或顺序不同）。通过这种方式，可以根据不同的需求初始化对象，提供灵活性和方便性。
 
 相当于Python中的初始化函数，但是Python的初始化函数不能有多个，只能靠类方法等实现。
+
+## 语法笔记
+
+`++x`：先自增，再使用。`x++`：先使用，再自增。
+
+对象的比较：`boolean same = s.equals(s1);` 也就是使用自身的方法
+
+字符串取切片区间：`String substring = s.substring(1, 2);` 区间和Python一样也是包含左边不包含右边
+
+以某字符为prefix：`boolean startswith = s.startsWith("H");`
+
+长度：`s.length()`
+
+`s.charAt(3)`返回index位于3的字符
