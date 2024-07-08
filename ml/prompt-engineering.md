@@ -246,6 +246,8 @@ graph TD
 
 ## Advanced Prompts Tool
 
+### Chain of Density
+
 - [ChatGPT-AutoExpert](https://github.com/spdustin/ChatGPT-AutoExpert/tree/main)
 - [Chain of Density Prompting](https://docs.google.com/document/d/1Qi3bLWUY_YQc5XJBsWXR5hniZAl-gA6fpG8p4X0TRHs/edit)
 
@@ -262,6 +264,17 @@ Chain of Density Prompting(密度链式提示)是一种针对大型语言模型�
 4. **迭代微调**: 重复上述密度提示的过程,直到模型在评估集上的性能不再有明显提升为止。
 
 Chain of Density Prompting的优点是能够充分利用人工示例,更高效地指导模型习得复杂任务。它模拟了人类逐步学习的过程,使模型的学习更加渐进、高效。该方法已被应用于诸如任务式对话、问答等多种场景,显示出不错的效果。
+
+### Prompt Variables
+
+在构建AI应用中常用的技术，可以让整个应用动态运行，根据用户信息的不同，输出不同的，根据用户信息生成的内容。在langchain中也是各种动态变量。
+
+### Prompt Chaining
+
+- 一次一个task
+- 将上一次的output作为下一次的input
+- 有利于提升精度和连续性，更容易troubleshooting，是一种好的实验
+- 适合复杂指导，多步骤任务，优化output
 
 ## resources links
 

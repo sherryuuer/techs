@@ -226,7 +226,7 @@ AWS安全服务一共包括六个板块：
 
 - Unified CW Agent 用来发送EC2的RAM，processes，disk space信息，namespace是CWAgent。使用Procstat Plugin。
 - EC2要对CW发送log需要相应的Agent权限。创建EC2后安装Agent，会通过漫长的设置创建config.json文件，这个文件可以存储在Parameter Store中，当你想用一个设置管理很多EC2的时候这很有用，但是这需要Agent的Admin权限。如果无法得到metric，troubleshooting找agent的log文件。
-- 使用命令行调用config文件，本地调用或者parameter store调用，后者更适合管理很多EC2的情况。 
+- 使用命令行调用config文件，本地调用或者parameter store调用，后者更适合管理很多EC2的情况。
 - **Cloud Watch Log insights**：进行可视化日志分析。注意这只是一个query引擎而不是一个即时流，如果想要将log流处理需要用**CloudWatch Log Subscriptions**的filter功能将日志不断传入其他服务进行处理，分析，存储。它还可以整合不同区域的日志，将他们聚合起来（kinesis）。那么既然它是一个订阅服务，就需要有起点和目的地账户，并且需要在账户之间设置policy，以供分发和接收。尤其是接收端的权限放行。
 - 可以通过设置metric的阈值（可以进行条件的组合比如AND，OR等，很灵活）发出alarm，可执行的动作，包括对EC2的启动关闭等操作，对Auto Scaling对扩张收缩，以及使用SNS发出通知等。
 - **Alarms**：可以通过CWlogs metrics filter设置，可设置频率，Actions可以对EC2操作，可以对AutoScaling操作，可以发送给SNS服务。**Composite Alarms**是一种针对其他警报的复合警报，可以使用条件语句，比如同时监视CPU和IO。
@@ -381,7 +381,7 @@ AWS安全服务一共包括六个板块：
 - VPC Endpoint Gateway（通过设置固定IP的网络路由实现，内网）：support S3&DynamoDB。不需要访问public internet。要在路由表中设置资源名称比如S3桶。是VPClevel的设置，同时必须开DNSresolution，因为S3和DynamoDB资源是需要解决域名的。注意：每个VPC都必须设置，peering，VPN连接的网络都不管用。
 - VPC Endpoint Interface（通过PrivateLink实现，需要进行DNS查询）：support all except DynamoDB。这个选项需要设置 VPC Endpoint Interface（ENI）。依赖SG进行安全设置（因为在EC2上）。需要DNSresolution解决服务的公共域名到私有hostname的映射。注意：这个可以通过 Site-to-site-VPN 和 Direct Connect 进行跨VPC访问。
 - 考虑到每一个服务都是一个API（所以他们都需要解决域名，进行IP接口访问！），如果设置interface，有时候需要设置非常多接口，用于多种服务组合。
-- troubleshooting：check DNS resolution 和 route table 
+- troubleshooting：check DNS resolution 和 route table
 - 二者区别：Endpoint Gateway 不需要分配专用的 IP 地址，而是使用 VPC 的子网路由表中的目标，通过 Internet Gateway（Internet 网关）进行访问。Endpoint Interface 需要分配一个专用的私有 IP 地址，并将其连接到 VPC 子网中，以提供专用的网络路径进行访问。
 - 网关Gateway和网络接口ENI：
   - 网关是一种网络设备，用于连接不同网络之间的通信。在 AWS 中，常见的网关包括 Internet Gateway（Internet 网关）、Virtual Private Gateway（虚拟专用网关，刚刚的VPN连接时候用到的虚拟网关）、NAT Gateway（NAT 网关）等。他们都需要添加路由设置。
@@ -528,8 +528,8 @@ AWS安全服务一共包括六个板块：
 - 跨账户许可：IAMPolicy，Resource-base-policy，OrgnizationID等都很有帮助
 - 判定逻辑：首先所有的action是被隐式拒绝的。
 ```
-没有显式deny(no explicit deny) 
---> 组织SCP为allow: allow on organization scps level 
+没有显式deny(no explicit deny)
+--> 组织SCP为allow: allow on organization scps level
 --> 基于资源的许可allow: allow on resource based policy
 --> 基于认证的许可allow: allow on identity based policy
 --> 边界许可allow: allow on IAM permission boundaries

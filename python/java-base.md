@@ -99,6 +99,8 @@ Java应用程序结构包括包、类和接口、方法、成员变量、构造�
 
 在 Java 编程语言中，变量可以分为两种主要类型：**基本类型**（Primitive Types）和**引用类型**（Reference Types）。
 
+基本类型基本以小写字母开头，引用类型基本以大写字母开头。
+
 ### 1. 基本类型（Primitive Types）
 
 基本类型是 Java 中最简单的数据类型。它们存储的是实际的值，而不是指向值的引用。Java 提供了 8 种基本数据类型，每一种类型都有固定的大小和范围：
@@ -163,7 +165,7 @@ Java应用程序结构包括包、类和接口、方法、成员变量、构造�
 ### 基本类型与引用类型的区别
 
 1. **内存分配**：
-   - 基本类型的值直接存储在栈内存中，分配固定大小的内存空间。
+   - 基本类型内存占用较小，值直接存储在栈内存中，分配固定大小的内存空间。
    - 引用类型的引用（地址）存储在栈内存中，而对象本身存储在堆内存中，引用指向对象的实际内存地址。
 
 2. **操作方式**：
@@ -290,13 +292,11 @@ java Main
    ```
    project_root/
    ├── out/
-   │   ├── main/
-   │   │   └── MainAccount.class
+   │   ├── MainAccount.class
    │   └── bank/
    │       └── BankAccount.class
    ├── src/
-   │   ├── main/
-   │   │   └── MainAccount.java
+   │   ├── MainAccount.java
    │   └── bank/
    │       └── BankAccount.java
    ```
@@ -355,3 +355,170 @@ Python中也有staticmethod修饰符。表示就是可以直接靠类使用的�
 长度：`s.length()`
 
 `s.charAt(3)`返回index位于3的字符
+
+Cast，类型转换：
+
+```java
+long l = 123;
+int x = (int) l;
+
+double d = 1.2;
+float f = (float) d;
+```
+
+在 Java 中，字符类型 `char` 使用 16 位无符号整数表示 Unicode 字符，这意味着它可以表示的最小值是 `0`，最大值是 `65535`。如果超过了这个范围，`char` 类型就会溢出（overflow）。
+
+1. **`char` 类型的范围**：
+   - `char` 类型在 Java 中表示一个 16 位的无符号整数。
+   - 它的取值范围是 `0` 到 `65535`，也就是 `2^16 - 1`。
+
+2. **Overflow（溢出）**：
+   - 当一个无符号整数超过它的最大值时，继续增加会导致它回到最小值，这被称为溢出。
+   - 对于 `char` 类型，当值达到 `65535` 时，再加 `1`，就会超出它的最大值，发生溢出。
+
+3. **加法操作和溢出**：
+   - 如果对 `char` 类型的最大值 `65535` 加 `1`，它就会溢出。
+   - 因为 `char` 类型是无符号的，所以它不能表示负数。溢出后，值会从头开始，也就是从 `0` 开始。
+   - 因此，`65535 + 1` 在 `char` 类型下会变成 `0`。
+
+```java
+public class CharOverflowExample {
+    public static void main(String[] args) {
+        char maxChar = 65535; // char 的最大值
+        System.out.println("Initial maxChar value: " + (int) maxChar); // 输出 65535
+
+        // 对 maxChar 加 1
+        maxChar++;
+
+        // 输出溢出后的值
+        System.out.println("maxChar after increment: " + (int) maxChar); // 输出 0
+    }
+}
+```
+## Primitives 和 Objects
+
+- 基本数据类型（primitives）适合用于需要高性能和低内存占用的场景，特别是在处理简单的数值计算时。
+  - 内存占用较小
+  - immutable不可变
+  - *stack*存储
+
+- 对象（objects）提供了更丰富的功能和灵活性，适合表示复杂的数据结构和行为。
+  - 内存占用较大
+  - default是mutable可变的
+  - 可以包含基本数据类型，用于定义object的比如属性
+  - *对象可以包含对象*
+    - 这是一个很有趣的思想，比如一只猫有一个主人，主人有一辆车，一辆车有价格，价格就是一个基本数字double类型
+    - 从一个对象，检索到其他对象的过程是一种高维度的思考方式
+  - 也是前面说的reference类型
+  - *heap*存储
+
+- 代入函数，其实是一种copy：当对基本类型的data进行copy和修改后，原本的data不会改变，因为它immutable，但是对object进行copy和修改，只是在其引用上修改，原本object也会被修改。
+
+## **栈**（Stack）和**堆**（Heap）
+
+### 栈（Stack）
+
+栈内存用于存储局部变量、方法调用和方法参数。它是一个LIFO（Last In, First Out）结构，意味着最后一个被压入栈的元素最先被弹出。栈的主要特点和用途包括：
+
+1. **存储内容**：
+   - 局部变量：在方法内部定义的变量。
+   - 方法调用：每次方法调用都会在栈上创建一个栈帧（Stack Frame），存储该方法的参数、局部变量和返回地址。
+   - 方法参数：传递给方法的参数也存储在栈上。
+
+2. **生命周期**：
+   - 栈上的内存由方法的执行控制。一个方法一旦结束，栈上的相应栈帧会被弹出并释放内存。
+   - 局部变量的生命周期也与方法相同，当方法完成时，局部变量被销毁。
+
+3. **访问速度**：
+   - 由于栈是LIFO结构，访问速度非常快，因为每次操作只涉及栈顶的元素。
+
+4. **自动管理**：
+   - Java 自动管理栈内存，无需手动分配和释放。
+
+5. **空间限制**：
+   - 栈的空间较小，通常有限。过深的递归调用或过多的局部变量可能会导致栈溢出（StackOverflowError）。
+
+#### 栈的例子
+
+```java
+public class StackExample {
+    public static void main(String[] args) {
+        int a = 5;   // 局部变量a
+        int b = 10;  // 局部变量b
+        int result = add(a, b);  // 方法调用，result存储返回值
+        System.out.println(result);
+    }
+
+    public static int add(int x, int y) {
+        int sum = x + y;  // 局部变量sum
+        return sum;       // 返回sum
+    }
+}
+```
+
+在上述代码中，`a`、`b`、`x`、`y` 和 `sum` 都是存储在栈上的局部变量。`add` 方法调用时，会在栈上创建一个新的栈帧来存储其参数和局部变量。
+
+### 堆（Heap）
+
+堆内存用于动态分配存储在Java中的所有对象和类实例。与栈不同，堆内存的管理更为复杂和灵活。堆的主要特点和用途包括：
+
+1. **存储内容**：
+   - Java中的所有对象和数组。
+   - 类的实例变量（字段）。
+
+2. **生命周期**：
+   - 堆上的对象有更长的生命周期，它们的内存由Java的垃圾回收机制（Garbage Collection）管理。
+   - 垃圾回收器会自动识别和清理不再使用的对象，从而释放内存。
+
+3. **访问速度**：
+   - 由于堆内存不遵循特定的顺序，其访问速度比栈慢。
+
+4. **手动管理**：
+   - 尽管不需要手动释放内存，开发者仍然需要小心管理对象的生命周期，避免内存泄漏（Memory Leak）。
+
+5. **空间优势**：
+   - 堆空间比栈大得多，适合存储大对象和长期存在的数据。
+
+#### 堆的例子
+
+```java
+public class HeapExample {
+    public static void main(String[] args) {
+        Person person = new Person("John", 30); // 创建一个Person对象
+        System.out.println(person.getName() + " is " + person.getAge() + " years old.");
+    }
+}
+
+class Person {
+    private String name; // 实例变量，存储在堆上
+    private int age;     // 实例变量，存储在堆上
+
+    public Person(String name, int age) {
+        this.name = name;
+        this.age = age;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public int getAge() {
+        return age;
+    }
+}
+```
+
+在上述代码中，`Person` 对象存储在堆上，`name` 和 `age` 是该对象的实例变量，它们也存储在堆上。
+
+### 栈与堆的对比
+
+| 特性            | 栈（Stack）                                    | 堆（Heap）                                   |
+|-----------------|------------------------------------------------|---------------------------------------------|
+| 用途            | 存储局部变量、方法调用和方法参数                | 存储所有对象和数组                          |
+| 内存管理        | 自动管理（LIFO）                                | 由垃圾回收器自动管理                         |
+| 访问速度        | 快（由于LIFO结构）                              | 相对较慢（由于需要动态分配和垃圾回收）       |
+| 生命周期        | 与方法调用周期一致                              | 对象可在方法结束后继续存在                   |
+| 大小限制        | 较小，受限于栈大小（可能导致StackOverflowError）| 较大，适合存储大量和长期存在的数据           |
+| 内存释放        | 方法结束时自动释放                              | 通过垃圾回收机制自动释放                     |
+
+理解栈和堆在Java中的角色和区别，对于有效地管理内存和优化应用程序性能非常重要。在编写代码时，注意局部变量和对象的使用方式，可以帮助避免常见的内存管理问题，如栈溢出和内存泄漏。

@@ -150,11 +150,6 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [外部链接：Prompt Design and Engineering: Introduction and Advanced Methods](https://arxiv.org/abs/2401.14423)
 - [外部链接：竟然有人用Excel实现了GPT2的构架，只要理解了基础，工具只是辅助而已！so coooool!](https://spreadsheets-are-all-you-need.ai/index.html#watch-the-lessons)
 
-## Concepts Seeds
-
-- [UMAP](concepts/umap.md)
-- [Terraform](concepts/terraform.md)
-
 ## Logbooks
 - [关于知识树的上层思考和总结：视角，应用，抽象，底层原理的重要性](principals/thinking.md)
 - [数据工程师的思考模型，我为什么总有思维盲点](principals/data-engineer-thinking-model.md)
