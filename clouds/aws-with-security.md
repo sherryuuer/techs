@@ -59,7 +59,7 @@ AWS安全服务一共包括六个板块：
 
 ### Guard Duty
 
-- 可以利用机器学习和行为分析技术来检测恶意活动和未经授权的行为。
+- 可以利用机器学习和行为分析技术来*检测恶意活动和未经授权的行为*。
 - GuardDuty 分析对象来自 AWS CloudTrail（针对人）、Amazon VPC 流量日志和 DNS 日志的数据（针对网络），S3 data event（针对数据），EKS logs等。
 - 后面可以加上EventBridge rules进行通知，trigger target: Lambda,SNS。
 - 防加密货币攻击。有专用的finding方法。
@@ -87,6 +87,7 @@ AWS安全服务一共包括六个板块：
 
 - 机器学习和图算法。
 - 深度分析根源问题。
+- 自动收集和输出事件：VPC Flow Logs，CloudTrail，GuardDuty
 - 生成可视化visualizations和细节details。
 - 流程：detective检测 - triage问题分类 - scoping问题界定 - response回应
 
@@ -134,7 +135,7 @@ AWS安全服务一共包括六个板块：
 ### EC2 instance connect（browser based）
 
 - 运作方式其实不是从浏览器而是通过CLI到该服务的*API*。
-- 会推送一个60秒的临时key到metadata。EC2会去metadata拿到这个key。
+- 会推送一个60秒的临时sshPublickkey到metadata。EC2会去metadata拿到这个key。
 - 从AWS固定的IPrange进行ssh连接。18.206.107.24/29
 - EC2的SG需要开放该IP的ssh22号端口的inbound许可。
 - 由于是API请求，所以该行为都会被CloudTrail记录。

@@ -333,3 +333,187 @@
 - 新创建的资源会立刻适用这些rules
 - 包括：WAFrules/Shield/SG/NetworkFirewall/Route53ResolverDNSFirewall
 - 创建的是Region level的Policy
+
+### Block a IP
+
+- 两种构架，block IP：
+- client --> VPC(NACL)(ALB(with WAF ip filter) --> EC2)
+- client --> CloudFront(with WAF ip filter) --> VPC(NACL)(ALB --> EC2)
+- (组件之间通过SG的白名单允许通过)
+
+### Inspector
+
+- EC2的网络可达性
+- 针对*EC2 instance/Container Images/Lambda Function*的网络漏洞分析 -> 会以一个risk score来表达漏洞的优先级
+
+### AWS Config
+
+- 根据Config rules检测*合规与否*以及*设置变化过程*而不阻止变化，无法deny，可以SNS通知
+- view CloudTrail API calls if enabled
+- region level，需要在每个region都设置
+- 跨region和account聚合数据
+- 修复：
+  - Config -> EventBridge -> Lmabda
+  - Config -> SSM Automations
+
+### 各种AWS管理的logs
+
+- Load Balancer access logs -> S3
+- CloudTrail logs -> S3/CW Logs
+- VPC Flow Logs -> S3/KDF/CW Logs
+- Route53 access logs -> CW Logs
+- S3 access logs -> S3
+- CloudFront access logs -> S3
+- AWS Config -> S3
+
+### Guard Duty
+
+[安全专家链接](aws-with-security.md###GuardDuty)
+
+### EC2 Instance Connect
+
+[安全专家链接](aws-with-security.md###EC2instanceconnect（browserbased）)
+
+### AWS Security Hub
+
+[安全专家链接](aws-with-security.md###AWSSecurityHub)
+
+### Detective
+
+[安全专家链接](aws-with-security.md###Detective)
+
+## Compute & Load Balancing
+
+![Architecture](solution-architecture-aws.png)
+
+### EC2 instance types
+
+**image type**
+
+- R(RAM):in-memory caches
+- C(CPU):compute&databases
+- M(medium/balanced):general/web app
+- I(I/O):instance storage/databases
+- G(GPU):video rendering/machine learning
+- T2/T3:burstable in capacity
+- T2/T3 unlimited:unlimited burst
+
+**launch type**
+
+- on demand instance
+- spot instance
+- reserved
+  - 最短一年
+- dedicated instances
+  - 无人分享你的hardware
+- dedicated hosts
+  - 预定整个物理服务器
+
+**EC2 included metrics**
+
+- CPU
+  - CPU利用率（CPU Utilization）
+  - CPU Credit Usage/Balance：适用于T系列突发性能实例，表示使用的CPU积分和剩余的CPU积分，用于在短时间内提高性能
+- Network：In/Out
+  - 网络流量和带宽使用情况
+  - In/Out表示接收和发送的数据量
+- Status Check：
+  - instance status = check the EC2 VM：实例运行健康状况
+  - system status = check the underlying hardware：底层硬件的健康状况
+- Disk：Read/Write for Ops/Bytes（only for instance store）
+  - 实例存储的IO状况
+  - 每秒读写操作数，每秒读写字节数
+- 注意，RAM（内存使用情况）不包括在内
+  - 内存是计算机系统中至关重要的组成部分，负责临时存储数据和指令，支持程序的高效执行和多任务处理。
+  - 内存的性能和容量直接影响计算机系统的整体性能和用户体验。
+
+### EC2 Graviton
+
+- 基于 ARM 架构的高性能、低成本处理器
+- 支持Linux各种而不支持windows instances
+
+### EC2 placement group
+
+- EC2的放置策略
+  - Cluster：单个AZ中集合的instance群
+    - low-latency但是rack损坏则全体不可用
+    - 适合大数据低延迟计算，高网络吞吐
+  - Spread：在多AZ上进行硬件的隔离分布，高可用性
+    - 限制：7 instance per AZ per placement group
+  - Partition：跨许多分区（partition）的spread，这些分区实际上坐落于不同racks的集合
+    - rack是指物理数据中心的一组服务机架
+    - Hadoop/Cassandra/Kafka/HDFS/HBase
+
+### HPC
+
+- 大数据传输服务：DX，Snowball&Snowmobile（数据到云），DataSync（本地到S3/EFS/FSx for Windows）
+- 超级计算机是AWS中各种服务组合的运用
+  - EC2 Placement Groups比如Cluster
+  - instance type比如GPU，Spot instance/Spot Fleets + Auto Scaling
+  - EC2 Enhanced Networking（SR-IOV）
+  - Elastic Fabric Adapter（EFA）
+  - [网络专家跳转链接](aws-with-networking.md###EC2NetworkperformanceOptimization)
+  - 存储：EBS/InstanceStore
+  - 网络存储：S3/EFS/FSx for Lustre
+  - 自动化和编排（Automation&Orchestration）：AWS Batch/AWS ParallelCluster
+    - ParallelCluster是开源的HPC管理工具，用textfiles进行设置，自动创建各种服务组件比如VPC，subnet，EC2等
+
+### Auto Scaling
+
+- 通过设置目标值（比如average），或者CW的阈值进行自动伸缩
+- Scheduled Actions：如果知道某时段需要增加unit，可以设置schedule
+- Predictive Scaling：可预测性伸缩，不断学习和分析，ML技术
+- 主要指标：CPU使用率，网络In/Out，RequestCountPertarge和其他自定义指标
+- *Spot Fleet support*：支持spot和on-demand实例混合
+- *Lifecycle Hooks*：在启动或者关闭一个实例之前可以进行特定的动作的功能，比如cleanUp，抽出日志等
+- *Upgrade AMI*：必须update launch configuration/template
+  - 然后可以手动关闭旧的实例，或者使用CloudFormation关闭
+  - 也可使用*EC2 Instance Refresh*，在启动新的实例的时候会自动使用新的AMI
+- 所有Auto Scaling Processes：
+  - Launch
+  - Terminate
+  - HealthCheck：EC2，ELB
+  - ReplaceUnhealthy
+  - AZRebalance
+  - AlarmNotification
+  - ScheduledActions
+  - AddToLoadBalancer
+  - InstanceRefresh
+
+- *AutoScaling 策略构架*
+  - 在ALB的同一个target group中发布新的template，和旧的template同时使用，慢慢删除旧template实例，流量会在所有实例中分布
+  - 在ALB的不同target group中发布新的template，只分配一小部分流量给新的实例查看效果，慢慢过渡
+  - 创建全新的ALB和它的target group，发布新的template，使用*Route53 CNAME weighted record*，分配流量给两个ALB群组进行逐步过渡，以及对新的ALB群组进行手动testing
+
+### Spot Instance & Spot Fleet
+
+- 适合batch作业
+- 定义max spot price，当没超过阈值的时候会自动增加spot instance数量，如果超过则自动关闭（在2分钟之内）
+- Spot Fleets：set of Spot Instances + (Optional) on-demand Instances
+  - 在满足最低价格的限制条件下，自动满足目标capacity需求
+
+### Amazon Fargate work with ECS/EKS
+
+- ECS use case：
+  - Run MicroServices
+  - Run Batch processing/Scheduled Tasks
+  - Migrate Apps to Cloud
+- ECS concepts:
+  - ECS Cluster
+  - ECS Services
+  - Task Definitions(json file )
+  - ECS Task
+  - ECS IAM Roles
+- ECS 集成 ALB：使用Dynamic Port Mapping，分配流量：可以在一个EC2实例上发布多个container
+
+- Fargate是一个Serverless的服务，无需构架基础设置，直接添加container
+
+- ECS安全：集成SSM ParameterStore和Secret Manager
+- ECS Task Networking：None，host（使用底层host的interface），bridge（虚拟网络），awsvpc（使用自己的ENI和私有IP）
+
+- ECR
+  - 支持image漏洞扫描（on push），版本控制和lifecycle
+    - 基础漏洞扫描由ECR进行，并触发EventBridge发布通知
+    - 高级Enhanced扫描通过Inspector进行，由Inspector触发EventBridge发布通知
+  - 通过CodeBuild可以register和push image到ECR
+  - 可以cross-region 或者 cross-account 地 replicate image
