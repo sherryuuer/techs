@@ -171,13 +171,6 @@ IAM Policy：用json方式写的权限控制方式，成员，角色，资源，
 - 容器化服务，需要定义集群，可移植性，容器为部署单元。
 - 容器，所以不涉及底层OS系统。
 
-### Cloud Run
-
-- 托管的GKE服务，用法和GKE基本相似除了：集群由谷歌管理，工作负载容器化，docker image，便宜，之需要关心应用的高可用性即可。
-- 正因为它只是容器，所以不涉及对OS层级的管理。而是交给谷歌管理。
-- 根据requests进行scaling
-- 可以有长达一小时的timeout请求
-
 
 ### Compute Engine
 
@@ -189,7 +182,7 @@ IAM Policy：用json方式写的权限控制方式，成员，角色，资源，
   - 要素：Image, Snapshot, Metadata(hostname, instance id, startup&shutdown scripts, custom metadata, service accounts info)
   - 新建一个GCE可以从public image,custom image, snapshot, 或者任何可以启动的disk来创建。可以设置SA账号，并设置该服务器可以access的其他API。还可以设置防火墙firewall（http或者https访问）。
   - Startup script：这个相当于AWS的user data，是在启动的时候执行的命令。
-- N2 is a balanced machine type, which is recommended for medium-large databases. 
+- N2 is a balanced machine type, which is recommended for medium-large databases.
 - 管理Instance集群，创建template，进行更新操作，使用PROACTIVE模式可以进行一次一个instance的rolling更新。
 
 ### Auto Scaling
@@ -217,7 +210,7 @@ IAM Policy：用json方式写的权限控制方式，成员，角色，资源，
 
 - 创建GKE的三个部分是：Cluster basics, Node pools, Cluster（automation, networking, security（可以设置SA）, metadata, features）
 - GKE mode: GKE has to modes to choose from: autopilot mode and standard mode. Autopilot is fully-provisioned and managed. *Autopilot* clusters are regional managed at the pod level. You are charged according to the resources pods use as you deploy and replicate them based on the pod spec. *Standard* mode provides you flexibility to define and manage the cluster structure yourself. *Standard* clusters can be zonal.
-- Nodes run containers. Nodes are VMs (in GKE they're Compute Engine instances). 
+- Nodes run containers. Nodes are VMs (in GKE they're Compute Engine instances).
 
 - 对于Workload可以进行设置和deploy。设置内容：application name, namespace, labels, cluster。这里namespace很重要，他是区分不同code的方式，比如一个node可以有很多版本的code，这里就是通过namespace区分的。
 
@@ -229,6 +222,11 @@ IAM Policy：用json方式写的权限控制方式，成员，角色，资源，
 - 事件驱动。web服务restAPI后端。轻量级数据转换。使用webhooks的业务工作流程。
 - image可以来自Container Registry。
 - 部署image后会有一个端口URL，通过requests请求就可以执行在image中部署的代码了。
+
+- 托管的GKE服务，用法和GKE基本相似除了：集群由谷歌管理，工作负载容器化，docker image，便宜，之需要关心应用的高可用性即可。
+- 正因为它只是容器，所以不涉及对OS层级的管理。而是交给谷歌管理。
+- 根据requests进行scaling
+- 可以有长达一小时的timeout请求
 
 ### APP Engine
 
@@ -296,7 +294,7 @@ codelabs：https://codelabs.developers.google.com/codelabs/cloud-bigtable-intro-
   - BigQuery connectors for big data products such as Spark or Hadoop
   - Cloud Composer, a Google Cloud managed version of Apache Airflow
   - Real-time use cases you can stream data into BigQuery using the Streaming API
-  - Dataflow and [Apache Beam](https://www.cnblogs.com/zlslch/p/7609417.html)：A possible use-case for this is to trigger a Cloud Function when an event happens. The Cloud Function could contain the logic to start an Apache Beam pipeline using a Dataflow runner that would execute transformations required and then save your data into BigQuery when it is done. 
+  - Dataflow and [Apache Beam](https://www.cnblogs.com/zlslch/p/7609417.html)：A possible use-case for this is to trigger a Cloud Function when an event happens. The Cloud Function could contain the logic to start an Apache Beam pipeline using a Dataflow runner that would execute transformations required and then save your data into BigQuery when it is done.
 
 ### Cloud SQL
 

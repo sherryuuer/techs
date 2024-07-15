@@ -1,6 +1,5 @@
 ## AWS中机器学习的相关服务和网络构架
 
----
 时间戳2024年2月。
 
 ### Sagemaker的训练和部署模型
@@ -99,7 +98,7 @@ RecordIO和Protobuf都是用于序列化数据的格式，通常在机器学习�
 - Amazon SageMaker Studio：可视化的IDE机器学习集成开发环境。方便和团队进行协作开发，还可以方便地切换坐落于AWS上的硬件。
 - Amazon SageMaker Experiments：查找，比较，整合，组织，在SageMaker中进行的各种ML实验。
 - Amazon SageMaker Debugger：集成于Studio的一个插件，可以回顾过去的梯度和张量，以发现问题，可以将数据集成到一个仪表盘，适用于很多框架。这让我想到了Tensorboard，感觉功能是很相似的。
-- Amazon SageMaker Studio Lab  
+- Amazon SageMaker Studio Lab
 - Automatic Model Tuning：边调整参数边学习的智能调优功能。
 - Apache Spark with SageMaker：将spark在大数据上的pre-processing能力和Sagemaker的机器学习能力相结合。使用Sagemaker-spark-library和SagemakerEstimator中的内置模型（K-means,PCA,XGBoost）可以更快速和方便的进行模型训练，并且可以使用Sagemaker中的很多其他功能，比如参数调优。
 - Model Monitoring：Sagemaker的模型监控，监控数据偏差，异常值等，以及新的特征，集成SageMaker Clarify可以监控是否有数据偏差，并且和CloudWatch集成，进行SNS通知。
@@ -127,24 +126,34 @@ RecordIO和Protobuf都是用于序列化数据的格式，通常在机器学习�
 
 **立刻上手无需代码**
 
-- Amazon Comprehend：自然语言处理，文本分析，文本分类，信息提取，事件监测，
-- Amazon Lex：是Alexa为base的自然语言聊天机器人引擎，通过将得到的文本传递给其他的服务，进行下一步处理。他没有处理语音的能力，如果要处理语音（Transcribe）和返回语音（Polly）需要其他的服务支持。有个Amazon Lex Automated Chatbot Designer可以帮助进行设计系统。比如如何嵌入意图slot文本等。
-- Amazon Polly：文本到语音服务。lexicons，SSML可以定制语音说法。
-- Amazon Rekognition：计算机视觉服务，物体检测，面部检测，图片和视频流（Kinesis）都可以。
-- Amazon Textract：OCR，对文件和手写文件进行识别和分析，包括表单和数据等。
-- Amazon Transcribe：语音到文本服务。可以自动监测语言，甚至不用设置。可以定制单词表。应用领域包括电话内容分析，医学分析，实时字幕等。
-- Amazon Translate：深度学习算法进行机器翻译的服务。
+- *Amazon Comprehend*：自然语言处理，文本分析，文本分类，信息提取，事件监测（SAP考试）
+- *Amazon Comprehend Medical*：使用NLP分析医学text，使用的API叫做DetectPHI API（Protected Health Information）
+  - 可以使用S3进行存储，可以用kinesis进行实时分析
+  - 将文本笔记，变成结构化的，清晰的病例，症状，笔记，突出关键词等，看hands-on视频的时候蛮震撼的
+- *Amazon Lex*：是Alexa为base的自然语言聊天机器人引擎，通过将得到的文本传递给其他的服务，进行下一步处理。他没有处理语音的能力，如果要处理语音（Transcribe）和返回语音（Polly）需要其他的服务支持。有个Amazon Lex Automated Chatbot Designer可以帮助进行设计系统。比如如何嵌入意图slot文本等。（SAP考试）
+  - call center的案例可以用*AWS Connect*是一个虚拟的contact center，结合Lex，可以处理客户订单，背后结合Lambda，就可以将信息写入CRM（客户关系管理系统）
+- *Amazon Polly*：文本到语音服务。lexicons（自定义词典），SSML（Speech Synthesis Markup Language）是一种用于控制文本转语音（TTS）引擎如何合成和朗读文本的标记语言）可以定制语音说法。（SAP考试）
+- *Amazon Rekognition*：计算机视觉服务，物体检测，文字检测，面部检测，图片和视频流（Kinesis）都可以，打标签打框框。（SAP考试）
+  - 通过设置一个*最小自信度阈值*来检测一些不好的内容：content moderation内容审核
+  - 可以使用A2I进行打标签flag
+- *Amazon Textract*：OCR，对文件和手写文件进行识别和分析，包括表单和数据等。（SAP考试）
+- *Amazon Transcribe*：语音到文本服务。可以自动监测语言，甚至不用设置。可以定制单词表。应用领域包括电话内容分析，医学分析，实时字幕等。（SAP考试）
+  - 深度学习，自动语音识别技术
+  - 可以自动移除PII个人信息
+  - 多语种语音识别
+- *Amazon Translate*：深度学习算法进行机器翻译的服务。（SAP考试）
 
 **其他**
 
 - Contact Lens：电话服务中心，提取电话内容进行分析，分类，主题检测。
-- Amazon Kendra：企业内部AI的IT支持。Alexa的妹妹。使用内部系统文件进行系统搜索。
-- Amazon Augmented AI（A2I）：Amazon的人工审查机器学习预测服务。构建更好的workflow。集成于Sagemaker，Textact，Rekognition等服务。
+- *Amazon Kendra*：企业内部AI的IT支持。Alexa的妹妹。使用内部*系统文件进行系统搜索*。Knowledge Index powered by ML（SAP考试）
+- *Amazon Augmented AI（A2I）*：Amazon的人工审查机器学习预测服务。构建更好的workflow。集成于Sagemaker，Textact，Rekognition等服务。（SAP考试）
 - Amazon Bedrock：生成式人工智能构建，托管服务。
 - AWS Trainium：AWS专门为超过 1000 亿个参数模型的深度学习训练打造的第二代机器学习 (ML) 加速器。**AWS Neuron**SDK，由编译器、运行时和分析工具组成，可以使用这些工具在 AWS Trainium 支持的 Amazon EC2 Trn1 实例上运行高性能训练。
 - AWS Inferentia：是 AWS 设计的一款机器学习推理加速器，可在云中提供高性能和低成本的机器学习推理。
 - Amazon Titan：Amazon Bedrock 独有的 Amazon Titan 系列模型。Amazon Titan 基础模型（FM）通过完全托管的 API 为客户提供广泛的高性能图像、多模式和文本模型选择。主要是生成式人工智能的AWS的自己训练的模型。
 - AWS Panorama：是机器学习 (ML) 设备及软件开发工具包 (SDK) 的集合，可在本地互联网协议 (IP) 摄像头中集成 CV 功能。
+- *Amazon Personalize*：（SAP考试）全托管实时个性化推介 ，和Amazon网站用的同一个推介系统（红豆泥？），可以直接集成你现在的系统
 
 **Kinesis Analysis中的两种算法**
 
@@ -153,11 +162,11 @@ RecordIO和Protobuf都是用于序列化数据的格式，通常在机器学习�
 
 **时间序列预测**
 
-- Amazon Forecast：进行时间序列数据预测。很想DeepAR功能，在引擎下使用这个模型。其他还有一些很贵的模型**DeepAR+**，**CNN-QR（QR是分位数回归）**，**Prophet**是一个非线性时间序列模型，不会很贵但是效果不错。其他还有比较便宜的**NPTS**可以处理稀疏数据，如果数据较少但是想预测季节性数据，另外少于一百个数据等时候，**ARIMA**自动回归移动平均算法，**ETS**指数平滑算法等。
+- *Amazon Forecast*：进行时间序列数据预测。很像DeepAR功能，在引擎下使用这个模型。其他还有一些很贵的模型**DeepAR+**，**CNN-QR（QR是分位数回归）**，**Prophet**是一个非线性时间序列模型，不会很贵但是效果不错。其他还有比较便宜的**NPTS**可以处理稀疏数据，如果数据较少但是想预测季节性数据，另外少于一百个数据等时候，**ARIMA**自动回归移动平均算法，**ETS**指数平滑算法等。（SAP考试）
 
 **教育娱乐**
 
-- Amazon DeepRacer：强化学习赛车比赛。 
+- Amazon DeepRacer：强化学习赛车比赛。
 - Amazon DeepLens：机器学习研究用的摄像机。
 - AWS Composer：AI驱动的键盘，教育使用。
 - AWS Panorama：计算机视觉边缘，将计算机视觉集成在你的IP的照相机上。
@@ -307,4 +316,3 @@ Snappy 压缩的特点包括：
 3. **无损耗：** Snappy 压缩尽可能地减少对压缩率的牺牲，同时保持了相对较高的压缩率。它主要关注在速度和压缩率之间找到一个平衡点，而不是追求最大的压缩率。
 
 Snappy 压缩通常用于各种应用场景，包括网络传输、大规模数据分析、分布式系统等，特别是在需要快速处理大量数据的环境中。然而，值得注意的是，Snappy 压缩的压缩率可能不如一些其他压缩算法（如Gzip）那么高，因此在一些对压缩率要求较高的场景中，可能需要考虑其他压缩算法。
-

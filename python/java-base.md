@@ -328,7 +328,7 @@ java Main
 
 ## Static
 
-是静态方法的意思，如果一个函数有static，那么可以在类中直接使用该方法，如果没有static关键字，则需要对类进行实例化。
+是静态方法的意思，表明这个member，它属于类，不属于实例，如果一个函数有static，那么可以在类中直接使用该方法，如果没有static关键字，则需要对类进行实例化。
 
 Python中也有staticmethod修饰符。表示就是可以直接靠类使用的方法。
 
@@ -342,7 +342,7 @@ Python中也有staticmethod修饰符。表示就是可以直接靠类使用的�
 
 相当于Python中的初始化函数，但是Python的初始化函数不能有多个，只能靠类方法等实现。
 
-## 语法笔记
+## 类型转换
 
 `++x`：先自增，再使用。`x++`：先使用，再自增。
 
@@ -522,3 +522,172 @@ class Person {
 | 内存释放        | 方法结束时自动释放                              | 通过垃圾回收机制自动释放                     |
 
 理解栈和堆在Java中的角色和区别，对于有效地管理内存和优化应用程序性能非常重要。在编写代码时，注意局部变量和对象的使用方式，可以帮助避免常见的内存管理问题，如栈溢出和内存泄漏。
+
+## Access Modifiers 访问修饰符
+
+- public：任何地方都可以访问。
+- protected：同包内和子类可以访问。
+- default（包级私有）：仅同包内可以访问。（啥也不用写）
+- private：仅类内部可以访问。
+  - 针对私有变量，设置公有的set和get就可以从外部访问了
+
+## String Class
+
+String不可变immutable，这意味着，一个字符串对象的值是不可改变的，因为任何新的字符串值会被存储在一个分开的新的对象中，变量会指向这个新的对象的引用。
+
+在Java中，字符串（`String`类）是线程安全的。线程安全性意味着多个线程可以同时访问同一个对象，而不会导致数据不一致或其他并发问题。Java中的`String`类具有以下几个特性，使其成为线程安全的：
+
+**不可变性（Immutability）**：
+- `String`对象是不可变的。一旦创建了一个`String`对象，它的值就不能被改变。任何对字符串的操作（如拼接、替换等）都会生成一个新的`String`对象，而不是修改原来的对象。这种不可变性确保了在多线程环境下，一个线程对`String`对象的修改不会影响到其他线程。
+
+**内部实现**：
+- `String`类的底层实现使用了一个`final`的字符数组来存储字符串的值。这个字符数组在`String`对象创建后也不能被修改。即使多个线程同时访问这个字符数组，也不会有并发问题。
+
+**常量池**：
+- Java有一个特殊的字符串常量池（String Pool），用于存储字符串字面量。每次创建一个新的字符串字面量时，JVM会先检查常量池中是否已经存在相同的字符串。如果存在，直接返回该字符串的引用；如果不存在，则将其添加到常量池中。由于字符串常量池中的字符串也是不可变的，所以它们的线程安全性也得到了保证。
+
+尽管`String`本身是线程安全的，但在多线程环境下操作字符串时，仍需要注意一些其他问题。例如，如果在多个线程中频繁地拼接字符串，最好使用`StringBuilder`或`StringBuffer`类来代替`String`。其中，`StringBuilder`是非线程安全的，但性能较高，而`StringBuffer`是线程安全的，可以在多线程环境中使用。他们操作起来就像是在操作数组。
+
+如果使用equals()，则是他们的content被比较。当字符串在常量池中指向同一个对象的时候，==可以得到True的结果。
+
+## Dates & Times
+
+- `java.time.LocalDate`
+- `java.time.LocalTime`
+- `java.time.LocalDateTime`
+- `java.time.ZonedDateTime` set by ZoneId
+- `java.time.Duration`：秒和微秒
+- `java.time.Period`：年月日
+- 加减区间：plus/minus duration/period
+
+- `.now()`, `.of()`, `.parse()`
+- `.getYear()`, `.getDayOfWeek()`, and so on
+- `.minusWeeks()`, `.plusDays()`, and so on
+
+- `java.time.format.DateTimeFormatter`： `.ofPattern("MM/dd/yyyy")`
+  - 创建了formatter实例后，使用实例调用`.format()`
+  - string to date, `.parse(<string>, <the instance of the formatter>)`
+- `java.time.format.DateTimeFormatterBuilder`： 类似于 String 的 Builder，可以进行append等类似列表的操作，很神奇
+
+- 其他的还有util里的：参考[菜鸟教程](https://www.runoob.com/java/java-date-time.html)
+
+## OOP
+
+Java的面向对象编程（OOP）有四大核心特性：封装、继承、多态和抽象。这些特性使得Java程序具有模块化、可维护性和可扩展性。
+
+### 1. 封装（Encapsulation）
+封装是将对象的属性和方法封装在一个类中，通过访问控制（如private, protected, public）来限制对这些属性和方法的直接访问。这样可以保护数据不被随意修改，同时也隐藏了对象的内部实现细节。
+- **优点：** 提高了代码的安全性和可维护性，提供了清晰的接口。
+- **示例：**
+  ```java
+  public class Person {
+      private String name;
+      private int age;
+
+      public String getName() {
+          return name;
+      }
+
+      public void setName(String name) {
+          this.name = name;
+      }
+
+      public int getAge() {
+          return age;
+      }
+
+      public void setAge(int age) {
+          this.age = age;
+      }
+  }
+  ```
+
+### 2. 继承（Inheritance）
+继承是通过从已有的类（称为父类或超类）中创建一个新的类（称为子类或派生类），使子类可以继承父类的属性和方法，并可以新增自己的属性和方法。继承实现了代码的复用和扩展。
+- **优点：** 代码复用、增强类的功能、提高代码的扩展性。
+- **示例：**
+  ```java
+  public class Animal {
+      public void eat() {
+          System.out.println("This animal eats food.");
+      }
+  }
+
+  public class Dog extends Animal {
+      public void bark() {
+          System.out.println("The dog barks.");
+      }
+  }
+  ```
+
+### 3. 多态（Polymorphism）
+多态是指同一操作在不同对象上具有不同表现形式的能力。多态性通过方法重载和方法重写实现。它允许对象在不同的上下文中以不同的方式进行响应。
+- **优点：** 提高代码的灵活性和可扩展性。
+- **示例：**
+  ```java
+  public class Animal {
+      public void makeSound() {
+          System.out.println("Some generic animal sound");
+      }
+  }
+
+  public class Dog extends Animal {
+      @Override
+      public void makeSound() {
+          System.out.println("Bark");
+      }
+  }
+
+  public class Cat extends Animal {
+      @Override
+      public void makeSound() {
+          System.out.println("Meow");
+      }
+  }
+
+  public class Main {
+      public static void main(String[] args) {
+          Animal myDog = new Dog();
+          Animal myCat = new Cat();
+          myDog.makeSound(); // 输出：Bark
+          myCat.makeSound(); // 输出：Meow
+      }
+  }
+  ```
+
+### 4. 抽象（Abstraction）
+抽象是指将对象的复杂实现隐藏起来，只保留对象的必要特性和行为。通过抽象类和接口，可以定义对象的抽象行为。
+- **优点：** 减少代码复杂度，提供清晰的接口，促进代码的设计。
+- **示例：**
+  ```java
+  abstract class Animal {
+      public abstract void makeSound();
+
+      public void sleep() {
+          System.out.println("This animal sleeps.");
+      }
+  }
+
+  class Dog extends Animal {
+      @Override
+      public void makeSound() {
+          System.out.println("Bark");
+      }
+  }
+
+  class Main {
+      public static void main(String[] args) {
+          Animal myDog = new Dog();
+          myDog.makeSound(); // 输出：Bark
+          myDog.sleep(); // 输出：This animal sleeps.
+      }
+  }
+  ```
+
+通过这四大特性，Java实现了面向对象编程的理念，帮助开发者构建更为结构化、模块化和可维护的代码。
+
+### Override，Overload，Hide
+
+- Override（重写）： 子类重写父类的非静态方法，方法签名必须一致，实现多态性。
+- Overload（重载）： 同一个类中方法名相同，但参数列表不同的方法。
+- Hide（隐藏）： 子类定义了一个与父类中静态方法同名且参数列表相同的方法，隐藏父类的静态方法。

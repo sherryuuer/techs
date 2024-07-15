@@ -58,8 +58,9 @@
   - Mask后算出的IP范围是从IP的起始位开始的 2^(32-mask) 个IP数量
   - 0-4和255不可用，AWS占用：0是网址，1是VPC Router，2映射到Amazon-provided DNS（Route53 DNS Resolver），3是给future预留，255是NetworkBroadcastAddress，因为VPC不支持内部广播功能（计算网址数量的时候，要想到这5个不能用）
   - IPv4一般是/16（max）或者/28（min），IPv6一般是是固定/56或者/64
-  - IPv6地址全是Public的并且具有全球唯一性。不可以自己设定子网range，并且不提供Amazon Provided DNS hostname。
+  - IPv6地址全是Public的并且具有全球唯一性。不可以自己设定子网range，并且不提供Amazon Provided DNS hostname。因为太多了所以根本无法scan，所以安全。
   - IPv6不支持Site2siteVPN，CustomGateway，NatDevice，和VPC Endpoint。只有IPv4支持。
+  - Egress Only Internet Gateway 是一种专门用于 IPv6 流量的出站网关，提供了仅出站访问互联网的功能，有效地提高了 VPC 中实例的安全性。通过配置 Egress Only Internet Gateway，可以确保实例能够访问互联网资源，而不会被互联网直接访问，从而减少潜在的安全风险。
   - EC2实例的IPv6地址在正常重启的情况下是保持不变的。只有在终止旧实例并启动新实例、手动关联新地址或发生故障迁移等情况下，IPv6地址才可能发生变化。AWS的这种设计提高了IPv6地址的可预测性和持久性。
   - Dual-stack mode是指具有IPv4和IPv6的地址。
 - Route Tables：可以在VPC级别，也可以在Subnet级别
@@ -366,6 +367,7 @@
 
 ### VPC flow logs
 
+- 三个level：*VPC，Subnet，ENI*
 - 捕获in/out *ENIs* 的IP traffic信息，因此它可以帮助troubleshooting连接问题
 - 这些ENI包括：ELB，RDS，ElastiCache，Redshift，workspaces，NATGateway，TransitGateway等，这些服务会在你的EC2中创建ENI，因此也会被捕获
 - VPC level / subnet level / ENI level
@@ -490,7 +492,7 @@
 - 是AWS Network管理的组件
 - 现在可以同region也可以跨region
 - 同一个AZ中进行Peering的VPC之间的data transfer是免费的，但是跨AZ的需要付费
-- 可以跨账户
+- 可以跨账户cross-account
 - CIDR不能有overlapping
 - 不具有传递性，必须两两连接
 - 两个VPC之间只能设置一个Peering，不具有冗余性
@@ -498,10 +500,10 @@
 - 必须更新*每个VPC的subnet*的*route table*，以确保双方允许通信
 - 需要一个请求方VPC和一个接受方VPC授权连接
 - 限制Case：如果VPCA-VPCB之间是Peering：
-  - VPCA无法利用VPCB的Internet Gateway，NAT Gateway，或者VPC Endpoint（Gateway）
+  - VPCA无法利用VPCB的*Internet Gateway*，**NAT Gateway**，或者*VPC Endpoint（Gateway）*
   - 如果VPCB和一个On-premise之间是VPN或者DX，VPCA也*无法连接到On-premise*，需要其他Proxy设置。
-
-- 补充：*Proxy*是指一种代理服务器：比如负载均衡，CDN内容分发服务，身份代理，API网关，地址转换NAT等都是代理形式。
+- 解决方案：Transit Gateway
+- 补充内容：*Proxy*是指一种代理服务器：比如负载均衡，CDN内容分发服务，身份代理，API网关，地址转换NAT等都是代理形式。
 
 ### VPC Endpoint
 
@@ -1516,10 +1518,16 @@ for prefix in ip_ranges['prefixes']:
 - 网络层和应用层的数据保护，防止DDos攻击
 - 集成Route53，AWS Shield，AWS WAF
 - 可以和外部以及内部的backbone进行HTTPS通信
-- 可以适用于大部分的网络应用，因为他支持Websocket协议
+- 可以适用于大部分的网络应用，因为他支持*Websocket*协议
 - Objects Expire time：24小时
 - CloudFront 的 Invalidation 功能是指允许用户立即使某些或全部已缓存的内容失效（即无效化），从而迫使 CloudFront 边缘节点在下一次请求时重新获取最新内容的过程。
 - S3到CloudFront之间的数据传输不会收取费用
+- CloudFront 适合在*全球范围到处的静态内容*，相对的*S3 Cross Region Replication*适合个别区域的动态内容低延迟获取
+- CloudFront Signed URL：不管源是什么，它通过filter一个IP，path，date或者expiration来访问资源
+- Custom Error Pages功能
+  - 指标Error Caching Minimum TTL用来确定缓存了错误页面多久
+- 三个价格等级：根据使用的边缘位置的多少，All - 200 - 100，从贵到便宜
+- 缓存失效（Cache Invalidation）是指从 CloudFront 边缘位置的缓存中移除指定的对象。这在你更新了源服务器上的内容之后，确保用户访问到最新的版本，而不是过期的缓存内容。
 
 ### Components
 
@@ -1610,12 +1618,12 @@ for prefix in ip_ranges['prefixes']:
 
 - 在distribution的edge进行代码的执行，降低延迟，没有缓存机制
 - 目的只是为了对请求request和回复response进行变更
-- 两种类型：Cloud Front Functions（Edge Locations）& Lambda@Edge（Regional Edge Cache）
+- 两种类型：Cloud Front Functions（*Edge Locations*）& Lambda@Edge（*Regional Edge Cache*）
   - Cloud Front Functions：
     - Javascript脚本
     - 低延迟高速启动
     - 可处理million reqests/秒
-    - 处理viewer的request和response
+    - 处理viewer的request和response（修改内容之类的）
     - process-based isolution（进程隔离）
     - CloudFront的本地native功能，完全在CloudFront中进行manage
     - 有free tier费用区间
@@ -1627,9 +1635,9 @@ for prefix in ip_ranges['prefixes']:
     - 处理viewer和origin的request和response
     - 没有free tier费用区间
     - 可集成Cognito或者第三方OICD
+    - 可以执行更长时间，并且可以调节CPU或memory
   - 使用方式1:可以在Edge location中使用CloudFront Function处理Viewer请求和响应，在Regional Edge Cache中使用Lambda@Edge处理Origin请求和响应
   - 使用方式2:仅在Regional Edge Cache中使用Lambda@Edge，在Cache的左边处理针对Viewer的请求和响应，在Cache的右边处理针对Origin的请求和响应
-
 
 - Use Case：
   - 操作或者过滤request和response
@@ -1639,9 +1647,12 @@ for prefix in ip_ranges['prefixes']:
   - Bot mitigation at the edge：拦截恶意机器人流量
   - 基于user-agent（device类型）的内容响应
   - Global Application：比如通过Lambda@Edge，对DynamoDB进行query抽取回复内容
+  - Lambda@Edge可以trigger S3 Cross-Region Replication，使得 CloudFront 获得更近的 region 的S3的内容
+
 
 ### AWS Global Accelerator
 
+- 依存于AWS内部网络
 - Use Case：面向全球用户的application
 - 是一个全球服务，会直接跳到Oregon Region
 - Anycast IP：同一 IP 地址可以分配给多个服务器或节点。当请求发送到这个 IP 地址时，网络会自动将请求路由到距离最近或最适合处理请求的服务器。这种方式可以提高服务的可靠性和性能，因为它能够减少响应时间并提供负载均衡。
@@ -1661,10 +1672,10 @@ for prefix in ip_ranges['prefixes']:
 
 - 和CloudFront的不同：
   - CF是为了，提高静态和动态内容，服务的性能，并且内容会从边缘缓存进行服务
-  - GA服务于更广泛的application包括TCP和UDP协议
+  - GA服务于更广泛的application包括*TCP和UDP*协议
   - GA可以用于non-HTTP的比如游戏（UDP），IoT（MQTT），Voice over IP
   - GA适用于HTTP的静态IP，deterministic，fast failover（可预测的快速的）
-  - 个人总结：CF是一个内容分发服务，GA是一个使用AWS内部网络进行路由加速的高级功能
+  - 个人总结：CF是一个内容分发服务，GA是一个*使用AWS内部网络进行路由加速的高级功能*
 
 ## Elastic Load Balancer
 
@@ -1845,6 +1856,10 @@ for prefix in ip_ranges['prefixes']:
   - 可视化的路由决定树编辑工具
   - 适合大型和复杂的设置
 
+- Route53的Health Checkers在VPC之外
+  - 所以无法检查Private endpoints（Private VPC或者On-premises resources）
+  - 可以通过创建CW Metric，和Alarm结合，Health Check可以检查alarm
+
 ### Record types
 - A：hostname to IPv4
 - AAAA：hostname to IPv6
@@ -1967,6 +1982,11 @@ for prefix in ip_ranges['prefixes']:
 
 ### Scenario
 
+- Health Checks RDS multi-region failover
+  - 主RDS被Health check监控（HTTP call）
+  - Health Check也可以被CW Alarm触发
+  - 然后Health Checker触发CW Event或者SNS topic，之后触发trigger Lambda，用于更新DNS和置换Replica RDS为主DB
+
 - EC2 instance
   - A记录指向一个EC2的Public ip或者Elastic IP
   - 之前也提到过Alias不能指向EC2，但是使用CNAME就可以指向EC2的Public DNS name
@@ -2032,7 +2052,7 @@ for prefix in ip_ranges['prefixes']:
 - 当你拥有多个Public/Private Zones的时候，如果他们之间的namespaces有重复的部分，那么Route53 resolver会自动匹配，match的字段最多的那个Zone
 
 - Subdomains
-  - 将流量印象subdomain的情况
+  - 将流量引向subdomain的情况
   - 设置：
     - 为subdomain创建新的Hosted Zone（sub.example.com）指向他所有的域名服务器列表
     - 从主的Hosted Zone（example.com）创建指向该subdomain的NS record（他也是一个record创建选项）同样设置，subdomain的所有域名服务器列表
@@ -2046,7 +2066,7 @@ for prefix in ip_ranges['prefixes']:
 - DNSSEC Signing确保了记录从Route53而来，不是被投毒的
 - Route53会用非对称公钥安全加密每一条记录，客户用私钥解密确认真实性
 - 两个key：
-  - 用户管理key：Key-signing-key（KSK）基于KMS的非对阵CMK
+  - 用户管理key：Key-signing-key（KSK）基于KMS的非对称CMK
   - AWS管理key：Zone-signing-key（ZSK）
 
 - 如何在Hosted Zone开启DNSSEC功能
@@ -2060,7 +2080,6 @@ for prefix in ip_ranges['prefixes']:
     - DNSSECInternalFailure
     - DNSSECKeySigningKeysNeedingAction
 
-
 - DNSSEC（Domain Name System Security Extensions） 是一组协议，用于为互联网的域名系统（DNS）添加安全性。它旨在保护 DNS 信息的完整性和真实性，防止一些常见的 DNS 攻击，例如 DNS 欺骗和缓存投毒。
 
 - DNSSEC 的基本功能
@@ -2071,7 +2090,6 @@ for prefix in ip_ranges['prefixes']:
 - *信任链建立*：
 - DNSSEC 建立了一种信任链，从根域名服务器（Root DNS Servers）到各个子域名服务器。这种信任链使得每个域名服务器的签名都可以通过上级服务器的签名进行验证，从而确保整个 DNS 查询路径上的安全性。
   - Root - TLD - Route53 - Hosted zone - sub Hosted Zone
-
 
 - **DNS层级**：
   - 根名称服务器（Root Name Servers）指向顶级域名（TLD）

@@ -209,38 +209,74 @@ AWS安全服务一共包括六个板块：
 - 集成 AWS Config
 - 重要组成：Resource Group / Document / Automation / Maintenance Windows / Parameter store / Inventory / State Manager / Run Command / Patch Manager / Session Manager
 - Document 自动执行功能是我觉得亮眼的功能。
-- 必须在server上安装 SSM Agent，AmazonLinux2和一些Ubuntu自带agent，一般出了问题都是因为没agent或者没对EC2授权相应的Role（Role也可以叫做：IAM instance profile，这是在hands on中看到的）
+- 必须在server上安装 *SSM Agent*，AmazonLinux2和一些Ubuntu自带agent，*一般出了问题都是因为没agent或者没对EC2授权相应的Role（Role也可以叫做：IAM instance profile，这是在hands on中看到的）*
 - lanch的新的EC2，比如已经安装了SSM Agent的AmazonLinux2的EC2，会直接出现在SSM的Fleet Manager中，作为一个舰队进行管理。
 - 使用 TAGS 对资源进行分组管理：Resource Group，从而进行自动化和cost分配
-- Document 你可以定义parameters和actions，用json或者yaml格式的文件。（很像Github Actions或者Cloud Formation，都是IaC），Parameters也可以从 Parameter Store中取得
-- Run Command功能是直接跑一个小的命令或者跑一个脚本（document=script），通过resource groups可以直接跑一个server集群，它和IAM还有CloudTrail集成，会被记录，不需要通过ssh连接EC2（而是通过SSM Agent，session manager也是通过Agent），可以控制执行速率rate（一次执行多少，或几个server），和错误控制（几个错误就停止之类），跑命令的结果可以在console表示也可以发送到S3或者CWLogs，可以给SNS发消息，也可以被EventBridge Trigger，甚至可以得到一个生成的 CLI 代码自己拿去控制台执行。
-- Automation：这个功能也是使用Document进行操作 EC2 等。可以用 EventBridge 触发，进行系统修补等。
+- **Document** 你可以定义parameters和actions，用json或者yaml格式的文件。（很像Github Actions或者Cloud Formation，都是IaC），Parameters也可以从 Parameter Store中取得
+  - 可以在ASG中的EC2被terminating之前发送一个命令，比如跑一个自动的document：需要在ASG中设置一个Lifecycle Hook，将要关闭的EC2设置为一个Terminating:Wait的状态，当EventBridege检测到了这个状态，就可以触发这个document的执行
+- **Run Command**功能是直接跑一个小的命令或者跑一个脚本（document=script），通过resource groups可以直接跑一个server集群，它和IAM还有*CloudTrail*集成，会被记录，*不需要通过ssh连接EC2*（而是通过SSM Agent，session manager也是通过Agent），可以控制执行速率rate（一次执行多少，或几个server），和错误控制（几个错误就停止之类），跑命令的结果可以在console表示也可以发送到S3或者CWLogs，可以给SNS发消息，也可以被EventBridge Trigger，甚至可以得到一个生成的 CLI 代码自己拿去控制台执行。
+- **Automation**：这个功能也是使用Document进行操作 EC2 等。可以用 EventBridge 触发，进行系统修补等。
 - Parameters Store：存参数或者密码，可用KMS加密，集成 IAM Policy，可以用于 CloudFormation 的输入。层级文件夹存储方式。Advance的Parameter设置可以有8K大小，但要付费，可以设置TTL（expiration date，到期可以设置通知notification，也可以通知没变化）。
   * aws ssm get-parameter 通过 with-decrption 可以解密密码，会检查你的KMS权限可否解密，挺酷。
   * 可以通过文件夹层级递归取得 aws ssm get-parameter --path /myapp/dev/ --recursive 你创建parameter的时候名字就是一个path格式就可以了，这很特别，比如name：/myapp/dev/db-password
-- Inventory：收集EC2元数据，可以通过S3+Athena或者QuickSight探索。（元数据包括：软件，OS，设置，更新时间等）
+- *Inventory*：收集EC2元数据，可以通过S3+Athena或者QuickSight探索。（元数据包括：软件，OS，设置，更新时间等）
 - State Manager：状态管理器，保证 EC2 满足某一设置状态。
-- Patch Manager：自动打补丁，可以设置有计划的 Maintenance Windows，可以通过tags，设置 Patch Baseline，进行不同的补丁计划。计划通过Document自动执行，报告可以发送到S3。
-- Session Manager：不需要ssh的EC2连接，*通过Agent和role*。通过IAM可以限制执行主体和对象EC2（通过tag），甚至可以限制使用的command。访问记录会被CloudTrail记录。可以记录logs（S3，CloudWatch Logs）
+- **Patch Manager**：自动打补丁，可以设置有计划的 Maintenance Windows，可以通过tags，设置 Patch Baseline和Patch Group，进行不同的补丁计划。计划通过Document自动执行，报告可以发送到S3。
+  - AWS-RunPatchBaseline applies to both *Windows and Linux*, and AWS-DefaultPatchBaseline is the name of the default Windows patch baseline
+- *Session Manager*：不需要ssh的EC2连接，*通过Agent和role*。通过IAM可以限制执行主体和对象EC2（通过tag），甚至可以限制使用的command。访问记录会被CloudTrail记录。可以记录logs（S3，CloudWatch Logs）
+- **OpsCenter**：解决操作上的问题：*Operational Issues（被叫做OpsItems）*
+  - OpsItems：issues，events，alerts
+  - 集合各种info比如config，Cloudtrail日志，CWAlarms，CFstack信息等
+  - 解决方式：run automation document
+  - 使用EventBridge或者CW Alarms创建OpsItems
+
 
 ### Cloud Watch
 
 - Unified CW Agent 用来发送EC2的RAM，processes，disk space信息，namespace是CWAgent。使用Procstat Plugin。
 - EC2要对CW发送log需要相应的Agent权限。创建EC2后安装Agent，会通过漫长的设置创建config.json文件，这个文件可以存储在Parameter Store中，当你想用一个设置管理很多EC2的时候这很有用，但是这需要Agent的Admin权限。如果无法得到metric，troubleshooting找agent的log文件。
 - 使用命令行调用config文件，本地调用或者parameter store调用，后者更适合管理很多EC2的情况。
-- **Cloud Watch Log insights**：进行可视化日志分析。注意这只是一个query引擎而不是一个即时流，如果想要将log流处理需要用**CloudWatch Log Subscriptions**的filter功能将日志不断传入其他服务进行处理，分析，存储。它还可以整合不同区域的日志，将他们聚合起来（kinesis）。那么既然它是一个订阅服务，就需要有起点和目的地账户，并且需要在账户之间设置policy，以供分发和接收。尤其是接收端的权限放行。
-- 可以通过设置metric的阈值（可以进行条件的组合比如AND，OR等，很灵活）发出alarm，可执行的动作，包括对EC2的启动关闭等操作，对Auto Scaling对扩张收缩，以及使用SNS发出通知等。
+- 安装Agent还可以使用SSM Run Command或者SSM State Manager
+
 - **Alarms**：可以通过CWlogs metrics filter设置，可设置频率，Actions可以对EC2操作，可以对AutoScaling操作，可以发送给SNS服务。**Composite Alarms**是一种针对其他警报的复合警报，可以使用条件语句，比如同时监视CPU和IO。
 - **Contributor Insights**：就是找到造成问题根源，是who造成了这些logs，比如一些bad IP地址，URL，host。一种分析手段。
+
+- **CloudWatch Synthetics Canary** 可以帮助用户通过运行自动化脚本（称为“Canaries”）来监控应用程序的可用性、性能和功能。这些脚本模拟用户行为，并*定期*运行，帮助检测应用程序中的潜在问题，使用Node.js或者Python编写，集成CW Alarm
+
+- **Cloud Watch Logs**：
+- *来源*：
+  - SDK，Logs Agent或者Unified CW Agent
+  - ElasticBeanstalk可以收集日志并发送
+  - ECS collection of Containers
+  - Lambda：function logs
+  - VPC Flow Logs
+  - API Gateway
+  - CloudTrail
+  - Route53 Log DNS queries
+- *组织方式*：Log group， log stream
+- 可以设置过期时间
+- KMS加密
+- *Send to*：
+  - S3：API call：CreateExportTask，形成log后12小时后才能export
+  - Kinesis Data Stream
+  - Kinesis Data Firehose
+  - AWS Lambda
+  - OpenSearch
+- **Cloud Watch Log insights**：进行可视化日志分析。注意这只是一个query引擎而不是一个即时流，如果想要将log流处理需要用**CloudWatch Log Subscriptions**的filter功能将日志不断传入其他服务进行处理，分析，存储。它还可以整合不同区域的日志，将他们聚合起来（Lambda 实时构架 或者 kinesis Data Firehose近实时构架，发送至OpenSearch或者S3）。那么既然它是一个订阅服务，就需要有起点和目的地账户，并且需要在账户之间设置policy，以供分发和接收。尤其是接收端的权限放行。
+- 可以通过设置metric的阈值（可以进行条件的组合比如AND，OR等，很灵活）发出alarm，可执行的动作，包括对EC2的启动关闭等操作，对Auto Scaling对扩张收缩，以及使用SNS发出通知等。
+- CW Logs聚合功能：多账户，多区域
+
 
 ### Amazon EventBridge
 
 - 时间cron驱动或者事件event驱动。
 - event实际上是一种json格式数据。
+  - 可以filter events
+  - 源：EC2 Instance，CodeBuild（fail build），S3 Event，Trusted Advisor（new finding），CloudTrai（any API call）
 - 可以发送到集成的组织event bus。
 - 可以重现replay过去的event。
 - event集合：event schema register
-- 可以集成到第三方或者自定义的event bus。
+- 可以集成到第三方Partner或者自定义Custom的event bus。
 - 如果跨账户使用，需要设置resource-based-policy。
 
 ### Amazon Athena
@@ -501,6 +537,7 @@ AWS安全服务一共包括六个板块：
 - 性能分析：X-Ray 可以记录每个请求的性能指标，如响应时间、延迟、错误率等。开发人员可以使用这些指标来识别应用程序中的性能瓶颈，并对其进行优化。
 - 故障诊断：X-Ray 可以帮助开发人员诊断分布式应用程序中的错误和故障。它可以显示请求中发生的异常和错误，并帮助开发人员追踪错误的根源。
 - 可视化工具：X-Ray 提供了可视化工具，如跟踪图和服务图，帮助开发人员直观地了解应用程序的架构和调用关系。这些工具可以帮助开发人员快速定位和解决问题。
+- EC2，ECS 安装XRay agent，Beanstalk，Lambda，API Gateway
 
 ### AWS Workspaces
 
