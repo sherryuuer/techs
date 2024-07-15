@@ -691,3 +691,16 @@ Java的面向对象编程（OOP）有四大核心特性：封装、继承、多�
 - Override（重写）： 子类重写父类的非静态方法，方法签名必须一致，实现多态性。
 - Overload（重载）： 同一个类中方法名相同，但参数列表不同的方法。
 - Hide（隐藏）： 子类定义了一个与父类中静态方法同名且参数列表相同的方法，隐藏父类的静态方法。
+
+## Constructor
+
+- 当你没有创建Constructor的时候，系统会在编译的时候为你创建一个default的Constructor，一个空的
+- Custom Constructor可以设置在初始化的时候传入的参数，一个Class可以有多个不同的Constructor，他们有不同的参数
+- 当你设置了Custom Constructor，系统就不会给它的default的Constructor了
+- **注意**：Constructor创建的时候，是没有返回类型的，不能加void，不然就是method了
+
+### super() and this()
+
+- super是引用了父类的Constructor
+- this是引用了自己的类中的其他Constructor
+- 如果没有显式地call父类的Constructor，那么java会自己添加super，默认call了父类的Constructor，并且是没有参数的，这时候如果给父类设置了参数，那么会出现compile错误
