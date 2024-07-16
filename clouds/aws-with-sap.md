@@ -527,7 +527,7 @@
 
 ### App Runner
 
-- 类似GCP的Cloud Run
+- 类似GCP的App Engine / Cloud Run
 - web apps构架，API构架，微服务构架，快速生产部署
 - image + source code就可以进行设置和部署了，最终用URL访问
 
@@ -568,7 +568,7 @@
   - 比如使用S3，SNS，EventBridge进行的驱动
   - Lambda会进行retry，一共三次
   - 请确保幂等性idempotent
-  - 可以通过SNS或者SQL设置DLQ
+  - 可以通过SNS或者SQS设置DLQ
 
 - 并行构架和批处理构架
   - 使用SNS的构架会立刻触发Lambda的执行，进行并行处理
@@ -694,7 +694,7 @@
 - 在 AppSync 中，开发者定义 GraphQL 模式（schema），描述应用程序的数据模型和操作。
 - GraphQL 模式包含*查询（queries）、变更（mutations）和订阅（subscriptions）*操作，用于获取、修改和监听数据变化。
 
-- AppSync 支持多种数据源，包括 Amazon DynamoDB、AWS Lambda、Amazon RDS、Elasticsearch、HTTP 端点等。
+- AppSync 支持多种数据源，包括 Amazon DynamoDB、AWS Lambda、Amazon RDS、ElasticSearch、HTTP 端点等。
 - **解析器（Resolvers）**是连接 GraphQL 操作和数据源的桥梁。每个解析器包含一个请求映射模板和一个响应映射模板，使用 Apache Velocity Template Language (VTL) 来定义请求和响应的转换逻辑。
 - 当客户端发起 GraphQL 请求时，AppSync 会根据 GraphQL 模式和解析器的定义，将请求映射到相应的数据源，并将结果返回给客户端。
 - AppSync 支持 GraphQL 订阅，使客户端可以实时接收数据变化通知。订阅操作定义了客户端感兴趣的事件，当相应的变更操作触发时，AppSync 会将更新推送给订阅的客户端。
@@ -1203,7 +1203,7 @@ Amazon SWF（Simple Workflow Service）是一项托管的工作流服务，帮�
   - S3
   - Redshift（是一种copy方法，需要通过从S3复制到redshift）
   - OpenSearch
-  - 第三方：MongoDB，Datadog，Splunk等
+  - 第三方：MongoDB，Datadog，Splunk等（Splunk收集机器生成的数据，未来IoT好像会很有用）
   - HTTP/S Endpoint
 - 它是一种近乎实时的*near real time*，因为它是batch写入的
   - buffer interval，可以从0到900秒
@@ -1233,7 +1233,7 @@ Amazon SWF（Simple Workflow Service）是一项托管的工作流服务，帮�
 
 - KDS数据源 - KDA数据分析 - 生成结果送往KDF - S3 - Redshift，或者ElasticSearch
 - KDF直接摄取数据 - S3
-- DynamoDB Stream - Lambda构架十分贵，替代方案就是KDS - Lambda - KDF - S3
+- *DynamoDB Stream* - Lambda构架十分贵，替代方案就是KDS - Lambda - KDF - S3
 
 ### Amazon MSK
 
@@ -1262,7 +1262,7 @@ Amazon SWF（Simple Workflow Service）是一项托管的工作流服务，帮�
     - 或通过EventBridge进行Batch trigger
   - 驱动后Batch会从ECR拉取镜像进行文件处理
   - 输出结果到S3或者DynamoDB等地方
-- 这个构架很像我测试的GCP的Cloud Run的CICD方式，而且run的镜像部署是自动集成的
+- 这个构架很像我测试的GCP的*Cloud Run*的CICD方式，而且run的镜像部署是自动集成的
 - AWS Batch和Lambda进行比较，就很像Cloud Run和Cloud Functions进行的比较
 
 - *比较App runner和Batch：*

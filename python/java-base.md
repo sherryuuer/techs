@@ -704,3 +704,88 @@ Java的面向对象编程（OOP）有四大核心特性：封装、继承、多�
 - super是引用了父类的Constructor
 - this是引用了自己的类中的其他Constructor
 - 如果没有显式地call父类的Constructor，那么java会自己添加super，默认call了父类的Constructor，并且是没有参数的，这时候如果给父类设置了参数，那么会出现compile错误
+
+## 枚举(enum)
+
+- Java 枚举是一个特殊的类，一般表示一组常量，比如一年的 4 个季节，一年的 12 个月份，一个星期的 7 天，方向有东南西北等。
+- 在Java中，每个枚举类型在编译时都会自动生成一个对应的类。这意味着每个枚举类型实际上是一个类，这个类继承自java.lang.Enum。
+- Java 枚举类使用 enum 关键字来定义，各个常量使用逗号 , 来分割。
+- 常用于switch中
+- 类型安全，可读性强，内存运算效率高
+
+* values() 返回枚举类中所有的值。
+* ordinal()方法可以找到每个枚举常量的索引，就像数组索引一样。
+* valueOf()方法返回指定字符串值的枚举常量。
+* toString()转换为字符串常量
+
+**每个枚举都是通过 Class 在内部实现的，且所有的枚举值都是 public static final 的。**
+
+1. 枚举是通过类（`Class`）在内部实现的
+
+在Java中，每个枚举类型在编译时都会自动生成一个对应的类。这意味着每个枚举类型实际上是一个类，这个类继承自`java.lang.Enum`。例如，定义如下的枚举：
+
+```java
+public enum Day {
+    SUNDAY, MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY
+}
+```
+
+编译后会生成一个类似以下结构的类：
+
+```java
+public final class Day extends Enum<Day> {
+    public static final Day SUNDAY = new Day("SUNDAY", 0);
+    public static final Day MONDAY = new Day("MONDAY", 1);
+    public static final Day TUESDAY = new Day("TUESDAY", 2);
+    public static final Day WEDNESDAY = new Day("WEDNESDAY", 3);
+    public static final Day THURSDAY = new Day("THURSDAY", 4);
+    public static final Day FRIDAY = new Day("FRIDAY", 5);
+    public static final Day SATURDAY = new Day("SATURDAY", 6);
+
+    private static final Day[] VALUES = {SUNDAY, MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY};
+
+    private Day(String name, int ordinal) {
+        super(name, ordinal);
+    }
+
+    public static Day[] values() {
+        return VALUES.clone();
+    }
+
+    public static Day valueOf(String name) {
+        for (Day day : VALUES) {
+            if (day.name().equals(name)) {
+                return day;
+            }
+        }
+        throw new IllegalArgumentException("No enum constant " + name);
+    }
+}
+```
+
+2. 枚举值是`public static final`
+
+枚举类型的每个枚举常量都是`public static final`的，这意味着：
+
+- **public**：枚举常量可以被外部代码访问。
+- **static**：枚举常量属于枚举类型本身，而不是某个特定的实例。这使得我们可以通过类名直接访问这些常量，例如`Day.MONDAY`。
+- **final**：枚举常量是不可变的，一旦创建，就不能被更改。
+
+每个枚举常量实际上是枚举类型的一个实例。由于这些常量是`static`的，它们在类加载时就被创建并初始化。因此，可以在任何地方通过类名直接访问它们。
+
+3. 遍历 for-each
+
+```java
+public enum Day {
+    SUNDAY, MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY
+}
+
+public class EnumExample {
+    public static void main(String[] args) {
+        // 使用for-each循环遍历所有的枚举常量
+        for (Day day : Day.values()) {
+            System.out.println(day);
+        }
+    }
+}
+```
