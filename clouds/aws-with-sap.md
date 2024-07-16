@@ -372,7 +372,7 @@
 
 ### EC2 Instance Connect
 
-[安全专家链接](aws-with-security.md#EC2-instance-connect（browser-based）)
+[安全专家链接](aws-with-security.md#EC2-instance-connect)
 
 ### AWS Security Hub
 

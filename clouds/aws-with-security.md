@@ -132,8 +132,9 @@ AWS安全服务一共包括六个板块：
   - 如果受污染的是整个Account，要重置和删除所有的instance上的IAM access keys,IAM user credentials,EC2 key pairs。
   - 替换所有的EC2Instance 中的 key pairs，可以使用SSM Run Command。
 
-### EC2 instance connect（browser based）
+### EC2 instance connect
 
+- （browser based）
 - 运作方式其实不是从浏览器而是通过CLI到该服务的*API*。
 - 会推送一个60秒的临时sshPublickkey到metadata。EC2会去metadata拿到这个key。
 - 从AWS固定的IPrange进行ssh连接。18.206.107.24/29
