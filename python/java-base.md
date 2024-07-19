@@ -531,6 +531,8 @@ class Person {
 - private：仅类内部可以访问。
   - 针对私有变量，设置公有的set和get就可以从外部访问了
 
+- **final**：不可改变的变量，不可override的方法，和不能继承的类
+
 ## String Class
 
 String不可变immutable，这意味着，一个字符串对象的值是不可改变的，因为任何新的字符串值会被存储在一个分开的新的对象中，变量会指向这个新的对象的引用。
@@ -789,3 +791,611 @@ public class EnumExample {
     }
 }
 ```
+
+## Interface
+
+在Java编程语言中，`Interface`（接口）是一种抽象类型，定义了一组方法，但不提供这些方法的实现。接口指定了类必须遵循的协议，它是实现多态性和解耦代码的关键机制。
+
+以下是Java接口的一些关键特性：
+
+1. **方法声明**：
+   - 接口中的方法默认是`public`和`abstract`，不包含方法体。
+   - 在Java 8中，引入了`default`方法和`static`方法。`default`方法提供了方法的默认实现，`static`方法则是接口中的静态方法，`private`是只能在接口内部使用的方法，隐藏方法的内部结构
+
+2. **常量**：
+   - 接口不能包含普通的实例变量（fields）。这是因为接口是抽象的行为定义，不能有具体的实现细节，而实例变量属于具体实现的一部分。接口中可以包含常量，默认是`public static final`。即，它们是公共的、静态的、不可变的常量。
+
+3. **多重继承**：
+   - Java类可以实现多个接口，克服了Java类只能单继承的限制。这使得接口在设计灵活性和可扩展性方面非常有用。
+
+4. **实现接口**：
+   - 一个类通过使用`implements`关键字来实现一个接口，并且必须提供接口中所有抽象方法的实现。
+
+5. **标记接口**：
+   - 一些接口没有方法或常量，例如`Serializable`接口。这些被称为标记接口，用于表示类具有某种属性。
+
+下面是一个简单的接口示例，以及一个实现该接口的类：
+
+```java
+// 定义一个接口
+public interface Animal {
+    // 抽象方法，没有花括号
+    void eat();
+    void sleep();
+}
+
+// 实现该接口的类
+public class Dog implements Animal {
+    @Override
+    public void eat() {
+        System.out.println("Dog is eating");
+    }
+
+    @Override
+    public void sleep() {
+        System.out.println("Dog is sleeping");
+    }
+
+    public static void main(String[] args) {
+        Dog dog = new Dog();
+        dog.eat();
+        dog.sleep();
+    }
+}
+```
+
+在这个例子中，`Animal`接口定义了两个抽象方法`eat`和`sleep`。`Dog`类实现了`Animal`接口，并提供了这些方法的具体实现。在`main`方法中，创建了一个`Dog`对象并调用了其`eat`和`sleep`方法。
+
+接口在Java编程中有许多应用场景，包括：
+
+- **定义规范**：接口可以定义一组方法，要求实现这些接口的类必须提供这些方法的具体实现。
+- **解耦和模块化**：接口可以帮助分离代码的实现和使用者，从而实现解耦和模块化。
+- **多态性**：接口使得不同类可以实现相同的接口，从而可以用相同的方式对待不同的对象，实现多态性。
+- **回调机制**：接口可以用于定义回调方法，以便在特定事件发生时调用。
+
+**接口冲突**：如果一个类有两个接口，两个接口有相同的`default`方法，会产生冲突conflict，解决它必须在类中`override`这个方法，让类有定义的方法，也就是覆盖这两个冲突的默认方法。
+
+## Abstract Class & Method
+
+在Java中，抽象类和抽象方法是面向对象编程中的重要概念，它们用于定义通用行为的框架，而不提供具体实现。以下是它们的定义和用法：
+
+### 抽象类（Abstract Class）
+
+**抽象类**是不能被实例化的类，它通常包含一个或多个抽象方法（没有方法体的方法），以及可以包含具体的方法（有方法体的方法）。抽象类提供了一种定义类层次结构和共享代码的机制。
+
+- **定义抽象类**：使用关键字`abstract`定义。
+- **不能实例化**：不能直接创建抽象类的实例。
+- **可以包含具体方法**：除了抽象方法外，抽象类还可以包含具体方法（具有方法体的方法）。
+- **可以有成员变量**：抽象类可以有成员变量。
+- **可以继承**：抽象类可以被其他类继承，子类必须实现所有的抽象方法，或者本身也是抽象类。
+
+### 抽象方法（Abstract Method）
+
+**抽象方法**是没有方法体的方法，仅声明方法签名。它们必须在抽象类中定义，并且必须在非抽象子类中实现。
+
+- **定义抽象方法**：使用关键字`abstract`定义。
+- **没有方法体**：抽象方法只有方法签名，没有方法体。
+- **必须在子类中实现**：如果一个类继承了抽象类，必须实现所有的抽象方法，除非该子类也是抽象类。
+
+```java
+// 定义一个抽象类
+public abstract class Animal {
+    // 抽象方法
+    public abstract void eat();
+    public abstract void sleep();
+
+    // 具体方法
+    public void breathe() {
+        System.out.println("Animal is breathing");
+    }
+}
+
+// 实现抽象类的子类
+public class Dog extends Animal {
+    @Override
+    public void eat() {
+        System.out.println("Dog is eating");
+    }
+
+    @Override
+    public void sleep() {
+        System.out.println("Dog is sleeping");
+    }
+
+    public static void main(String[] args) {
+        Dog dog = new Dog();
+        dog.eat();
+        dog.sleep();
+        dog.breathe();
+    }
+}
+```
+
+在这个例子中：
+
+- `Animal`是一个抽象类，包含两个抽象方法`eat`和`sleep`，以及一个具体方法`breathe`。
+- `Dog`类继承了`Animal`类，并实现了所有的抽象方法。
+- 在`main`方法中，创建了一个`Dog`对象，并调用了其`eat`、`sleep`和`breathe`方法。
+
+抽象类和抽象方法在Java编程中有许多应用场景，包括：
+
+- **定义共同行为**：抽象类可以定义一组共同行为，所有子类共享这些行为。
+- **代码复用**：抽象类可以包含具体方法，子类可以复用这些方法。
+- **模板设计模式**：抽象类可以用来定义算法的骨架，而具体实现由子类提供。这种设计模式称为模板方法模式（Template Method Pattern）。
+- **接口与实现分离**：抽象类可以作为接口的替代方案，提供一些默认实现，同时要求子类实现特定的方法。
+
+通过使用抽象类和抽象方法，Java开发者可以创建更灵活和可维护的代码结构，实现代码的复用和扩展。
+
+## Generics and Collections
+
+Java的泛型（Generics）和集合（Collections）是Java编程语言中两个重要的概念，广泛用于编写类型安全和灵活的代码。
+
+### 泛型（Generics）
+
+**泛型**是一种编程语言的特性，允许在定义类、接口和方法时使用类型参数。它们使得代码可以用于不同的数据类型，而不必重新编写代码，同时提供了编译时类型检查，提高了代码的安全性和可维护性。
+
+#### 泛型的优点
+
+1. **类型安全**：在编译时检查类型，防止类型转换错误。
+2. **代码重用**：编写一次代码，可以用于不同的数据类型。
+3. **提高代码的可读性和可维护性**：代码更简洁、明确。
+
+#### 泛型的使用
+
+1. **泛型类**：
+
+```java
+public class Box<T> {
+    private T t;
+
+    public void set(T t) {
+        this.t = t;
+    }
+
+    public T get() {
+        return t;
+    }
+
+    public static void main(String[] args) {
+        Box<Integer> integerBox = new Box<>();
+        integerBox.set(10);
+        System.out.println("Integer Value: " + integerBox.get());
+
+        Box<String> stringBox = new Box<>();
+        stringBox.set("Hello Generics");
+        System.out.println("String Value: " + stringBox.get());
+    }
+}
+```
+
+2. **泛型方法**：
+
+```java
+public class GenericsExample {
+    public static <T> void printArray(T[] array) {
+        for (T element : array) {
+            System.out.println(element);
+        }
+    }
+
+    public static void main(String[] args) {
+        Integer[] intArray = {1, 2, 3, 4, 5};
+        String[] strArray = {"A", "B", "C", "D", "E"};
+
+        printArray(intArray);
+        printArray(strArray);
+    }
+}
+```
+
+3. **有界类型参数**：
+
+```java
+public class GenericsExample {
+    public static <T extends Number> void printNumber(T number) {
+        System.out.println("Number: " + number);
+    }
+
+    public static void main(String[] args) {
+        printNumber(10); // Integer
+        printNumber(10.5); // Double
+        // printNumber("10"); // 编译错误，String不是Number的子类
+    }
+}
+```
+
+### 集合（Collections）
+
+**集合框架**（Collections Framework）是Java提供的一组类和接口，用于存储和操作数据集合。它们提供了对数据结构的高效操作，包括列表（List）、集合（Set）、队列（Queue）和映射（Map）。
+
+#### 集合框架的主要接口
+
+1. **List**：有序集合，允许重复元素。常用实现类有`ArrayList`、`LinkedList`。
+
+```java
+List<String> list = new ArrayList<>();
+list.add("A");
+list.add("B");
+list.add("C");
+for (String s : list) {
+    System.out.println(s);
+}
+```
+
+2. **Set**：不允许重复元素的集合。常用实现类有`HashSet`、`LinkedHashSet`、`TreeSet`。
+
+```java
+Set<String> set = new HashSet<>();
+set.add("A");
+set.add("B");
+set.add("A"); // 重复元素不会被添加
+for (String s : set) {
+    System.out.println(s);
+}
+```
+
+3. **Queue**：先进先出的集合。常用实现类有`LinkedList`、`PriorityQueue`。
+
+```java
+Queue<String> queue = new LinkedList<>();
+queue.add("A");
+queue.add("B");
+queue.add("C");
+System.out.println(queue.poll()); // A
+System.out.println(queue.poll()); // B
+```
+
+4. **Map**：键值对映射，不允许重复键。常用实现类有`HashMap`、`LinkedHashMap`、`TreeMap`。
+
+```java
+Map<String, Integer> map = new HashMap<>();
+map.put("A", 1);
+map.put("B", 2);
+map.put("A", 3); // 键"A"的值被更新
+for (Map.Entry<String, Integer> entry : map.entrySet()) {
+    System.out.println(entry.getKey() + ": " + entry.getValue());
+}
+```
+
+#### 集合工具类
+
+**Collections**类提供了许多静态方法，用于操作或返回集合。常用方法有：
+
+- `sort(List<T> list)`: 对列表进行排序。
+- `shuffle(List<?> list)`: 对列表进行随机排序。
+- `reverse(List<?> list)`: 反转列表中的元素顺序。
+
+```java
+List<Integer> numbers = new ArrayList<>(Arrays.asList(1, 2, 3, 4, 5));
+Collections.shuffle(numbers);
+System.out.println("Shuffled List: " + numbers);
+
+Collections.sort(numbers);
+System.out.println("Sorted List: " + numbers);
+
+Collections.reverse(numbers);
+System.out.println("Reversed List: " + numbers);
+```
+
+### 总结和廖雪峰老师网站
+
+[廖雪峰老师Java学习网站的解释](https://www.liaoxuefeng.com/wiki/1252599548343744/1265102638843296)
+
+- **泛型**：通过类型参数提高代码的类型安全性和复用性。
+- **集合**：提供了一组类和接口，用于高效地存储和操作数据集合。
+
+通过使用泛型和集合，Java开发者可以编写更灵活、高效和易于维护的代码。
+
+## Comparable and Comparator
+
+在Java中，`Comparable` 和 `Comparator` 是用于对象比较和排序的两个重要接口。
+
+### Comparable 接口
+
+`Comparable` 接口是Java类库提供的一种内部比较器接口，它允许实现了该接口的类的对象自行进行比较。实现了 `Comparable` 接口的类必须实现 `compareTo()` 方法，该方法返回一个整数值，用于表示对象的顺序关系。
+
+- **方法签名**：
+
+  ```java
+  public interface Comparable<T> {
+      int compareTo(T o);
+  }
+  ```
+
+- **用途**：
+
+  - 当一个类实现了 `Comparable` 接口后，它的对象可以通过 `Collections.sort()` 方法进行排序。
+  - 实现了 `Comparable` 接口的类的对象可以作为元素存储在 `SortedSet` 和 `SortedMap` 的实现类中。
+
+- **示例**：
+
+  ```java
+  public class Person implements Comparable<Person> {
+      private String name;
+      private int age;
+
+      // 构造函数、getter和setter等省略
+
+      @Override
+      public int compareTo(Person otherPerson) {
+          // 比较逻辑，根据需要定义比较的方式
+          return this.age - otherPerson.age;
+      }
+  }
+  ```
+
+### Comparator 接口
+
+`Comparator` 接口是一个外部比较器接口，它允许创建独立的比较器实现来进行对象的比较。`Comparator` 接口不会影响类的实现，可以在需要时创建多个不同的比较规则。
+
+- **方法签名**：
+
+  ```java
+  public interface Comparator<T> {
+      int compare(T o1, T o2);
+  }
+  ```
+
+- **用途**：
+
+  - `Comparator` 接口适用于需要在不同情况下使用不同的比较逻辑的场景。
+  - 可以使用 `Comparator` 来对类的对象进行排序，而不需要修改类本身或者使用其默认的比较方式。
+
+- **示例**：
+
+  ```java
+  public class PersonAgeComparator implements Comparator<Person> {
+      @Override
+      public int compare(Person p1, Person p2) {
+          return p1.getAge() - p2.getAge();
+      }
+  }
+  ```
+
+### 区别和适用场景
+
+- **Comparable vs Comparator**：
+
+  - `Comparable` 接口是对象自身的内部比较方式，类必须实现它来定义对象之间的默认比较规则。
+  - `Comparator` 接口是一个独立的比较器，允许定义多种不同的比较规则，并在需要时动态选择和应用这些规则。
+
+- **适用场景**：
+
+  - 使用 `Comparable` 接口当类的自然顺序（默认的排序方式）已经被明确定义时。
+  - 使用 `Comparator` 接口当需要定义额外的、非默认的比较规则，或者在不同的场景下使用不同的比较方式时。
+
+总结来说，`Comparable` 和 `Comparator` 是Java中用于对象比较和排序的两种不同方式，每种方式都有其适用的场景和优势，开发者可以根据具体需求选择合适的接口来实现对象的比较和排序功能。
+
+## 异常处理 Exception
+
+Java的异常处理机制旨在提高代码的健壮性和可维护性，通过捕获和处理异常来防止程序在运行时崩溃。Java使用`try`, `catch`, `finally` 和 `throw` 关键字来实现异常处理。
+
+### 异常的分类
+
+Java中的异常主要分为两大类：
+
+1. **受检异常（Checked Exception）**：
+   - 这些是由编译器强制检查的异常，必须被捕获或在方法签名中声明。
+   - 例如：`IOException`, `SQLException`
+
+2. **非受检异常（Unchecked Exception）**：
+   - 这些是由程序错误引起的异常，编译器不强制检查。
+   - 包括运行时异常（Runtime Exception）和错误（Error）。
+   - 例如：`NullPointerException`, `ArrayIndexOutOfBoundsException`
+
+### 异常处理机制
+
+1. **try-catch**：
+
+   用于捕获和处理异常。在`try`块中放置可能会抛出异常的代码，在`catch`块中处理该异常。
+
+   ```java
+   try {
+       // 可能抛出异常的代码
+   } catch (ExceptionType e) {
+       // 处理异常的代码
+   }
+   ```
+
+2. **finally**：
+
+   `finally`块用于执行一些重要的清理代码，不论是否抛出异常，该块中的代码都会执行。
+
+   ```java
+   try {
+       // 可能抛出异常的代码
+   } catch (ExceptionType e) {
+       // 处理异常的代码
+   } finally {
+       // 总是执行的代码
+   }
+   ```
+
+3. **throw**：
+
+   用于显式抛出异常对象。
+
+   ```java
+   public void someMethod() throws Exception {
+       if (someCondition) {
+           throw new Exception("错误信息");
+       }
+   }
+   ```
+
+4. **throws**：
+
+   用于在方法签名中声明该方法可能抛出的异常，提醒调用者处理这些异常。
+
+   ```java
+   public void someMethod() throws IOException {
+       // 可能抛出IOException的代码
+   }
+   ```
+
+### 示例代码
+
+以下是一个简单的例子，展示了如何使用`try`, `catch`, `finally`和`throw`来处理异常：
+
+```java
+import java.io.*;
+
+public class ExceptionExample {
+    public static void main(String[] args) {
+        try {
+            // 可能抛出IOException的代码
+            readFile("test.txt");
+        } catch (IOException e) {
+            // 处理IOException
+            System.out.println("An error occurred: " + e.getMessage());
+        } finally {
+            // 总是执行的代码
+            System.out.println("Execution finished.");
+        }
+    }
+
+    public static void readFile(String fileName) throws IOException {
+        FileReader file = new FileReader(fileName);
+        BufferedReader fileInput = new BufferedReader(file);
+
+        // 打印文件内容
+        for (int counter = 0; counter < 3; counter++) {
+            System.out.println(fileInput.readLine());
+        }
+        fileInput.close();
+    }
+}
+```
+
+### 自定义异常
+
+Java允许开发者创建自定义异常类，通常用于特定业务逻辑中的错误处理。自定义异常需要继承`Exception`或`RuntimeException`。
+
+```java
+public class CustomException extends Exception {
+    public CustomException(String message) {
+        super(message);
+    }
+}
+
+public class TestCustomException {
+    public static void main(String[] args) {
+        try {
+            validateAge(15);
+        } catch (CustomException e) {
+            System.out.println("Caught custom exception: " + e.getMessage());
+        }
+    }
+
+    static void validateAge(int age) throws CustomException {
+        if (age < 18) {
+            throw new CustomException("Age must be 18 or above.");
+        }
+    }
+}
+```
+
+## `try-with-resources`
+
+`try-with-resources` 是Java 7引入的一种资源管理机制，用于简化资源（如文件、数据库连接等）关闭的代码。它确保了任何实现了 `AutoCloseable` 接口的资源在使用完后会自动关闭，从而减少资源泄漏的风险。
+
+### 语法和用法
+
+`try-with-resources` 的基本语法如下：
+
+```java
+try (ResourceType resource = new ResourceType()) {
+    // 使用资源的代码
+} catch (ExceptionType e) {
+    // 处理异常的代码
+}
+```
+
+其中，`ResourceType` 必须是实现了 `AutoCloseable` 或 `Closeable` 接口的类。
+
+### 工作原理
+
+当`try-with-resources`语句结束时，无论是否抛出异常，都会自动调用资源的 `close()` 方法。这确保了资源的正确释放。
+
+### 示例
+
+下面是一个使用 `try-with-resources` 读取文件的例子：
+
+```java
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+
+public class TryWithResourcesExample {
+    public static void main(String[] args) {
+        try (BufferedReader br = new BufferedReader(new FileReader("test.txt"))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                System.out.println(line);
+            }
+        } catch (IOException e) {
+            System.out.println("An error occurred: " + e.getMessage());
+        }
+    }
+}
+```
+
+在这个例子中：
+
+- `BufferedReader` 和 `FileReader` 都实现了 `AutoCloseable` 接口。
+- 当`try`块结束时，不论是否发生异常，`BufferedReader` 和 `FileReader` 的 `close()` 方法都会被自动调用。
+
+### 多个资源
+
+`try-with-resources` 语句可以管理多个资源，多个资源之间用分号分隔：
+
+```java
+try (BufferedReader br = new BufferedReader(new FileReader("test.txt"));
+     PrintWriter pw = new PrintWriter(new FileWriter("output.txt"))) {
+    String line;
+    while ((line = br.readLine()) != null) {
+        pw.println(line);
+    }
+} catch (IOException e) {
+    System.out.println("An error occurred: " + e.getMessage());
+}
+```
+
+在这个例子中，`BufferedReader` 和 `PrintWriter` 都会在`try`块结束时自动关闭。
+
+### 自定义资源类
+
+任何实现了 `AutoCloseable` 接口的类都可以使用 `try-with-resources` 语句。以下是一个自定义资源类的例子：
+
+```java
+public class CustomResource implements AutoCloseable {
+    public void useResource() {
+        System.out.println("Using resource");
+    }
+
+    @Override
+    public void close() {
+        System.out.println("Closing resource");
+    }
+}
+
+public class TryWithResourcesCustomExample {
+    public static void main(String[] args) {
+        try (CustomResource resource = new CustomResource()) {
+            resource.useResource();
+        }
+    }
+}
+```
+
+在这个例子中，当`try`块结束时，`CustomResource` 的 `close()` 方法会被自动调用。
+
+### 优点
+
+- **简洁**：减少了显式的资源关闭代码，使代码更简洁和易读。
+- **安全**：确保资源被正确关闭，减少资源泄漏的风险。
+- **简化异常处理**：自动处理在关闭资源时可能抛出的异常。
+
+### 总结
+
+`try-with-resources` 是Java中处理资源管理的一种简洁高效的方式。通过自动管理资源的关闭，它不仅简化了代码，还提高了程序的安全性和可靠性。

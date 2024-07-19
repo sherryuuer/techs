@@ -18,13 +18,36 @@
 - 混合环境（VPC，VPN，Direct Connect）
   - Transit Gateway
 
-- OTHER THOUGH
-  - 网关是网络自治系统（AS）的分界
-  - 涉及到网关的服务Gateway，一般都只涉及路由设置。涉及Interface，IP等，一般会涉及路由表和DNS解析。
-  - 整个云构架中重要的部分：
-    - API到处都是，DNS解析非常重要
-    - PrivateLink和ENI功能强大
-    - 混合云的需求，多VPC和本地相连
+- **复习思考笔记**
+- *网关*是网络自治系统（AS）的分界
+- 涉及到网关的服务Gateway，一般都只涉及路由设置。涉及Interface，IP等，一般会涉及路由表和DNS解析。
+- 网关一般无法直接传递流量，因为它会重新进行包分组和路由选择！它面对的是一片域
+- 整个云构架中重要的部分：
+  - API到处都是，DNS解析非常重要
+  - PrivateLink和ENI功能强大
+  - 混合云的需求，多VPC和本地相连，DX/S2SVPN很重要，Transit Gateway很重要
+- 网络加速部分蛮酷的，EBS使用的是网卡专用，ENA等用的是绕过底层hypervisor，DPDK算法直接绕过了操作系统进行通信，得以加速
+- 重要的通行检查点：出发点的权限，防火墙，路由表，到达点的权限是否允许，中途是否有DNS正确解析，总之就是，出发，中途，终点
+- *路由表*，是统御一个域（subnet）的，在该域中的流量出发点可以找到，路由表中的gateway的跳点，但是如果从其他地方进来的流量，则无法跳到gateway跳点，因为它进来后是一个域，这个域（subnet）不具备路由功能！能路由流量的只有点。peering也是一种域之间的连接！
+- *ENI* = 一个host： ENI - PrivateLink - 服务（interface endpoint）一个AZ一个ENI
+- *PrivateLink*使用的是云服务的内部网络专用连接，是一种*服务端点*到*接口端点*的点到点专用虚拟连接
+- *TransitGateway*是Regional的，各个区域的TGW可以进行Peering。它是*多域的中转站*，它的attachment就像是卫星组件，每个卫星也就是VPC就像是一个TGW的*子网*，各自有各自的路由传播方法和路由表！
+  - 注意**当关闭了默认的TGW自己的路由表的时候，这些路由表不是在TGW上的，而是在各个attachment上的，他们是静态手动设置的，只有当使用开启了默认自动路由的时候，路由表才由TGW管理，这就像是VPC的默认路由表和subnet路由表一样，看是谁在统域**
+  - 视角切换到*VPC内部*，在VPC中的*每一个AZ都必须有*一个TGW的*ENI*来进行流量控制，如果哪个AZ里没有，那么那个AZ就无法通行流量
+  - 增加一个DC/VPN的路由domain的情况，则需要分两个路由表，统御VPN-VPC的流量，而不允许VPC之间的流量
+  - *ApplianceMode*使得流量可以对称！
+  - TGW - TGW跨区域对等连接，注意**内部组件无法BGP动态路由，需要静态路由手动设置**，默认加密传输，感觉是ENI所以是PrivateLink安全。另外他们两边可设置**自治系统号码**，这意味着两边都是自治系统。
+  - TGW Connect可以用于连接SDN网络和第三方设备，这个时候可以BGP，我认为是因为要连接的东西有BGP，并且有GRE安全隧道
+  - TGW连接S2SVPN，可以用ECMP和BGP功能提升带宽，还可以通过AWS全球加速Accelerator骨干系统进行网络加速以及提升安全性，因为S2SVPN走的是公网，进入AWS骨干系统，就进了私有网域了（这个加速骨干系统VGW就不能用，**虽然他们都是gateway，但是VGW是一个VPC的组件，而TGW我感觉是一个独立的组件，功能很强大**）
+  - **TGW能不能BGP要看连的是啥呢**，它自己互相连就不能BGP
+- *VIF*：这玩意儿是DX中要说的，但是这里有TransitVIF这样的虚拟连接方式，它可以连接4组到DXGateway，然后每个DXGateway可以连接6个TGW，一共24个（现在）
+- 混合构架三种，S2S走的公网虽然加密但是还是有风险，ClientVPN也是，DX是专用私有网络绝对安全，也许吧
+- **S2SVPN**，使用IPSec安全协议 -> VGW
+  - 在配置本地VPN的时候，流量路由设置没有跳VGW的选项，而逝0.0.0.0出IGW，*实质还是走外网出去了*，只是加密后进入了云端而已
+  - VPC端的VGW，带宽有限，用*TGW代替VGW*则大幅提升带宽，1.25束缚了VGW！
+  - 还有一种*EC2作为VPN*的方法，可以非常customize！安装防御软件啦，装NAT功能啦之类，带宽为5GB比VGW高
+- **Client2Site**，使用客户端 -> Client VPN Endpoint，依然靠ENI实现
+- **Direct Connect**
 
 ## VPC
 
@@ -297,7 +320,7 @@
   - 除此之外，也必须是支持Enhanced Networking的操作系统AMI
 
 - **DPDK**
-  - DPDK，全称为Data Plane Development Kit，它主要用于*加速网络数据包处理*，通常应用于网络设备和服务器上。DPDK通过*绕过bypass操作系统的内核网络栈*，直接在用户态进行数据包处理，从而大大提高数据包处理的速度和效率。所以它的目的是加速**操作系统内的包处理**。（SR-IOV是*加速instance和hypervisor之间的*包处理，这还要经过一下操作系统再去网卡呢，DPDK直接操作系统都直接绕过(kernel bypass)了），算法很cool。
+  - DPDK，全称为Data Plane Development Kit，它主要用于*加速网络数据包处理*，通常应用于网络设备和服务器上。DPDK通过*绕过bypass操作系统的内核网络栈*，直接在用户态进行数据包处理，从而大大提高数据包处理的速度和效率。所以它的目的是加速**操作系统内的包处理**。（SR-IOV是*加速instance和hypervisor（虚拟机监控器）之间的*包处理，这还要经过一下操作系统再去网卡呢，DPDK直接操作系统都直接绕过(kernel bypass)了），算法很cool。
 
 - **EFA**
   - 是ENA的一种类型，*只能用于Linux系统*，才能发挥它的功能，如果你放在Windows上，它就只是一个ENA了。
@@ -368,6 +391,7 @@
 
 ### VPC flow logs
 
+- 在它的5tuple中，非常长，最后还有*包的源和目的地*，用于检查是不是发送的地方就是包的源！
 - 三个level：*VPC，Subnet，ENI*
 - 捕获in/out *ENIs* 的IP traffic信息，因此它可以帮助troubleshooting连接问题
 - 这些ENI包括：ELB，RDS，ElastiCache，Redshift，workspaces，NATGateway，TransitGateway等，这些服务会在你的EC2中创建ENI，因此也会被捕获
@@ -387,7 +411,8 @@
 
 ### VPC Traffic Mirroring
 
-- 将EC2的ENI的流量进行copy，将流量重定向到目标存储位置以进行后续分析。
+- **不像IDS/IPS，镜像流量不会对系统造成影响，它是ENI到ENI的**
+- 将EC2的*ENI*的流量进行copy，将流量重定向到目标存储位置以进行后续分析。
 - VPC中的创建方法：
   - Create the mirror target：可以是EC2或者是ELB/NLB（UDP-4789） -> 之后就可以接一个或者一组Traffic Analyzer
   - Define the traffic filter：过滤内容：
@@ -416,8 +441,10 @@
   - *怀疑它内部用的是Infra的code进行分析的*
   - 所以当你是Iac的CI/CD集成构架时，就可将该功能加入CI/CD流程，保证你的设置按预期设定
   - 暂时只支持IPv4
+  - 一般是同一个region的连接
 
 - *Network Access Analyzer* （在*Network Manager*中，是Security和Governance工具）
+  - 比如检查你的资源是否有暴露在外网
   - 分析从一个点到另一个点的各种path，审查这些path是否合规：比如你的一个EC2直接通外网了，那么你可以用该工具检测，判定不合规，并修复
   - UseCase：信任网络路径，信任连接检测，隔离网络区域检测等
   - 需要设置一个Network Access Scope，有AWS预设的也可以自定义，定义后实质是一个json格式定义
@@ -501,7 +528,7 @@
 - 必须更新*每个VPC的subnet*的*route table*，以确保双方允许通信
 - 需要一个请求方VPC和一个接受方VPC授权连接
 - 限制Case：如果VPCA-VPCB之间是Peering：
-  - VPCA无法利用VPCB的*Internet Gateway*，**NAT Gateway**，或者*VPC Endpoint（Gateway）*
+  - VPCA无法利用VPCB的*Internet Gateway*，**NAT Gateway**，或者*VPC Endpoint（Gateway）*总之网关类型的你就是出不去
   - 如果VPCB和一个On-premise之间是VPN或者DX，VPCA也*无法连接到On-premise*，需要其他Proxy设置。
 - 解决方案：Transit Gateway
 - 补充内容：*Proxy*是指一种代理服务器：比如负载均衡，CDN内容分发服务，身份代理，API网关，地址转换NAT等都是代理形式。
@@ -510,7 +537,8 @@
 
 - VPC Endpoint在不经过公共互联网的情况下，将VPC私有连接到支持的 AWS 服务。这种连接是安全的、可靠的，低成本，并且简化了与这些服务的交互。
 - AWS 提供两种类型的 VPC Endpoint：接口端点 (Interface Endpoint) 和网关端点 (Gateway Endpoint)。
-- 接口端点是基于 AWS PrivateLink 的，使用弹性网络接口 (ENI) 在您的 VPC 中为支持的服务提供私有 IP 地址。
+- **Interface是一种网络组件了，Gateway是一种连接方式和协议，Interface面对的是一个点，Gateway面对的是一个域**
+- 接口端点是基于 AWS PrivateLink 的，使用弹性网络接口 (ENI) 在 VPC 中为支持的服务提供私有 IP 地址。
   - 访问支持 PrivateLink 的服务，例如 Amazon S3、DynamoDB 之外的 AWS 服务（如 EC2、Systems Manager、Kinesis 等）。
   - 连接第三方 SaaS 应用程序或您自己的服务，通过 PrivateLink 在您的 VPC 中公开这些服务。
   - 现在S3也有了Interface端点了。
@@ -540,7 +568,7 @@
   - 网关端点通过*更新 VPC 路由表*，将流量定向到支持网关端点的 AWS 服务，如 Amazon S3 和 DynamoDB。
   - 无网络接口
   - 网关端点通过在 VPC **路由表中添加特殊路由**，将流量安全地定向到 AWS 内部管理的虚拟网关。类似于一个特殊的黑洞路由，但它实际上会处理特定服务的流量。
-- 网关路由示例：
+- 网关路由示例：pl是特定的**AWS的prefix list**
 ```scss
 Destination      | Target
 ----------------|----------------
@@ -562,9 +590,10 @@ pl-xxxxxxxxxxxxx| vpce-12345678 (Gateway Endpoint)
   - EC2的话，*SecurityGroup*的 default 的 rule 是 allow all，但是如果你用的是 custom outbound rule 的话，需要添加针对`pl-xxxxx`的 http 和 https 的 outbound rules
   - EC2还需要一个 IAM role 用于access S3/DynamoDB
   - target是vpce-<id>
+- 安全方面⬇️
 - **VPC Endpoint Pollicy**
   - 通过定义一个IAM Policy，内部限定要访问的S3 bucket为特定的Resource桶，以及特定的Action
-  - 不定义的情况下default为允许对拥有的所有的S3的bucket的所有的Actions
+  - 不定义的情况下default为允许对拥有的所有的S3的bucket的所有的Actions，定义了policy则会按照这个policy来限制用户行为
 
 - **S3 Bucket Policy**
   - 在Bucket level可以定义policy限制条件condition，只允许从*vpce*通过的Access，或者只从某*vpc*来的Access（表示该vpc中所有的endpoints）
@@ -572,10 +601,11 @@ pl-xxxxxxxxxxxxx| vpce-12345678 (Gateway Endpoint)
 - Troubleshooting：
   - 检查安全组是否有custom rule没有开放对pl地址的outbound
   - 检查VPC Endpoint Policy是否设置了deny
-  - 检查私有子网的路由表是否有路由到vpce的pl地址条件（正常的话是自动被设置的）
-  - 检查VPC的DNSresolution是否是enabled
+  - 检查私有子网的路由表是否有路由到vpce的pl地址条件
+  - 检查VPC的*DNSresolution*是否是enabled
   - 检查S3 Bucket Policy是否允许对bucket的访问
   - 检查IAM permission，user permission和IAM Role
+  - **重要的检查点：出发点的权限，防火墙，路由表，到达点的权限是否允许，中途是否有DNS正确解析，总之就是，出发，中途，终点**
 
 - **Remote Network**（VPN/DX或者PeeringVPC）连接问题
   - 结论是*不能*。因为Gateway是VPC和AWS的VPC之间的网关（两个网络的边界点），只能处理路由表所在的私有子网的通信。VPN/DX或者Peering的信息进来后，他们没有路由指示，找不到要跳的点。
@@ -600,10 +630,10 @@ Interface功能可以说是VPC Endpoint的一个Extension。
 - *troubleshooting*：check DNS resolution 和 route table
 
 - **PrivateLink**
-  - 目的是expose一个VPC中的应用（SAAS）给其他很多VPC（可暴露给1000个VPC）而不需要通过Internet Gateway，peering（可联通100个VPC），nat等。
+  - 目的是**expose**一个VPC中的应用（SAAS）给其他很多VPC（可暴露给1000个VPC）而不需要通过Internet Gateway，peering（可联通100个VPC），nat等。
   - 高可用性，安全性。
-  - NLB+SAAS构架：消费端VPC（ENI（可设置多个，以提高可用性））--> PrivateLink --> 服务端VPC（NLB --> multi-servers(SAAS)）
-  - NLB+On-premise构架：消费端VPC（ENI）--> PrivateLink --> EdgeVPC（NLB）--> VPN/DX（安全连接On-premise（SAAS））
+  - *NLB*+SAAS构架：消费端VPC（ENI（可设置多个，以提高可用性））--> PrivateLink --> 服务端VPC（NLB --> multi-servers(SAAS)）
+  - *NLB*+On-premise构架：消费端VPC（ENI）--> PrivateLink --> EdgeVPC（NLB）--> VPN/DX（安全连接On-premise（SAAS））
   - ECS构架：多task多应用 --> ALB --> NLB --> PrivateLink --> ENI-of-VPC/VGW连接的其他VPN网络
   - VPC Endpoint构架：VPC Endpoint interface --> PrivateLink --> S3
   - *Snowflake的PrivateLink构架*：构架连接的是客户的S3到SF的内部stage（也是一个S3）。步骤如下：
@@ -627,9 +657,11 @@ Interface功能可以说是VPC Endpoint的一个Extension。
     - *enableDnsSupport* 是 AWS 中用于配置 VPC 的一个功能，它允许 VPC 中的实例使用默认的 DNS 解析服务来解析公共 DNS 域名，从而能够与互联网上的资源进行通信。默认启用，但是关闭了也可以自己设置Custom DNS Server。
     - *enableDnsHostname* 是 AWS VPC 中的一个配置选项，它允许 VPC 内的实例分配具有公开可解析主机名的 DNS 记录，从而使其他网络中的资源可以通过主机名来访问 VPC 中的实例。新VPC默认是禁用的。前置条件是 enableDnsSupport 为 True。
     - 通过设置Private DNS enabled，就可以使用PrivateDNS名，它是一个很短的以服务开头的hostname，比如sql.region.amazon.com。但是解析前的DNS名为vpce为开头的两个很长的DNS名，可以有很多个冗余设置。如果你没设置这个，就需要一个option：--endpoint-url手动设置endpoint的DNS名，自行解决。
+    - **这个设置，设置了就会走内部，不设置的话，有IGW的就可能出去公网了，因为是同一串名字**
     - 当enable了Private DNS设置后，内部使用的是AWS创建的Route53 Private Hosted Zone的域名解析功能。
+  - 如果只是用一个zone，用zone的DNS名会比较省钱。
 
-- **Remote Network**（VPN/DX或者PeeringVPC）连接问题
+- **Remote Network，也就是从其他DC或者VPC连接的问题**（VPN/DX或者PeeringVPC）连接问题
   - 结论是*能*。
   - Peering的VPC的需要attached to *Custom Route53 Private Hosted Zone*
   - On-premise的DNS Query需要forwarded to *Custom Route53 Resolver*
@@ -646,16 +678,16 @@ Interface功能可以说是VPC Endpoint的一个Extension。
 - 通过弹性网络接口（**ENI**, Elastic Network Interface）在子网中实现与VPC的连接，但其工作方式比简单的ENI配置更复杂和高效。
 - 可以跨账户连接VPC（TGW Sharing）：
   - 使用Resource Access Manager进行资源共享：选择资源 - 设置权限 - 选择分享对象（用户，组织，IAM role和user）
-  - 使用了S2SVPN的连接分享不能跨账户
-  - 使用DX的连接分享可以跨账户
-  - 对TGW的管理权限，不会让渡给被分享的账户
-  - 需要使用AZ ID来保证AZ标识符的唯一性
+  - 使用了*S2SVPN*的连接分享*不能跨账户*
+  - 使用*DX*的连接分享*可以跨账户*
+  - *对TGW的管理权限*，不会让渡给被分享的账户
+  - 需要使用*AZ ID*来保证*AZ标识符的唯一性*
 
 **底层逻辑：**
 - *网络虚拟化和分段：*
   Transit Gateway利用AWS的网络虚拟化技术，将不同的VPC、VPN连接和Direct Connect链接划分为隔离的网络段，确保流量隔离和安全性。它支持基于标签的路由和策略，允许灵活的流量管理。
 - *边缘路由器：*
-  Transit Gateway使用高性能的边缘路由器来管理和转发流量。这些路由器可以处理大量的网络流量，并支持高可用性和冗余设计，以确保连 接的可靠性。
+  Transit Gateway使用高性能的边缘路由器来管理和转发流量。这些路由器可以处理大量的网络流量，并支持高可用性和冗余设计，以确保连接的可靠性。
 - *软件定义网络（SDN）：*
   - 通过SDN，AWS可以快速部署和调整网络拓扑，满足用户需求。
   - 软件定义网络（SDN, Software-Defined Networking）是一种网络架构方法，通过将网络控制平面与数据平面分离，实现网络的集中管理和动态配置。SDN的核心思想是使用软件来集中控制网络行为，而不是依赖传统的硬件设备进行独立和分散的管理。
@@ -680,13 +712,13 @@ Interface功能可以说是VPC Endpoint的一个Extension。
   - 第三步（因为第一步的勾选，所以这里是自动的），通过创建Attachment，会自动创建出Accociations（连接信息），Propagations，和Routes
     - Propagations：传播指的是将路由信息从一个关联的网络资源传播到Transit Gateway路由表的过程
     - 启用传播，以便这些VPC和VPN连接的路由信息可以传播到Transit Gateway的路由表中
-    - 发现Propagations的列表信息和Accociations的内容一样
+    - Propagations的列表信息和Accociations的内容一样
     - Routes的内容中多了CIDR信息，和路由类型（Propagated）
   - 第四步，为每个VPC中连接的Subnet的路由表定义TransitGateway的路由信息（TGW的CIDR只要覆盖各个VPC的CIDR就可以了，比如各个VPC是16mask，那么TGW是8mask就可以了）
   - 如果想**限制某些VPC之间的通信**，则在第一步创建TGW的时候，不要勾选enable默认传播和路由设置，而是在之后设置。第二步Attachment和之前一样，第三步没有了自动设置，需要在路由表界面手动设置：
     - *Accociation*：为每个VPC创建路由表，并在Accociations的tab对每个VPC进行各自路由表的attachemnt添加（vpc：route-table的一一对应）。（Accociation=Attachment）
     - *Propagation*：为每个路由表添加要进行传播的对象VPC。
-    - *Routes*：路由表有两种，一种是通过Propagation的设置而创建的动态路由，这种路由在VPC进行了CIDR修改后会自动更新。还有一种是手动静态路由，无法检测VPC中的CIDR变更，需要手动修改和维护。
+    - *Routes*：路由表有两种，一种是通过Propagation的设置而创建的*动态路由*，这种路由在VPC进行了CIDR修改后会自动更新。还有一种是手动*静态路由*，无法检测VPC中的CIDR变更，需要手动修改和维护。
     - 第四步，每个VPC中的*Subnet的路由表*，也需要设置为，在TGW中创建的，各个VPC自己的路由表（而不是原本的默认TGW公有默认路由表）
 
 - **TGW VPC Network Patterns**
@@ -708,8 +740,9 @@ Interface功能可以说是VPC Endpoint的一个Extension。
   - 当用户创建VPC附件时，TGW会*自动选择*最优的AZ进行ENI的部署，确保流量路径最短且高效。
 - 特性：**Appliance Mode**
   - flow hash 算法（通过关注5 tuples，source，destination信息），将流量 fix 在一个ENI上
-  - 单向流量路由：在Appliance mode下，TGW会将进入和退出流量通过同一个ENI传输，确保流量路径的一致性。这种模式特别适合需要对进出流量进行同步处理的网络设备，如状态检测防火墙和负载均衡器。
+  - 单向流量路由：在Appliance mode下，TGW会将进入和退出流量通过同一个ENI传输，确保流量路径的一致性。这种模式特别适合需要对进出流量进行同步处理的网络设备，如*状态检测防火墙和负载均衡器*。
   - 对称路由：通过确保流量的对称性，Appliance mode可以防止状态检测设备在处理不对称流量时（当仅有AZ affinity功能开启时，会出现不对称）出现问题。
+  - 这个功能要是关闭，Appliance设备会发现这个流量没见过，会直接drop
 - **应用场景：**
   - AZ Affinity：
     - 性能敏感应用：适用于需要低延迟和高性能的应用，如实时数据处理、金融交易系统等。
@@ -718,7 +751,7 @@ Interface功能可以说是VPC Endpoint的一个Extension。
     - 安全设备：适用于需要状态检测的安全设备，如防火墙、入侵检测/防御系统（IDS/IPS）。
     - 负载均衡器：确保负载均衡器能够对称地处理进出流量，提高负载分配的效率。
     - 特定网络服务：适用于需要对称流量处理的其他网络服务，如VPN网关、网络分析工具等。
-- -option：ApplianceModeSupport=enable
+- -option：*ApplianceModeSupport=enable*
 
 ### Transit Gateway Peering
 
@@ -773,14 +806,14 @@ Interface功能可以说是VPC Endpoint的一个Extension。
 - TGW的连接方式之一：
   - On-premise --> DX --> <Transit VIF(virtual interface)> --> DX Gateway --> TransitGateway --> VPCs
   - 最多可以连接4个Transit VIFs，6个Transit Gateway，这意味着在一个Region中可以连接最多24个TGW（数字可能会进化哦）
-  - 但是上面这种Transit VIF连接方式是不安全的，没有加密。下面的较为安全。
+  - 但是**上面这种Transit VIF连接方式是不安全的，没有加密。下面的较为安全。**
 - TGW的连接方式之二：
-  - On-premise --> DX --> <Public VIF(virtual interface)> --> VPN Connection --> TransitGateway --> VPCs
-  - 这种方式使用了IPSec加密，IPsec（Internet Protocol Security）是一套用于在IP网络中提供安全通信的协议和技术。它通过对IP数据包进行加密和认证，确保数据在传输过程中的机密性、完整性和真实性。IPsec通常用于建立虚拟专用网络（VPN）。Layer3加密。
+  - On-premise --> DX --> <Public VIF(virtual interface)> --> VPN Connection（*IPSec*） --> TransitGateway --> VPCs
+  - 这种方式使用了**IPSec加密**，IPsec（Internet Protocol Security）是一套用于在IP网络中提供安全通信的协议和技术。它通过对IP数据包进行加密和认证，确保数据在传输过程中的机密性、完整性和真实性。IPsec通常用于建立虚拟专用网络（VPN）。Layer3加密。
 
 ### Multicast with Transit Gateway
 
-- 在网络通信中，**多播（Multicast）**是一种向多个目标节点发送单个数据包的通信方法。与单播（Unicast）和广播（Broadcast）不同，单播是一对一的通信，广播是一对所有的通信，而多播则是一/多对多的通信。
+- 在网络通信中，**多播（Multicast）**是一种向多个目标节点发送单个数据包的通信方法。与单播（Unicast）和广播（Broadcast）不同，单播是一对一的通信，广播是一对所有的通信，而*多播则是一/多对多的通信*。
 - 多播通常用于以下场景：
   - 流媒体传输：*UDP*，在视频直播、音频流传输等场景中，多播可以使得服务器只需发送一份数据流，而多个客户端可以同时接收。
   - 组播会议：在网络会议、在线教育等场景中，多播可以将数据流有效地发送给多个参与者，减少网络带宽和资源消耗。
@@ -792,7 +825,7 @@ Interface功能可以说是VPC Endpoint的一个Extension。
   - 发送者（Sender）：发送者是将数据包发送到多播组的节点或设备。
   - 接收者（Receiver）：接收者是从多播组接收数据包的节点或设备。
   - 多播组（Multicast Group）：多播组是一组具有共同目标的接收者。发送者将数据包发送到多播组的 IP 地址，而接收者通过订阅该地址来接收数据包。
-  - IGMP（Internet Group Management Protocol）：IGMP是在 IPv4 网络中管理多播组成员的协议。它允许主机和路由器加入或离开多播组，并在网络中传播多播成员的信息。
+  - **IGMP（Internet Group Management Protocol）**：IGMP是在 IPv4 网络中管理多播组成员的协议。它允许主机和路由器加入或离开多播组，并在网络中传播多播成员的信息。
   - MLD（Multicast Listener Discovery）：MLD是在 IPv6 网络中类似于 IGMP 的协议，用于管理多播组成员。
   - 组播路由协议：组播路由协议用于在网络中传输多播数据包，并确保它们能够到达多播组的所有成员。
   - 组播转发器（Multicast Forwarder）：组播转发器是负责在网络中转发多播数据包的设备或路由器。它们根据多播路由表来转发数据包，确保它们按照多播组成员的订阅信息进行传输。
@@ -825,7 +858,7 @@ Interface功能可以说是VPC Endpoint的一个Extension。
 
 ### TGW构架：中心化出站流量
 
-（通过这个构架感觉到，最复杂的地方，在一，每一个VPC的子网，和每一个attachment都需要设置路由表）
+（通过这个构架感觉到，最复杂的地方在，每一个VPC的子网，和每一个attachment都需要设置路由表）
 
 - 意思是所有的VPC（Applications）的Internet出站流量都通过TGW，和他连接的一个VPC（Shared Service）的NAT进行出站。
 
@@ -838,9 +871,9 @@ Interface功能可以说是VPC Endpoint的一个Extension。
 
 - 该构架会进行流量优化，试图将流量控制在同一个AZ中，如果一个AZ故障了，会自动引流到另一AZ，failover功能
 - NAT能力：最大同时连接55000连接，带宽从5Gbps可以扩展到100Gbps
-- 这个构架并不能省钱，目的是为了控制整体的网络流量的
+- 这个构架并不能省钱，目的是为了控制整体的网络流量的出口往一个VPC的IGW
 
-### TGW构架：中心化网络检查+GLB
+### TGW构架：中心化网络检查+GWLB+Appliance（IDS/IPS）
 
 - Appliance设备在网络中是指，执行特定网络任务的专用设备。比如防火墙，负载均衡，入侵检测等。
 - 这种构架的目的是中心化组织的网络流量，以便进行监督Inspection。
@@ -849,7 +882,7 @@ Interface功能可以说是VPC Endpoint的一个Extension。
 - 路由表还是一样的非常复杂，但是没有了刚刚的VPC之间的BlackHole路由，而是将VPC之间的流量都导向Traffice Inspection VPC的GLB进行流量过滤。
 - 在这种构架下，在GLB后面增加一层NAT子网，则可以实现向IGW的出站流量，这时候，不管是出站还是入站流量，都会经过GLB的监察。
 - GLB使用的是服务的Endpoint Interface，通过PrivateLink，流量是安全的
-- GLB使用GENEVE（通用网络虚拟化封装协议），将IP地址封装在UDP网络报文中。
+- GLB使用*GENEVE（通用网络虚拟化封装协议）*，将IP地址封装在UDP网络报文中。
 
 ### TGW构架：中心化VPC Interface Endpoints
 
@@ -905,7 +938,7 @@ Interface功能可以说是VPC Endpoint的一个Extension。
 
 - BGP路由信息交换方法：
   - 每个BGP路由器向*相邻路由器*发送本地路由表中的路由信息，并接收相邻路由器发送的路由信息。（这就是动态路由）
-  - 然后根据收到的相邻邻居路由的信息更新自己的路由表。通往一个目标的路径可能有多个，这也是一种failover。
+  - 然后根据收到的相邻邻居路由的信息更新自己的路由表。通往一个目标的路径可能有多个，这也是一种*failover*。
 
 ### VPN Basics
 
@@ -934,7 +967,8 @@ Interface功能可以说是VPC Endpoint的一个Extension。
 - 本地部署网络和 AWS 区域之间的 Direct Connect 连接是专用连接，但未进行加密。尽管每个 VPC 可能在 Direct Connect 连接中具有私有 VIF，但该解决方案未提供加密。
 
 - *创建步骤*简要包括：
-  - 在控制台创建VPC端和本地端端VGW和CGW
+  - 在控制台创建VPC端和本地端端VGW和CGW（**CGW创建是在VPC，创建对象是DC的服务器的IP地址**）
+  - 在控制台创建连接VGW和CGW的S2SVPN连接（其中还可以创建两个tunnel的各自的CIDR范围）
   - 创建VPN连接，然后下载配置文件
   - 根据下载的配置文件，在本地VPN设备（如Cisco、Juniper或其他支持IPSec的设备）上配置IPSec隧道：
     - *设置IKE（Internet Key Exchange）参数*，其中有一个参数：`nat_traversal=yes`，这是**NAT-Traversal**机制：
@@ -990,7 +1024,7 @@ Interface功能可以说是VPC Endpoint的一个Extension。
     - Restart：AWS重启IKE Phase 1
     - None：take no action
   - Custom 使用动态路由必须支持DPD，总之*动态路由必然支持DPD*，因为既然是动态肯定要有确认对方是否生存的功能。
-  - *idle connection*：如果隧道上没有任何通信发生，隧道仍然会被关闭：对策来说：
+  - *idle connection*：如果隧道上没有任何通信发生，隧道仍然会被关闭：*对策*来说：
     - 可以设置一个合适的idle timeout
     - 或在一端设置一个host，每隔5-10秒就向对方发生一个ping，来保证通道不会处于idle状态
 
@@ -1014,9 +1048,9 @@ Interface功能可以说是VPC Endpoint的一个Extension。
 - 1个TGW - 多个CGW：Multi-VPN构架，每个VPC附件attachment的带宽最大为50 Gbps。
 - 多个S2SVPN连接：比如两组连接，每组都有两条通道，提高可用性
 
-**VPN Cloud Hub**
+### VPN Cloud Hub：本地DC的hub
 
-- VPN Gateway可以不*用attach*在任何VPC上
+- **VPN Gateway**是一个可以*不用attach*在任何VPC上的东西
 - VPN Gateway - 连接多个本地DC的 CGW（有各自的自治系统号码），从而达到*各个本地DC之间互相使用IPSec Tunnel建立VPN通信*的目的。这里面没有AWS的VPC参与。
 - 每个CGW必须有unique的 BGP ASN，和动态路由
 - 每个本地DC必须有不同（no overlapping）的CIDR range
@@ -1027,11 +1061,11 @@ Interface功能可以说是VPC Endpoint的一个Extension。
 ### EC2 based VPN
 
 - *VPN Termination*是指终止或结束VPN连接的过程或设备。在VPN（Virtual Private Network，虚拟专用网络）中，Termination指的是在网络中结束数据传输的点或设备。这通常是在连接两个网络或者连接用户设备和企业网络时发生的。VPN Termination点可以是网络设备，如路由器、防火墙或VPN服务器，它们负责加密和解密数据、处理连接请求，并终止连接。
-- 使用EC2 based VPN的可是想使用其他的通道协议而不是IPSec，比如：GRE，dmvpn
-- EC2实例作为VPN端点时，可以通过操作系统OS层面的*IP表（iptables）*来管理流量的转发和过滤。iptables是Linux系统上用于配置和管理网络规则的工具，可以用于实现诸如*路由、NAT、端口转发和访问控制*等功能。
+- 使用EC2 based VPN的*目的*可能是想使用其他的通道协议而不是IPSec，比如：**GRE，dmvpn**
+- EC2实例作为VPN端点时，可以通过操作系统OS层面的*IP表（iptables）*来管理流量的转发和过滤。**iptables**是Linux系统上用于配置和管理网络规则的工具，可以用于实现诸如*路由、NAT、端口转发和访问控制*等功能。
   - *流量转发*：通过iptables设置规则，将VPN连接的流量从EC2实例转发到VPC或本地数据中心。这些规则可以指定特定的源、目标、端口等条件，以确保只有符合条件的流量被转发。
   - *NAT转换*：如果需要在VPN连接的两端进行地址转换，可以使用iptables设置NAT规则，将源地址或目标地址进行转换，以确保流量正确地在VPC和本地网络之间传递。
-  - 这使得**VPC和本地DC之间可以有overlapping的CIDR**，而VGW的情况下是不允许的。
+    - 这使得**VPC和本地DC之间可以有overlapping的CIDR**，而VGW的情况下是不允许的。
   - *安全性增强*：通过iptables可以实现对流量的深度检查和过滤，从而增强VPN连接的安全性。可以安装threat protection 软件，可以设置规则来防范DDoS攻击、阻止恶意流量、限制访问等。
 - 可以达到Transitive Routing（流量传递）的目的。而网关系统VGW则不可以。
 - 增强带宽，带宽是EC2的上限5Gbps，同时可以水平扩展。
@@ -1046,12 +1080,12 @@ Interface功能可以说是VPC Endpoint的一个Extension。
 
 ### Transit VPC
 
-- 多VPC对多本地DC的构架，一个复杂的mesh用一个VPC来替代的结构：Multi-VPC -- TransitVPC -- Multi-ON-premise-DC
+- 多VPC对多本地DC的构架，**一个复杂的mesh用一个VPC来替代的结构**：Multi-VPC -- TransitVPC -- Multi-ON-premise-DC
 - Transit VPC通过一个中心VPC来实现路由，从而简化了网络管理和路由策略的制定。所有的流量都会通过这个中心VPC进行转发和管理。
 - 可以在VPC中的EC2上安装Advanced Threat Protection等软件
 - Transit VPC可以集中管理和监控流量，通过应用安全策略、访问控制列表（ACL）和防火墙来增强网络安全性。
 - 可以有Overlapping CIDR，因为可以通过NAT转发功能（**TransitGateway不行，除了这一点其他的都可以通过TransitGateway实现。**）
-- Transitive Routing：VPC Endpoints，IGW。因为它是一个EC2base的VPN
+- Transitive Routing：VPC Endpoints，IGW可以转发传来的流量。因为**它是一个EC2base的VPN**
 - Client - site 连接多个VPC资源
 
 ## Client VPN
@@ -1066,8 +1100,8 @@ Interface功能可以说是VPC Endpoint的一个Extension。
   - Client VPN Endpoint（同时就会在target subnet中创建ENI，以及它的SG）
   - Client连接到VPN Endpoint的同时就是land到了这个subnet中，就可以使用各种资源了
   - VPN Endpoint关联的Route表，控制访问路由
-  - Authorization Rules：用于对用户的更精细控制，比如在AD控制的基础上，设置部门分别的访问权限
-  - Application Subnet（可访问的资源），IGW等其他VPC资源
+  - *Authorization Rules*：用于对用户的更精细控制，比如在AD控制的基础上，设置部门分别的访问权限
+  - *Application Subnet*（可访问的资源），IGW等其他VPC资源
 - 限制：
   - Client CIDR range不能和VPC的local CIDR重合
   - CLient CIDR range也不能和手动添加到VPN Endpoint的路由重合
