@@ -1399,3 +1399,351 @@ public class TryWithResourcesCustomExample {
 ### 总结
 
 `try-with-resources` 是Java中处理资源管理的一种简洁高效的方式。通过自动管理资源的关闭，它不仅简化了代码，还提高了程序的安全性和可靠性。
+
+## 文件读写（字符和字节）
+
+在Java中，文件读写操作主要通过`java.io`包中的类来实现。以下是一些常用类和方法，分别用于读取和写入文件。
+
+### 文件读取
+
+#### 使用 `FileReader` 和 `BufferedReader`
+`FileReader` 类用于读取字符文件。`BufferedReader` 提供缓冲读取，提高了读取效率。
+
+```java
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+
+public class FileReadExample {
+    public static void main(String[] args) {
+        try (BufferedReader br = new BufferedReader(new FileReader("example.txt"))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                System.out.println(line);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+#### 使用 `FileInputStream` 和 `InputStreamReader`
+`FileInputStream` 类用于读取字节文件，通常与 `InputStreamReader` 结合使用，将字节流转换为字符流。
+
+```java
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
+import java.io.BufferedReader;
+import java.io.IOException;
+
+public class FileReadExample2 {
+    public static void main(String[] args) {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream("example.txt")))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                System.out.println(line);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### 文件写入
+
+#### 使用 `FileWriter` 和 `BufferedWriter`
+`FileWriter` 类用于写入字符文件。`BufferedWriter` 提供缓冲写入，提高了写入效率。
+
+```java
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+
+public class FileWriteExample {
+    public static void main(String[] args) {
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter("example.txt"))) {
+            bw.write("Hello, World!");
+            bw.newLine();
+            bw.write("Java File Writing Example.");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+#### 使用 `FileOutputStream`
+`FileOutputStream` 类用于写入字节文件。
+
+```java
+import java.io.FileOutputStream;
+import java.io.IOException;
+
+public class FileWriteExample2 {
+    public static void main(String[] args) {
+        try (FileOutputStream fos = new FileOutputStream("example.txt")) {
+            String content = "Hello, World!\nJava File Writing Example.";
+            fos.write(content.getBytes());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### 使用 NIO 包中的类
+Java NIO（New IO）提供了更加高效的文件操作方法。
+
+#### 文件读取
+```java
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.List;
+import java.io.IOException;
+
+public class FileReadNIOExample {
+    public static void main(String[] args) {
+        try {
+            List<String> lines = Files.readAllLines(Paths.get("example.txt"));
+            for (String line : lines) {
+                System.out.println(line);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+#### 文件写入
+```java
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+
+public class FileWriteNIOExample {
+    public static void main(String[] args) {
+        String content = "Hello, World!\nJava NIO File Writing Example.";
+        try {
+            Files.write(Paths.get("example.txt"), content.getBytes(StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### 总结
+- `FileReader` 和 `BufferedReader` 适合读取字符文件。
+- `FileInputStream` 和 `InputStreamReader` 适合读取字节文件，并可以将字节流转换为字符流。
+- `FileWriter` 和 `BufferedWriter` 适合写入字符文件。
+- `FileOutputStream` 适合写入字节文件。
+- Java NIO 提供了更加高效和简便的文件读写方法。
+
+在选择使用哪个类时，可以根据具体需求和文件类型来决定。
+
+## Java的Lambda表达式和Functional接口
+
+### Lambda表达式
+
+**定义**：Lambda表达式是Java 8引入的一种简洁的方式，用于实现匿名函数。它可以使代码更加简洁、可读性更强，特别是在需要使用短小的代码段来实现接口方法时。
+
+**语法**：
+```java
+(parameters) -> expression
+或
+(parameters) -> { statements; }
+```
+
+**示例**：
+```java
+// 使用Lambda表达式实现Runnable接口
+Runnable r = () -> System.out.println("Hello, Lambda!");
+r.run();
+```
+
+### Functional接口
+
+**定义**：Functional接口是指仅包含一个抽象方法的接口。这种接口可以隐式地转换为Lambda表达式。Java 8引入了`@FunctionalInterface`注解，用于显式地声明一个接口为Functional接口，但这不是强制的，任何满足条件的接口都可以作为Functional接口。
+
+**示例**：
+```java
+@FunctionalInterface
+interface MyFunctionalInterface {
+    void myMethod();
+}
+```
+
+**常见的Functional接口**：
+- `java.lang.Runnable`：只有一个`run`方法。
+- `java.util.concurrent.Callable`：只有一个`call`方法。
+- `java.util.function.Predicate`：只有一个`test`方法，用于条件判断。
+- `java.util.function.Function`：只有一个`apply`方法，用于将一个值转换为另一个值。
+- `java.util.function.Consumer`：只有一个`accept`方法，用于处理一个输入值而不返回结果。
+- `java.util.function.Supplier`：只有一个`get`方法，用于提供一个值。
+
+Java的Functional接口提供了许多通用的接口类型，每个接口在不同的场景中使用，用于解决特定类型的问题。以下是常见的Functional接口及其典型使用场景：
+
+#### 1. `Runnable` 接口
+**使用场景**：用于在新线程中执行代码块。
+
+**示例**：
+```java
+Runnable task = () -> System.out.println("Running in a separate thread");
+new Thread(task).start();
+```
+
+#### 2. `Callable<V>` 接口
+**使用场景**：与`Runnable`类似，但可以返回结果或抛出异常，常用于需要返回结果的异步任务。
+
+**示例**：
+```java
+import java.util.concurrent.Callable;
+
+Callable<Integer> task = () -> {
+    return 123;
+};
+```
+
+#### 3. `Predicate<T>` 接口
+**使用场景**：用于进行条件判断，返回`true`或`false`。常用于过滤操作。
+
+**示例**：
+```java
+import java.util.function.Predicate;
+
+Predicate<String> isLongerThan5 = s -> s.length() > 5;
+System.out.println(isLongerThan5.test("Hello")); // false
+System.out.println(isLongerThan5.test("Hello, World!")); // true
+```
+
+**典型应用**：在集合过滤中使用
+```java
+List<String> names = Arrays.asList("Alice", "Bob", "Charlie");
+List<String> longNames = names.stream()
+                              .filter(isLongerThan5)
+                              .collect(Collectors.toList());
+```
+
+#### 4. `Function<T, R>` 接口
+**使用场景**：用于将一种类型的数据转换为另一种类型，常用于映射操作。
+
+**示例**：
+```java
+import java.util.function.Function;
+
+Function<Integer, String> intToString = i -> "Number: " + i;
+System.out.println(intToString.apply(5)); // "Number: 5"
+```
+
+**典型应用**：在集合映射中使用
+```java
+List<Integer> numbers = Arrays.asList(1, 2, 3, 4, 5);
+List<String> numberStrings = numbers.stream()
+                                    .map(intToString)
+                                    .collect(Collectors.toList());
+```
+
+#### 5. `Consumer<T>` 接口
+**使用场景**：用于对单个输入执行某些操作，但不返回结果，常用于遍历操作或打印操作。
+
+**示例**：
+```java
+import java.util.function.Consumer;
+
+Consumer<String> printUpperCase = s -> System.out.println(s.toUpperCase());
+printUpperCase.accept("hello"); // "HELLO"
+```
+
+**典型应用**：在集合遍历中使用
+```java
+List<String> names = Arrays.asList("Alice", "Bob", "Charlie");
+names.forEach(printUpperCase);
+```
+
+#### 6. `Supplier<T>` 接口
+**使用场景**：用于提供或生成一个结果，不接受任何输入，常用于延迟计算或对象实例化。
+
+**示例**：
+```java
+import java.util.function.Supplier;
+
+Supplier<Double> randomValue = () -> Math.random();
+System.out.println(randomValue.get()); // 随机数
+```
+
+**典型应用**：延迟加载或默认值提供
+```java
+public class LazyInitialization {
+    private Supplier<HeavyObject> heavyObjectSupplier = () -> createHeavyObject();
+
+    private HeavyObject createHeavyObject() {
+        // 创建一个重型对象
+        return new HeavyObject();
+    }
+
+    public HeavyObject getHeavyObject() {
+        return heavyObjectSupplier.get();
+    }
+}
+```
+
+#### 7. `UnaryOperator<T>` 接口
+**使用场景**：用于对单个操作数进行操作，并返回与操作数相同类型的结果。它是`Function`的特殊化形式。
+
+**示例**：
+```java
+import java.util.function.UnaryOperator;
+
+UnaryOperator<Integer> square = x -> x * x;
+System.out.println(square.apply(5)); // 25
+```
+
+**典型应用**：在集合操作中使用
+```java
+List<Integer> numbers = Arrays.asList(1, 2, 3, 4, 5);
+List<Integer> squaredNumbers = numbers.stream()
+                                      .map(square)
+                                      .collect(Collectors.toList());
+```
+
+#### 8. `BinaryOperator<T>` 接口
+**使用场景**：用于对两个操作数进行操作，并返回与操作数相同类型的结果。它是`BiFunction`的特殊化形式。
+
+**示例**：
+```java
+import java.util.function.BinaryOperator;
+
+BinaryOperator<Integer> sum = (a, b) -> a + b;
+System.out.println(sum.apply(2, 3)); // 5
+```
+
+**典型应用**：在归约操作中使用
+```java
+List<Integer> numbers = Arrays.asList(1, 2, 3, 4, 5);
+int total = numbers.stream()
+                   .reduce(0, sum);
+System.out.println(total); // 15
+```
+
+#### 9. `BiFunction<T, U, R>` 接口
+**使用场景**：用于将两个输入类型的数据转换为另一种类型，常用于需要两个输入参数的情况。
+
+**示例**：
+```java
+import java.util.function.BiFunction;
+
+BiFunction<String, String, Integer> compareLengths = (a, b) -> a.length() - b.length();
+System.out.println(compareLengths.apply("hello", "world!")); // -1
+```
+
+Java 的 Functional 接口广泛应用于各种场景中，特别是在集合操作、并发处理、条件判断、数据转换和遍历操作中。Lambda 表达式与 Functional 接口的结合，使得代码更加简洁、易读和可维护。在实际开发中，根据需求选择适当的 Functional 接口，可以大大提高代码的效率和质量。
+
+### 总结
+
+- **Lambda表达式** 提供了一种简洁的方式来实现Functional接口的方法，使代码更加简洁和易读。**它是Functional接口的一个实例**
+- **Functional接口** 是*只包含一个*抽象方法的接口，Java 8提供了许多预定义的Functional接口，使得Lambda表达式的使用更加广泛和灵活。
+- 通过结合Lambda表达式和Functional接口，可以显著减少代码的冗余，提高代码的可维护性和可读性。

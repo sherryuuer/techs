@@ -69,6 +69,31 @@
   - 现在的bsp项目应该就是这样的，不同的公司治理不同的数据域
 - Data Mesh采用*联邦式数据治理*模式，在保证数据治理一致性的同时，允许各个域根据自身需求灵活地管理和使用数据
 
+### ETL和ELT
+
+- 传统的数据存储是ETL，但是数据糊ELT则是先load，在需要的时候再转换
+- 可以是各种源，数据库，文件，API等，可以是批处理，实时，或者近实时处理
+- 自动化编排：
+  - Glue/Glue Workflows
+  - Lambda
+  - Step Functions
+  - MWAA
+  - EventBridge
+
+### Data Sources和Format
+
+- JDBC，ODBC，APIs，RawLogs，Streams
+- CSV：最常见文件格式，tsv也是
+- Json：软件设置文件，web服务器和客户端等交互文件，嵌套格式的数据
+- Avro：二进制格式，大数据，实时处理系统
+- Parquet：列式数据，IO和存储优化，分布式系统
+
+### 相关概念
+
+- 数据建模（Data Modeling）是指设计和定义数据结构和关系的过程，以便在数据库系统中有效存储、管理和检索数据。
+- 模式演变（Schema Evolution）是指在数据库或数据仓库中随着业务需求变化对数据模式进行修改和扩展的过程。
+- 数据血缘（Data Lineage）是指追踪数据从源头到最终目的地的流动路径及其所经历的所有处理步骤的过程。
+
 ## Storage
 
 ## Database

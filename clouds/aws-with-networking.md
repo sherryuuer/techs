@@ -31,7 +31,7 @@
 - *路由表*，是统御一个域（subnet）的，在该域中的流量出发点可以找到，路由表中的gateway的跳点，但是如果从其他地方进来的流量，则无法跳到gateway跳点，因为它进来后是一个域，这个域（subnet）不具备路由功能！能路由流量的只有点。peering也是一种域之间的连接！
 - *ENI* = 一个host： ENI - PrivateLink - 服务（interface endpoint）一个AZ一个ENI
 - *PrivateLink*使用的是云服务的内部网络专用连接，是一种*服务端点*到*接口端点*的点到点专用虚拟连接
-- *TransitGateway*是Regional的，各个区域的TGW可以进行Peering。它是*多域的中转站*，它的attachment就像是卫星组件，每个卫星也就是VPC就像是一个TGW的*子网*，各自有各自的路由传播方法和路由表！
+- *TransitGateway*是**Regional的路由器**，各个区域的TGW可以进行Peering。它是*多域的中转站*，它的attachment就像是卫星组件，每个卫星也就是VPC就像是一个TGW的*子网*，各自有各自的路由传播方法和路由表！
   - 注意**当关闭了默认的TGW自己的路由表的时候，这些路由表不是在TGW上的，而是在各个attachment上的，他们是静态手动设置的，只有当使用开启了默认自动路由的时候，路由表才由TGW管理，这就像是VPC的默认路由表和subnet路由表一样，看是谁在统域**
   - 视角切换到*VPC内部*，在VPC中的*每一个AZ都必须有*一个TGW的*ENI*来进行流量控制，如果哪个AZ里没有，那么那个AZ就无法通行流量
   - 增加一个DC/VPN的路由domain的情况，则需要分两个路由表，统御VPN-VPC的流量，而不允许VPC之间的流量
@@ -46,8 +46,32 @@
   - 在配置本地VPN的时候，流量路由设置没有跳VGW的选项，而逝0.0.0.0出IGW，*实质还是走外网出去了*，只是加密后进入了云端而已
   - VPC端的VGW，带宽有限，用*TGW代替VGW*则大幅提升带宽，1.25束缚了VGW！
   - 还有一种*EC2作为VPN*的方法，可以非常customize！安装防御软件啦，装NAT功能啦之类，带宽为5GB比VGW高
-- **Client2Site**，使用客户端 -> Client VPN Endpoint，依然靠ENI实现
-- **Direct Connect**
+- **Client2Site**，使用客户端 -> Client VPN Endpoint，依然靠ENI实现，以及ACM
+- **Direct Connect**：各种VIF，**802.1Q VLAN封装**（layer2）是一种通过在**以太网帧中添加标签（VLAN Tag）**来支持VLAN的标准。客户端路由必须支持BGP。
+  - Connection和VIF是两个不同的范畴，一个是物理的一个是虚拟的
+  - **Public VIF**可以连接到所有的AWS*全球*服务（*虽然她叫做public实际走的是AWS的private网络，就像是进入了AWS的内部网络，可以用任何的服务*），*跨区域的*服务。而**Private VIF**只能接到和DX设置在同区域的VPC（*必须和VGW在同一个region*），这是一个关键区别
+  - Hosted Connection只能在主账户，但是Hosted VIF可以给其他账户
+  - *DXGW构架*：*TransitVIF*（最大4条）连接DXGateway，连接TGW（一条6个）
+  - DXGateway（all region）可以让PrivateVIF有多个region的分支，反之只能路由到一个region
+  - *DXGW构架*：DXRouter/或者多个 - *PrivateVIF*/或者多个 - 多DXGW - 多区域VGW
+  - DXGW连接的*SiteLink*蛮酷的，走AWS的backbone，连接本地DC
+  - **路由策略好复杂**：publicVIF路由，inbound是9开头，outbound是8开头，privateVIF路由偏好是7开头
+  - Troubleshooting中的层级概念很有意思
+- TGW和DX的TransitVIF结合（要DXGW参与）起来用，构架很有意思
+- CloudWan直接中心化所有的连接管理，管理元数据在美国us-west-2，这个服务蛮酷的，使用SDWAN和IaC技术和AWS的边缘计算网络直接将世界VPCs连接在一起，DX需要用TGW连接
+- *CloudFront*（CDN）
+  - ALB在监听Listener层面可以设置rule来限制监听的对象，比如是否有X-Custom-Header，来设置转发规则（负载均衡就是一个转发代理）
+  - CF是一个内容分发服务，GA是一个*使用AWS内部网络进行路由加速的高级功能*，使用AnyCastIP功能
+- ELB的东西很多，还是最好重新看一遍笔记
+  - ALB:layer7
+  - NLB:layer4
+  - GWLB:layer3
+- Route53的东西很重要
+- 网络安全主要设计*防御*和*检测*两种
+  - 注意一下*NLB*部分，他是针对IP的网络层的东西
+- EKS**POD军团**
+- 网络统筹管理和分享
+- **思考方式和线索**：发生问题的**网络层级，二层链路层，三层网络，四层传输，七层应用**，每个层级都有自己的协议，然后就是网络范围是在哪里，**本地，还是VPC，还是AWS的云内，云内是同区域吗**，然后就是流量的进出，**路由的线索**，**路由和防火墙**，**网关和端点ENI**都是两种东西，但是经常放在一起讲。**网络世界的编码和解码，其实和计算机底层的编码解码也是一样的**，只不过他们发生的世界不一样。人的认知世界也是编码解码的过程。如果解码知识和信息至关重要。每一个技术的出现都是为了解决一个问题，理解这个问题，相当于重走一次底层过程。
 
 ## VPC
 
@@ -1170,7 +1194,7 @@ Interface功能可以说是VPC Endpoint的一个Extension。
 
 - 更新target subnet的路由，指向Peered VPC
 - 更新Peered VPC的资源SG，允许来自target subnet的SG的流量
-- VPN Endpoint中为Authorize traffic rule添加Peered VPC的CIDR许可
+- VPN Endpoint中为Authorize traffic rule（**应该是一个防火墙**）添加Peered VPC的CIDR许可
 - VPN Endpoint中为路由表添加到Peered VPC的CIDR许可
 
 ## Direct Connect（DX）
@@ -1207,19 +1231,19 @@ Interface功能可以说是VPC Endpoint的一个Extension。
   - Cost考虑，可以设置VPN作为备用连接
   - Dual device：两条DX Connections（单一Location两条连接（development and test选项），或者分别的Location各设置连接（high resiliency选项））
   - 四条连接：两个Location，各两条Connections，这是可以设置的最大弹性连接上限（Maximum resiliency选项）
-  - 使用BFD（双向连接检测）将failover的时间减少到1秒内；需要在Customer端router设置；不设置的情况下默认的是BGP keep-alives的hold down90秒
+  - **使用BFD（双向连接检测）**将failover的时间减少到1秒内；需要在*Customer端router设置*；不设置的情况下默认的是BGP keep-alives的hold down90秒
 
-- Security
+- **Security**
   - DX连接本来就是专有连接，也就是内部连接，所以是没有加密的
-  - 实现流量加密的方法：
+  - 实现*流量加密*的方法：
     - layer4:TLS加密（传输层，理想的方式）
     - layer3:VPN加密（网络层）使用Public VIF - VGW（IPSec）
-    - layer2:MACSec加密（链路层）只支持dedicated连接
+    - layer2:MACSec加密（链路层）只支持dedicated连接（不是所有的DXpartner都支持）
 
 ### 要求 requirements
 
 - Single-mode Fiber：现在有1G，10G，100G光缆，这是一种*物理设置*而不是逻辑设置。
-- 802.1Q VLAN encapsulation：802.1Q VLAN封装是一种通过在以太网帧中添加标签来支持VLAN的标准。它允许在同一物理网络上创建多个逻辑网络，从而实现流量隔离和网络管理的灵活性。
+- 802.1Q VLAN encapsulation：**802.1Q VLAN封装**是一种通过在**以太网帧中添加标签**来支持VLAN的标准。它允许在同一物理网络上创建多个逻辑网络，从而实现流量隔离和网络管理的灵活性。
 - Auto-Negotiation必须是disabled状态以保证速度1Gbps以上，改用*手动设定*
   - 自动协商（Auto-Negotiation）是一种网络协议，允许以太网设备在建立连接时自动协商共同支持的最佳传输速度、双工模式（全双工或半双工）和其他相关参数。这个过程在以太网网络中非常重要，因为它确保了设备之间能够以最佳性能进行通信，而无需手动配置。
 - Custom路由必须支持BGP和BGP MD5认证：对每个消息都要验证哈希值，有一些零信任的特征，比如持续验证，但是在范围，管理，策略，细度上还是不及。另外MD5哈希算法已被证明在密码学上不安全，存在碰撞漏洞和破解风险。
@@ -1244,11 +1268,11 @@ Interface功能可以说是VPC Endpoint的一个Extension。
 ```mermaid
 graph TD
   subgraph 虚拟化环境
-    VIF1[虚拟接口 (VIF)]
-    VIF2[虚拟接口 (VIF)]
-    VSwitch[虚拟交换机 (vSwitch)]
-    VM1[虚拟机 (VM1)]
-    VM2[虚拟机 (VM2)]
+    VIF1[虚拟接口VIF1]
+    VIF2[虚拟接口VIF2]
+    VSwitch[虚拟交换机vSwitch]
+    VM1[虚拟机VM1]
+    VM2[虚拟机VM2]
     VIF1 -- 网络连接 --> VSwitch
     VIF2 -- 网络连接 --> VSwitch
     VM1 -- VIF1 --> VSwitch
@@ -1258,8 +1282,8 @@ graph TD
 
   subgraph 云服务环境
     VPC[VPC]
-    Endpoint[接口端点 (Interface Endpoint)]
-    CloudService[私有云服务 (S3, DynamoDB等)]
+    Endpoint[接口端点Interface Endpoint]
+    CloudService[私有云服务S3, DynamoDB等]
     VPC -- 私有连接 --> Endpoint
     Endpoint -- 私有连接 --> CloudService
   end
@@ -1308,7 +1332,7 @@ graph LR
 
 **Public VIF（公有虚拟接口）：**
 
-- 连接性质：公有连接。尽管使用 Direct Connect 的专用链路。使用 AWS Direct Connect 的 Public VIF 连接到 AWS 的各种公有服务时，不会通过传统的互联网路径。这种连接通过 *AWS Direct Connect 的专用网络链路*，提供了一种更可靠、低延迟且高带宽的连接方式。
+- 连接性质：公有连接。尽管使用 Direct Connect 的专用链路。使用 AWS Direct Connect 的 Public VIF 连接到 AWS 的各种公有服务时，不会通过传统的互联网路径。这种连接通过 *AWS Direct Connect 的专用网络链路*，提供了一种更可靠、低延迟且高带宽的连接方式。但他却叫公共VIF！
 - 适用场景：你希望通过 Direct Connect 访问 AWS 的公有资源，而不通过互联网，以获得更高的性能、可靠性和安全性。
 - 示例：直接访问 S3 存储桶中的数据或通过 Route 53 解析域名，而不使用互联网路径。
 - Public VIF支持本地连接到AWS APIs，且低延迟，其他的VIF则需要额外的infra设置，更多的复杂度和延迟
@@ -1341,14 +1365,14 @@ for prefix in ip_ranges['prefixes']:
         print(f"IP Range: {prefix['ip_prefix']} in region {prefix['region']}")
 ```
 
-- Public VIF不支持JumboFrames
+- **Public VIF不支持JumboFrames**
 
 **Private VIF（私有虚拟接口）：**
 
 - 连接到你自己的 Amazon VPC（虚拟私有云）中的私有资源。
   - 无法连接到DNS resolver at Base+2
   - 无法连接到Gateway endpoint（因为他是一个gateway无法transit连接），相对的可以连接到Interface endpoint
-- VPC - （attach）VGW - （associate）PrivateVIF
+- VPC - （attach）*VGW* - （associate）PrivateVIF
 - *VGW* 和 Private VIF必须在同一个region
 - *DXGW* 可以和不同的region中的VPCs创建 Private VIF 连接
 - *DX Gateway*可以从一个DX连接多个VPCs
@@ -1498,13 +1522,19 @@ for prefix in ip_ranges['prefixes']:
 
 ## AWS Cloud WAN（wide area network）
 
+- **底层技术**：
+  * 软件定义广域网络技术SD-WAN（使用network policy json文件）
+  * VLAN技术
+  * 边缘计算和边缘网络技术（region edge-location）
+  * 自动化和编排IaC技术
+
 - 创建，管理，监控wide area network
 - 通过*AWS Network Manager*中的*Global Network*管理，提供一个dashboard，可视化地理视图，拓扑图等
 - Network attachments：VPC，VPN，AWS DX，AWSS2SVPN，SD-WAN（Software-Defined Wide Area Network）等
-- 它要*解决的问题*，是到此为止的复杂连接，都用Cloud WAN统一为一个中心化的广域网络连接：
+- 它要*解决的问题*，是到此为止的复杂连接，都用Cloud WAN统一为一个**中心化的广域网络连接**：
   - 复杂连接：VPCs - Transit Gateway（Peerings）- DX Gataways - DX - SD-WAN
   - Cloud Wan省略了中间的layers复杂连接，将VPCs，本地DC，SD-WAN中心化为一个广域网
-- 是一个全球服务，但是它的设置，元数据等都存放在Home region中（Oregon（us-west-2））
+- 是一个全球服务，但是它的设置，元数据等都存放在**Home region中（Oregon（us-west-2））**
 
 ### Components & config
 
@@ -1543,7 +1573,7 @@ for prefix in ip_ranges['prefixes']:
 - 首先创建TGW到Cloud WAN之间的Peering连接
 - 然后创建TGW的路由表的attachments（依据segments的TAGs）
 
-- 目前Cloud WAN还不能直接和DX连接，所以中间可以通过TGW连接到DX的本地中心，比如创建一个叫做 hybrid 的 segments 用于进行混合连接
+- 目前Cloud WAN还*不能直接和DX连接，所以中间可以通过TGW连接到DX的本地中心，比如创建一个叫做 hybrid 的 segments 用于进行混合连接*
 
 ## Cloud Front
 
@@ -1605,7 +1635,7 @@ for prefix in ip_ranges['prefixes']:
 - 使用WAF（web application firewall）和Secrets Manager的安全增强
   - 设置在Cloud Front前的WAF可以进行访问的第一层过滤，比如IP地址等
   - 设置在ALB前的第二层WAF则可以通过过滤header进行源控制访问的第二层过滤
-  - 使用SecretsManager进行定期Custom Header的键值对定期更新，并通过驱使Lambda function，进行CloudFront的header更新，和ALB前的WAF的过滤规则更新
+  - 使用*SecretsManager进行定期Custom Header的键值对定期更新*，并通过驱使Lambda function，进行CloudFront的header更新，和ALB前的WAF的过滤规则更新
 
 - GEO地理访问限制，国家限制
   - 使用第三方GeoIP database进行国家IP的过滤
@@ -1623,7 +1653,7 @@ for prefix in ip_ranges['prefixes']:
     - HTTP only（对S3静态网站是默认选项，因为他只能用HTTP）
     - HTTPS only
     - 或者match viewer的protocol
-  - 在CloudFront和你的Origion之间必须使用有效的SSL/TLS安全证书
+  - 在CloudFront和你的Origion之间必须使用有效的*SSL/TLS*安全证书
 
 - Alternate Domain Name（CNAME）设置选项
   - 不是使用CloudFront的domain而是使用自己定义的domain的设置
@@ -1634,7 +1664,7 @@ for prefix in ip_ranges['prefixes']:
   - 默认是：*.cloudfront.net
   - Custom SSL Certificate
     - 使用Alternate Domain Name的情况下
-    - HTTP request，推介使用SNI（Server Name Indication）
+    - HTTP request，*推介使用SNI（Server Name Indication）*
     - 证书可以使用ACM或者第三方证书，但是第三方你需要手动更新
     - 证书必须在US East弗吉尼亚region创建或者导入，因为这是一个全球服务
 
@@ -1647,7 +1677,7 @@ for prefix in ip_ranges['prefixes']:
   - ALB：
     - 必须使用ACM中提供的，或者import到ACM中的证书
   - EC2：
-    - ACM 并不支持直接为EC2实例生成或管理证书，在EC2实例上，需要使用你自己的自定义证书或从第三方证书机构获取的证书，才能实现从ALB到EC2的加密
+    - **ACM 并不支持直接为EC2实例生成或管理证书**，*在EC2实例上，需要使用你自己的自定义证书或从第三方证书机构获取的证书*，才能实现从ALB到EC2的加密
 
 ### Edge Function
 
@@ -1687,10 +1717,10 @@ for prefix in ip_ranges['prefixes']:
 
 ### AWS Global Accelerator
 
-- 依存于AWS内部网络
+- 依存于AWS*内部网络*
 - Use Case：面向全球用户的application
 - 是一个全球服务，会直接跳到Oregon Region
-- Anycast IP：同一 IP 地址可以分配给多个服务器或节点。当请求发送到这个 IP 地址时，网络会自动将请求路由到距离最近或最适合处理请求的服务器。这种方式可以提高服务的可靠性和性能，因为它能够减少响应时间并提供负载均衡。
+- **Anycast IP**：同一 IP 地址可以分配给多个服务器或节点。当请求发送到这个 IP 地址时，网络会自动将请求路由到距离最近或最适合处理请求的服务器。这种方式可以提高服务的可靠性和性能，因为它能够减少响应时间并提供负载均衡。
 - 通过Anycast ip，将用户请求引到最近的Edge Location，然后通过AWS internal network，将用户流量送达application
 - 支持ElasticIP，EC2，ALB，NLB，public or private
 - 低延迟，高failover
@@ -1698,7 +1728,7 @@ for prefix in ip_ranges['prefixes']:
 - 使用AWS internal network，安全性高
 - Application Health check功能，在一分钟之内发现不健康立刻failover
 - 强大的灾难恢复性能
-- 安全性高，只需要将两个extarnal IP添加到白名单
+- 安全性高，*只需要将两个extarnal IP添加到白名单*
 - 通过AWS Shield进行DDoS保护
 
 - 和CloudFront的相同点：
@@ -1718,7 +1748,7 @@ for prefix in ip_ranges['prefixes']:
 - 对下游的server流量分流，从private流量到public流量
 - Application单点服务暴露
 - 针对server的Health Check，无缝处理下游server故障
-  - 基于端口port和路由route进行健康检查，如果response不是200，就会被判断为非健康
+  - 基于*端口port和路由route进行健康检查*，如果response不是200，就会被判断为非健康
 - 为网站提供SSL termination
 - Cookies粘性会话
 - 跨AZ的高可用性
@@ -1741,7 +1771,7 @@ for prefix in ip_ranges['prefixes']:
 
   - 支持从client返回的HTTP responses
   - 支持redirects，比如HTTP - > HTTPS
-  - Health Check支持HTTP和HTTPS，不支持WebSocket
+  - *Health Check支持HTTP和HTTPS，不支持WebSocket*
   - 每一个Subnet的CIDR最小/28，需要8个free的ip地址
   - 每一个ALB只能用于100个IP地址（所有的subnet加起来）
 
@@ -1763,7 +1793,7 @@ for prefix in ip_ranges['prefixes']:
       - http-header
       - query-string
 
-  - ALB完全支持gRPC协议
+  - **ALB完全支持gRPC协议**
     - 该协议支持HTTP/2，以及microservice集成
     - 当ALB背后的服务是Microservice Auto Scaling Group的时候，client使用gRPC HTTP/2协议，从ALB到服务也会使用该协议进行流量引导
     - 监听协议只能是HTTPS
@@ -1818,23 +1848,24 @@ for prefix in ip_ranges['prefixes']:
   - 可以使得requests数量在所有zone的*所有EC2上*均匀分布（requests_num/ ec2_num），如果不开启则是根据zone（ELB）的数量均匀分布（requests_num / elb_num）
   - ALB中该功能默认开启，所以跨AZ的数据传输是免费的，在ALB页面无法关闭功能，但是可以针对特定的Target Group在attributes编辑页面关闭该功能
   - NLB和GWLB默认不开启，所以如果你开启了，你跨AZ数据是要付费的
-  - CLB默认不开启，但是如果你开启了，却是免费的
+  - CLB默认不开启，但是如果你开启了，却是免费的，现在都没CLB了，忘了吧
 
 - 传输中安全：User - HTTPS - LB - HTTP - PraviteEC2
-  - TLS 和 TCP Listeners：TLS监听会在LB就终止443端口安全通信然后解密数据（use SSL certificates key）通过私网传递到target服务器。如果想要端到端的加密，需要TCP监听，从而实现私网中也是加密的状态，但是target服务器需要有解密流量的功能。总之TLS监听的加密在LB结束，TCP的监听方式是全程加密的。
+  - TLS 和 TCP Listeners：TLS监听会在LB就终止443端口安全通信然后解密数据（use SSL certificates key）通过私网传递到target服务器。如果想要端到端的加密，需要TCP监听，从而实现私网中也是加密的状态，但是target服务器需要有解密流量的功能。**总之TLS监听的加密在LB结束，TCP的监听方式是全程加密的。**
 - LB的的HTTPS安全协议用的是X.509 Certificates(TLS/SSL Certificates)，可以通过ACM设置，也可以自己上传。
-- SNI（Server Name Indication）
+- *SNI（Server Name Indication）*
   - 是一种 TLS（Transport Layer Security）协议扩展：在单个服务器上托管多个域名的 HTTPS 网站的时候，服务器就可以根据主机名选择合适的证书来建立加密连接，而不再受到 IP 地址的限制。
   - 支持 ALB 和 NLB。
   - 当背后有多个Target Group的时候，就可以使用不同的域名访问了。
+- 唯一随机会话密钥（*unique random session key*）是一种在安全通信中使用的加密密钥，用于在单个会话期间对数据进行加密。
 
-- Connection Draining
+- **Connection Draining**
   - 在CLB中叫Connection Draining，在ALB和NLB中叫做Deregistration Delay
   - 在要删除一个instance之间允许完成现有的connetion请求，并且不会再发送新的request到这个instance
   - 设置时间，默认300秒，可以设置1-3600秒
   - 可以设置为0秒，也就是立刻切断连接，适用于请求request和处理过程非常短暂的情况
 
-- X-Forwarded-Headers（HTTP）
+- **X-Forwarded-Headers（HTTP）**
   - instance收到请求的ip一般是ELB的ip，如果想要获取client的ip的情况下，需要该功能
   - 支持*CLB（HTTP/HTTPS）和ALB*
   - HTTP-Headers
@@ -1843,12 +1874,12 @@ for prefix in ip_ranges['prefixes']:
     - X-Forwarded-Port：client to ELB port
   - 当在Instance中的log format中设置写入上述HTTP-Headers的内容的时候，就会在日志中看到client的ip等信息了
 
-- NLB Proxy-Protocol
-  - 适用情况：*NLB*，以*IP地址为Target Group*，*TCP/TLS协议*的情况下，需要获取client的IP的时候
+- **NLB Proxy-Protocol**
+  - 适用情况：*NLB*，以*IP地址为Target Group*，**TCP/TLS协议**的情况下，需要获取client的IP的时候
   - NLB使用Proxy-Protocol version2
   - 当Target Group为Instance ID或者ECS Tasks的时候，不需要设置，直接可以获取clientIP
   - 当协议是UDP/TCP_UDP的情况下也不需要设置，直接是可以获取的
-  - NLB也不应该再坐在其他Proxy的后面，而是直接是Proxy的情况
+  - *NLB也不应该再坐在其他Proxy的后面，而是直接是Proxy的情况*
   - 需要在控制台attribute的地方开启这个，然后还需要在EC2中，设置：RemoteIPProxyProtocol On，然后就可以在日志中看到client的IP地址了
 
 - 混合构架：ELB的backend服务器类型
@@ -1920,9 +1951,9 @@ for prefix in ip_ranges['prefixes']:
 - NS：Name servers for the Hosted Zone
 
 ### Routing Policy
-- DNS的Routing不是负载均衡的那种routing，它不走流量traffic，只回复client的query
+- *DNS的Routing不是负载均衡的那种routing，它不走流量traffic，只回复client的query*
 
-- HTTP Health Check只针对public resources，这个功能意味着自动化的DNS failover
+- **HTTP Health Check**只针对public resources，这个功能意味着自动化的DNS failover
   - 在设置records的时候，选择绑定Health Checker，来监控对象端点
   - 监控endpoint服务：application，server，和其他AWS resource
     - 通过15个global health checkers进行不断监控
@@ -1936,7 +1967,7 @@ for prefix in ip_ranges['prefixes']:
     - 最多可以监视256个child health checkers
     - 可以使用逻辑运算AND，OR，NOT
     - 自主设定多少child health check通过才允许parent health check通过
-  - 监控CloudWatch alarms，对于私有资源的监控很有用
+  - 监控*CloudWatch alarms，对于私有资源的监控很有用*
     - 因为health checker无法监控Private Hosted Zones的私有资源，所以无法接触私有endpoint，比如私有VPC，或者私有的on-premise服务
     - 所以可以为私有资源设置CloudWatch Metrics然后设置CW Alarms，health checker可以监控这些Alarms，从而监控资源状况
   - Health Checks集成CloudWatch Metrics
@@ -1949,7 +1980,7 @@ for prefix in ip_ranges['prefixes']:
   - 无法使用Health checks功能
 - Weighted：
   - 针对特定的资源比如EC2，分配不同的权重比例，使得query的结果，会对不同的资源，回复不同的权重
-  - 计算方法上，从的权重不需要加起来等于100，只需要比例换算
+  - 计算方法上，总的权重不需要加起来等于100，只需要比例换算
   - DNS Records必须有相同的name和type
   - 可以和Health Checks相关联
   - Use Case：比如对服务器的负载均衡，对测试环境和生产环境的测试比例调试
@@ -1969,14 +2000,14 @@ for prefix in ip_ranges['prefixes']:
   - 可以和Health Checker相关联使用
 - Geoproximity：
   - 基于用户地理位置和资源的region位置
-  - 根据定义的bias大小来分配流量，1～99的bias意味着更多的流量，-1～-99意味着更少分配流量
+  - 根据定义的**bias**大小来分配流量，1～99的bias意味着更多的流量，-1～-99意味着更少分配流量
   - 对象资源：AWS的基于Region的资源，基于地理经纬度的非AWS资源
-  - 必须使用Route53 Traffic Flow（advanced）来使用这个feature
+  - *必须使用Route53 Traffic Flow（advanced）来使用这个feature*
   - 通过Traffic Policy UI（Traffic Flow可视化工具）可以很清晰的看到设置的地理范围
 
 - IP-based Routing Policy：CIDR collections to Records
   - 将一组CIDR blocks路由到同一个端点：比如CIDR为230.113.10.11/24的范围的用户都路由到12.34.56.78
-  - Use case：将特定的ISP的用户路由到一个特定的endpoint，目的是为了网络优化和，降低网络传输成本
+  - Use case：将特定的ISP的用户路由到一个特定的endpoint，目的是为了*网络优化和，降低网络传输成本*
 
 - Multi-Value Routing Policy
   - 需要将流量导向多个资源的时候
@@ -2013,11 +2044,11 @@ for prefix in ip_ranges['prefixes']:
     - example.com.    IN    NS    ns-789.awsdns-56.net.
     - example.com.    IN    NS    ns-012.awsdns-78.com.
 
-- 所以这是一个让你的域名的权威服务器从其他的服务器变成AWS的权威服务器的过程，NS记录是可以进行负载均衡的，所以等于是添加了AWS的NS记录，通过原有的NS记录过期，来让AWS成为你的新的权威服务器。
+- *所以这是一个让你的域名的权威服务器从其他的服务器变成AWS的权威服务器的过程，NS记录是可以进行负载均衡的，所以等于是添加了AWS的NS记录，通过原有的NS记录过期，来让AWS成为你的新的权威服务器。*
 
 ### Scenario
 
-- Health Checks RDS multi-region failover
+- **Health Checks RDS multi-region failover**
   - 主RDS被Health check监控（HTTP call）
   - Health Check也可以被CW Alarm触发
   - 然后Health Checker触发CW Event或者SNS topic，之后触发trigger Lambda，用于更新DNS和置换Replica RDS为主DB
@@ -2032,7 +2063,7 @@ for prefix in ip_ranges['prefixes']:
     - CNAME只是域名指向域名，只要是有效域名就可以，比如EC2的Public DNS
     - 当从Public访问（比如从AWS Cloud Shell）Public DNS（或者CNAME指向的新的域名），就会解析到EC2的Public IP，从内部比如其他EC2访问Public DNS（或者CNAME指向的新的域名），就会解析到EC2的Private IP
 
-- ALB
+- **ALB**
   - 可以使用根域名或者非根域名
   - 根域名example.com指向ALB连接，只能用Alias
   - 非根域名alb.example.com指向ALB连接，用Alias或者CNAME都可以
@@ -2048,14 +2079,14 @@ for prefix in ip_ranges['prefixes']:
   - 比如使用Alias将域名example.com指向API Gateway的DNS name
   - API Gateway的背后指向Lambda Function和ALB资源
 
-- RDS
+- **RDS**
   - RDS 具有动态特性、高可用性和故障转移能力
   - RDS 提供的 DNS 名称（如 mydatabase.123456789012.us-west-2.rds.amazonaws.com）是一个稳定的域名，这个域名会解析为当前主实例的 IP 地址。
-  - 使用 CNAME 记录有助于实现这种动态的指向，因为 CNAME 指向的是另一个域名，而不是固定的 IP 地址。因此，当 RDS 后端实例发生变化时，只需要更新该域名指向的新实例，外部的 CNAME 指向保持不变。
+  - 使用 *CNAME* 记录有助于实现这种动态的指向，因为 CNAME 指向的是另一个域名，而不是固定的 IP 地址。因此，当 RDS 后端实例发生变化时，只需要更新该域名指向的新实例，外部的 CNAME 指向保持不变。
 
-- S3 bucket
+- **S3 bucket**
   - domain name -- > S3 static websit endpoint
-  - ALias 设置是必须选项
+  - *ALias 设置是必须选项*
   - bucket name必须和 domain name一致，例如：
     - 存储桶名称：myblog.com
     - S3 静态网站 URL：http://myblog.com.s3-website-us-east-1.amazonaws.com
@@ -2096,7 +2127,7 @@ for prefix in ip_ranges['prefixes']:
 
 ### DNSSEC
 
-- Route53的该功能支持Public Hosted Zone
+- Route53的该功能支持*Public Hosted Zone*
 - 支持域名注册和签名的DNSSEC
 - DNSSEC Signing确保了记录从Route53而来，不是被投毒的
 - Route53会用非对称公钥安全加密每一条记录，客户用私钥解密确认真实性
@@ -2164,12 +2195,12 @@ for prefix in ip_ranges['prefixes']:
 ### Logging
 
 **DNS Query Logging：**
-- 是指Route53 resolver收到的所有public DNS queries
+- 是指*Route53 resolver收到的*所有*public DNS queries*
 - 只有*Public Hosted Zones*有该功能
 - 可以发送到CloudWatch的logs中，也可export到S3中
 
 **Resolver Query Logging：**
-- 是指你的VPC中的resources发起的DNS queries
+- *是指你的VPC中的resources发起的*DNS queries
 - 针对：Private Hosted Zones，Resolver Inbound&Outbound Endpoints，Resolver DNS Firewall
 - 可以发送到CloudWatch logs，S3，或者Kinesis Data Firehose
 - 同样的log设置可以通过AWS Resource Access Manager（RAM）分享给其他的AWS account
@@ -2281,7 +2312,7 @@ Route 53 的健康检查功能可以定期检查网络资源的状态，并在�
 
 - **ip限制**：可以用SG进行允许的ip的白名单设置，使用NACL对ip进行block
 - **ALB**：ALB可以设置SG，EC2可以设置SG，二者之间可以设置白名单，EC2允许ALB来的流量，在二者的外面，设置subnet，进行ip的block
-- **NLB**：NLB和ALB不同，它无法设置自己的SG，所以只能，设置subnet，设置NACL进行ip限制
+- **NLB**：**NLB和ALB不同，它无法设置自己的SG**，所以只能，设置subnet，设置NACL进行ip限制
 - NLB 直接将流量转发（基于IP和TCP/UDP）到目标实例的网络接口（ENI），这使得应用安全组规则在 NLB 层面变得不现实和复杂。因此，NLB 的安全控制主要依赖于目标实例上的安全组。ALB 终止客户端连接（基于HTTP/HTTPS）并在负载均衡器层应用安全组规则，这样可以更精细地控制和管理进入的 HTTP/HTTPS 流量。
 - **CloudFront**：当ALB前有CF的时候，如果在ALB外面套NACL，对于block ip是不起作用的，因为block的将会是CF的public ips，而不是client ip，想要限制client ip，需要在CF设置*WAF*，进行ip address filtering。
 
@@ -2375,7 +2406,7 @@ Route 53 的健康检查功能可以定期检查网络资源的状态，并在�
 - 通过GWLB的Endpoint，PrivateLink实现
 
 - 将GWLB创建在客户的设备网络中
-- GWLB是layer3（Network layer），ALB是layer7（Application layer），NLB是layer4（Transport layer）
+- **GWLB是layer3（Network layer），ALB是layer7（Application layer），NLB是layer4（Transport layer）**
 
 - TargetGroup：
   - EC2 instances
@@ -2409,12 +2440,12 @@ Route 53 的健康检查功能可以定期检查网络资源的状态，并在�
 - Public证书是免费使用的，但是Private证书不是免费
 - domain validated的Public证书是由ACM自动更新的，如果你使用自己import的证书，就需要手动更新。AWS的ACM证书不会给你私钥，但是你自己的证书你可以自己管理私钥，这是区别
 
-- ACM证书需要在每个region中生成，但是CloudFront证书需要在us-east-1中request，因为它是一个全球服务
+- ACM证书需要在每个region中生成，但是**CloudFront证书需要在us-east-1中request**，因为它是一个**全球服务**
 - 生成证书时候的网站domain可以使用*，但是不能放在中间，只能在开头，比如*.example.com
 
 ### AWS Firewall Manager
 
-- 跨多个账户和资源的防火墙管理服务
+- *跨多个账户和资源的防火墙管理服务*
 - 管理以下服务的rules：
   - AWS WAF
   - AWS Shield Advanced
@@ -2440,21 +2471,21 @@ Route 53 的健康检查功能可以定期检查网络资源的状态，并在�
 
 ### containers，microservices and Kubernetes
 
-- 容器（containers）是一种轻量级、可移植的软件包装方式，它将应用程序及其所有依赖项打包在一起，确保它们能够在任何环境中一致地运行。容器利用操作系统级的虚拟化技术，使多个容器可以在同一个操作系统内核上高效地运行。
+- **容器（containers）**是一种轻量级、可移植的软件包装方式，它将应用程序及其所有依赖项打包在一起，确保它们能够在任何环境中一致地运行。容器利用操作系统级的虚拟化技术，使多个容器可以在同一个操作系统内核上高效地运行。
   - Docker（单一容器）和 Kubernetes
-- 微服务（Microservices）架构是一种软件设计模式，它将应用程序分解为一组小的、独立的服务，每个服务专注于一个单一的业务功能。这种架构风格相对于传统的单体应用具有更好的灵活性和可扩展性。
+- **微服务（Microservices）**架构是一种软件设计模式，它将应用程序分解为一组小的、独立的服务，每个服务专注于一个单一的业务功能。这种架构风格相对于传统的单体应用具有更好的灵活性和可扩展性。
   - Spring Boot、Django、Express.js：用于开发微服务的框架。
   - API 网关（如 Kong、Nginx）：管理和路由微服务请求的工具。
   - 消息队列（如 RabbitMQ、Kafka）：用于微服务之间的异步通信。
-- Kubernetes 是一个开源的平台，用于自动化容器化应用的部署、扩展和管理。它被广泛认为是容器编排的标准工具，可以处理大规模的容器化应用集群。
+- **Kubernetes**是一个开源的平台，用于自动化容器化应用的部署、扩展和管理。它被广泛认为是容器编排的标准工具，可以处理大规模的容器化应用集群。
 
 ### Kubernetes Architecture
 
 **Kubernetes building blocks**
 
-- Kubernetes Cluster
+- *Kubernetes Cluster*
   - Control Plane
-    - 主要是一个Master Node(host set of control processes)
+    - 主要是**一个Master Node**(host set of control processes)
     - 重要组件：
       - kube-apiserver：外界用户和kube交互的api，是控制台的前端
       - etcd：是用于维护state of cluster的key-value store（manifest文件）
@@ -2462,7 +2493,7 @@ Route 53 的健康检查功能可以定期检查网络资源的状态，并在�
       - kube-controller-manager：运行控制进程，Node Controller，Replication Controller，Namespace Controller，Job Controller，EndpointSlice Controller等
       - cloud-controller-manager：将kubernetes cluster和云供应商等provider的api连接，用于决定node/instance是否要被删除，服务的云负载均衡的配置等
   - Data Plane
-    - Worker Nodes
+    - **Worker Nodes**
       - kubelet是node中的agent，和api进行交互，确保container在pod中运行，可以将node的状态报告给控制plane，从而更新cluster的状态数据，同时与容器运行时交互，以管理节点上的 Pod 和容器
       - kube-proxy是pods的代理，是pod的expose方式，类似于使用负载均衡来暴露EC2一样
       - container runtime容器运行时，管理和执行容器的底层软件组件。它负责拉取和存储容器镜像，创建和运行容器实例，资源管理，日志监控等
@@ -2487,9 +2518,9 @@ Route 53 的健康检查功能可以定期检查网络资源的状态，并在�
 
 ### EKS Cluster networking
 
-- control plane和data plane的交互方式
+- *control plane和data plane的交互方式*
   - control plane是由EKS服务控制的，坐落在AWS的VPC中
-  - 通过在customer的VPC中的ENI，与data plane进行communication，workers坐落在自己的subnet中
+  - 通过在customer的VPC中的**ENI**，与data plane进行communication，workers坐落在自己的subnet中
   - EKS的ENI创建时，就会有自己的EKS subnet，同时有SG，SG默认允许本地VPC进行交互
   - EKS可以为pods分配IPv4或者IPv6的ip地址，但是不能同时设置（dual-stack）
 - Public access： （默认）
@@ -2498,7 +2529,7 @@ Route 53 的健康检查功能可以定期检查网络资源的状态，并在�
   - AWS提供CIDR blocks白名单
 - Public & Private：
   - K8s的API同样从public的internet访问
-  - workers坐落在private subnet中，通过和EKS的ENI的private IP进行交互
+  - workers坐落在private subnet中，通过和EKS的*ENI的private IP*进行交互
   - AWS提供CIDR blocks白名单
 - Private access：
   - 创建从本地DC到CostomerVPC的VPN/DX私有连接
@@ -2506,8 +2537,8 @@ Route 53 的健康检查功能可以定期检查网络资源的状态，并在�
 - EKS API private access（PrivateLink）：（eksctl）
   - 通过VPC Interface Endpoint（PrivateLink）和EKS进行交互
   - 不管是从本地DC的私有连接还是从VPC中，这都是一种安全的私有访问
-- K8s的应用expose使用Load Balancer（public subnet）
-- Nodes的Public访问，使用NAT Gateway（IPv4）或者Egress Only IGW（IPv6）
+- K8s的应用expose使用*Load Balancer*（public subnet）
+- *Nodes的Public访问*，使用*NAT Gateway（IPv4）或者Egress Only IGW（IPv6）*
 
 ### EKS Pod networking
 
@@ -2520,7 +2551,7 @@ Route 53 的健康检查功能可以定期检查网络资源的状态，并在�
 - Pod自己的IP对于其他Pod来说也是同一个IP
 - Kubernetes 的网络模型假设所有的 Pods 都在一个扁平的网络空间中。也就是说，任意一个 Pod 可以直接访问任何其他 Pod 的 IP 地址。这种模型消除了需要 NAT 的场景，因为没有重叠的 IP 地址空间和需要进行地址转换的情况。
 
-**VPC CNI**
+**VPC CNI**：Pod的IP的分配方式
 
 - Amazon VPC CNI（容器网络接口插件）管理 Pod 网络。常见的 CNI 插件（如 Flannel, Calico, Weave）都实现了 Pod 到 Pod 的直接通信能力，这些插件在集群节点之间建立一个覆盖网络，确保 Pods 可以跨节点相互访问
 - CNI创建和附加ENIs到worker nodes上
@@ -2534,10 +2565,10 @@ Route 53 的健康检查功能可以定期检查网络资源的状态，并在�
   - Prefix delegation：将CIDR附加给ENI（而不是单一的IP）
   - 仅支持AWS Nitro-based node
 
-**Pod to external network**
+**Pod to external network**：这部分有意思
 
 - external network:Internet, Transit Gateway, OnPremise
-- Pod和外界沟通的方式：将Pod的IP转换为Node的Primary ENI的Primary IP，这只适用于IPv4，因为IPv6不具有网络转换功能
+- *Pod和外界沟通的方式*：将Pod的IP转换为Node的Primary ENI的Primary IP，这只适用于IPv4，因为IPv6不具有网络转换功能
 - 当Node在Public Subnet：
   - Source NAT enabled（EXTERNALSNAT=false）
   - Node进行NAT转换
@@ -2547,9 +2578,9 @@ Route 53 的健康检查功能可以定期检查网络资源的状态，并在�
   - Source NAT enabled（EXTERNALSNAT=true）
   - NAT Gateway进行NAT转换，Node不再进行该步骤
   - Pod IP -> NAT IP -> NAT Elastic IP -> IGW
-  - 对于TGW和VPN/DX和PeeredVPC，可以进出，因为没NAT转换，IP地址保持可见
+  - 对于TGW和VPN/DX和PeeredVPC，可以进出，因为没NAT转换为Node的IP，所以Pod的IP地址保持可见
 
-- 另外，Multi-homed Pods表示一个Pods可以attach多个interfaces，with Multus CNI，这使得一个Pod可以有多个IP
+- 另外，Multi-homed Pods表示**一个Pods可以attach多个interfaces**，with Multus CNI，这使得一个Pod可以有多个IP
 
 ### EKS Security Group
 
