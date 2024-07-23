@@ -65,8 +65,8 @@
 - ELB的东西很多，还是最好重新看一遍笔记
   - ALB:layer7
   - NLB:layer4
-  - GWLB:layer3
-- Route53的东西很重要
+  - GWLB:layer3:不支持publicGWLB，不支持SG，很特别，靠IP被允许流量，存在目的是为了第三方的防火墙检测IDS/IPS
+- Route53的东西很重要，resolver-endpointENI
 - 网络安全主要设计*防御*和*检测*两种
   - 注意一下*NLB*部分，他是针对IP的网络层的东西
 - EKS**POD军团**
@@ -1592,7 +1592,7 @@ for prefix in ip_ranges['prefixes']:
 - Custom Error Pages功能
   - 指标Error Caching Minimum TTL用来确定缓存了错误页面多久
 - 三个价格等级：根据使用的边缘位置的多少，All - 200 - 100，从贵到便宜
-- 缓存失效（Cache Invalidation）是指从 CloudFront 边缘位置的缓存中移除指定的对象。这在你更新了源服务器上的内容之后，确保用户访问到最新的版本，而不是过期的缓存内容。
+- *缓存失效*（Cache Invalidation）是指从 CloudFront 边缘位置的缓存中移除指定的对象。这在你更新了源服务器上的内容之后，确保用户访问到最新的版本，而不是过期的缓存内容。
 
 ### Components
 
@@ -2139,7 +2139,7 @@ for prefix in ip_ranges['prefixes']:
   - 准备工作：通过用户反馈确保zone的可用性，将records的TTL降低比如1小时，降低SOA minimum 到5分钟
   - 使用控制台或者CLI开启该功能
   - 使用Route53创建一个KSK，并绑定到客户管理CMK
-  - 创建信任链chain of trust：通过在parent级的hosted zone中创建DS（delegation signer）record 指向child zone
+  - 创建信任链chain of trust：通过在parent级的hosted zone中创建**DS（delegation signer）record** 指向child zone
     - 它包含了用来进行record加密的公钥的hash值
     - 你的register可以是Route53也可以是第三方
   - 好的做法使用CW的alarms进行监控，创建如下alarms：
@@ -2393,11 +2393,12 @@ Route 53 的健康检查功能可以定期检查网络资源的状态，并在�
 - Rule group：stateless和stateful各自拥有Rule group
   - stateless rule：单独检查每一个packet，使用5-tuple格式检查，同时包括优先级，用户action等
   - stateful rule：根据上下流量方向检查包
-  - stateful rule - domain list rule：匹配方式domain list和protocol，HTTPS使用SNI来决定hostname或者domain name，HTTP则使用HTTP host header来得到name
+  - **stateful rule** - domain list rule：匹配方式domain list和protocol，HTTPS使用SNI来决定hostname或者domain name，HTTP则使用HTTP host header来得到name
   - stateful rule - Suricata rule/signature：包括Action，Header，Options，是一个开源的rule
   - Rule Engine的过滤方式：先走stateless（pass/drop/forward），然后forward到statefull的规则，决定（drop/alert/pass）
 - Firewall policy：包括stateless和statefull的所有rule groups
 - 在hands-on中也可以确认到，先创建stateful和stateless的rule之后，创建policy，将rule加入进policy中
+- 这里的stateful和SG的不一样，这里的一开始默认都通过，SG是默认都deny然后设置白名单
 
 ### Gateway Load Balancer
 
@@ -2412,7 +2413,7 @@ Route 53 的健康检查功能可以定期检查网络资源的状态，并在�
   - EC2 instances
   - IP addresses：private ip only
 
-- GWLB和他的targets之间的通信使用GENEVE protocol on UDP port 6081
+- GWLB和他的targets之间的通信使用*GENEVE protocol on UDP port 6081*
 - 它会维护和特定目标设备之间的stickiness，通过5-tuple（TCP/UDP flows）或者3-tuple（没有port，只有ip和protocol）（non TCP/UDP flows）
 - HTTP，HTTPS，TCP支持Health Checks
 - 不支持public的GWLB，只支持internal，没有public DNS
@@ -2641,7 +2642,7 @@ Route 53 的健康检查功能可以定期检查网络资源的状态，并在�
 - 和CloudFormation集成：当需要创建新的网络架构，可以通过CF自动对IPAM进行API请求，获得可用的IP地址
 - 可以tracking&monitoring IP地址的使用情况，通过historical insights，Dashboard，以及CloudWatch（AWS/IPAM）等
 - 注意，管理PrivateIP pools是需要Advanced tier（付费）的
-- 创建IPAM管理Pools后可以设置合规条件，比如通过resource tag来限制资源创建时候的IP分配只能通过贴tag来被自动分配IP
+- 创建IPAM管理Pools后可以设置合规条件，比如通过resource *tag*来限制资源创建时候的IP分配只能通过贴tag来被自动分配IP
 
 ### Cloud Formation
 
@@ -2720,7 +2721,7 @@ Route 53 的健康检查功能可以定期检查网络资源的状态，并在�
 - 简化了VPC和CIDR的管理，网络配置的责任可以只放在主账户上，被分享的账户只需要负责开发等
 - 重复利用NAT和ENI等，降低成本
 - 减少IP使用限制和复杂度
-- 缺点：其他账户创建资源可能会混杂（noisy neighbor）/主账户发生问题，印象范围是所有账户，这是一个双方权衡的问题
+- 缺点：其他账户创建资源可能会混杂（noisy neighbor）/主账户发生问题，影响范围是所有账户，这是一个双方权衡的问题
 - 针对noisy neighbor问题，可以为每个账户创建subnet，进行资源隔离，但这会增加IP密度
 
 **AZ之间的数据传输data transfer费用问题**

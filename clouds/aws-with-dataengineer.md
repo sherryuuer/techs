@@ -94,6 +94,12 @@
 - 模式演变（Schema Evolution）是指在数据库或数据仓库中随着业务需求变化对数据模式进行修改和扩展的过程。
 - 数据血缘（Data Lineage）是指追踪数据从源头到最终目的地的流动路径及其所经历的所有处理步骤的过程。
 
+### 数据库性能提升方法
+
+- indexing：进行索引
+- Partitioning：分区，并行计算
+- Compression：列式压缩
+
 ## Storage
 
 ## Database
@@ -111,6 +117,17 @@
 ## Security & Identity & Compliance
 
 ## Networking & Content Delivery
+
+- 主要参考网络专家内容，只回顾关键想法
+- *路由表*决定流量，决定子网的public还是private性质
+- VPCFlowLogs记录的是所有IP的进出流量，比如ENI网卡
+- AWS PrivateLink用于服务暴露，包括AWS的还有你自己的，为AWS或者你自己的服务创建ENI
+  - 使用ELB作为服务的暴露端点
+- 其他重要services：
+  * VPCPeering，VPCEndpoint，VPN，DX
+  * Route53
+  * CloudFront
+
 
 ## Management & Governance
 

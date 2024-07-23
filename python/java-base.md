@@ -1747,3 +1747,185 @@ Java 的 Functional 接口广泛应用于各种场景中，特别是在集合操
 - **Lambda表达式** 提供了一种简洁的方式来实现Functional接口的方法，使代码更加简洁和易读。**它是Functional接口的一个实例**
 - **Functional接口** 是*只包含一个*抽象方法的接口，Java 8提供了许多预定义的Functional接口，使得Lambda表达式的使用更加广泛和灵活。
 - 通过结合Lambda表达式和Functional接口，可以显著减少代码的冗余，提高代码的可维护性和可读性。
+
+## Stream API
+
+在Java中，Lambda表达式和方法引用（Method Reference）都是简化代码的一种方式。方法引用是Lambda表达式的一种简写形式，用于直接引用已有的方法，而不需要显式地写出Lambda表达式。
+
+Java的Stream API是从Java 8引入的一个新特性，提供了一种高效且易于使用的方式来处理集合（如List、Set、Map等）中的数据。Stream API允许你以声明性编程的方式进行集合的操作，比如过滤、映射、归约等。
+
+### 核心概念
+
+1. **Stream**：不是数据结构，而是从支持数据处理操作的源生成的元素序列。可以通过集合、数组、生成器等获取Stream。
+2. **中间操作**：返回Stream本身，因此可以链式调用多个操作。常见的中间操作有`filter`、`map`、`flatMap`、`sorted`、`distinct`等。
+3. **终端操作**：触发Stream操作并生成结果，如`forEach`、`collect`、`reduce`、`count`等。终端操作后Stream不再可用。
+
+### 创建Stream
+
+Stream可以通过多种方式创建：
+
+1. **从集合**：
+   ```java
+   List<String> list = Arrays.asList("a", "b", "c");
+   Stream<String> stream = list.stream();
+   ```
+
+2. **从数组**：
+   ```java
+   String[] array = {"a", "b", "c"};
+   Stream<String> stream = Arrays.stream(array);
+   ```
+
+3. **从值**：
+   ```java
+   Stream<String> stream = Stream.of("a", "b", "c");
+   ```
+
+4. **从生成器**：
+   ```java
+   Stream<Double> stream = Stream.generate(Math::random).limit(10);
+   ```
+
+5. **从迭代器**：
+   ```java
+   Stream<Integer> infiniteStream = Stream.iterate(0, n -> n + 1).limit(10);
+   ```
+
+### 中间操作示例
+
+1. **filter**：过滤符合条件的元素
+   ```java
+   List<Integer> numbers = Arrays.asList(1, 2, 3, 4, 5);
+   List<Integer> evenNumbers = numbers.stream()
+                                      .filter(n -> n % 2 == 0)
+                                      .collect(Collectors.toList());
+   ```
+
+2. **map**：将元素转换为另一种形式
+   ```java
+   List<String> strings = Arrays.asList("a", "b", "c");
+   List<String> upperStrings = strings.stream()
+                                      .map(String::toUpperCase)
+                                      .collect(Collectors.toList());
+   ```
+
+3. **sorted**：排序
+   ```java
+   List<String> strings = Arrays.asList("d", "a", "c", "b");
+   List<String> sortedStrings = strings.stream()
+                                       .sorted()
+                                       .collect(Collectors.toList());
+   ```
+
+4. **distinct**：去重
+   ```java
+   List<Integer> numbers = Arrays.asList(1, 2, 2, 3, 3, 3);
+   List<Integer> uniqueNumbers = numbers.stream()
+                                        .distinct()
+                                        .collect(Collectors.toList());
+   ```
+
+### 终端操作示例
+
+终端操作符后，才被执行。
+
+1. **forEach**：对每个元素执行操作
+   ```java
+   List<String> list = Arrays.asList("a", "b", "c");
+   list.stream().forEach(System.out::println);
+   ```
+
+2. **collect**：将Stream转换为其他形式
+   ```java
+   List<String> list = Arrays.asList("a", "b", "c");
+   List<String> upperList = list.stream()
+                                .map(String::toUpperCase)
+                                .collect(Collectors.toList());
+   ```
+
+3. **reduce**：将元素组合起来
+   ```java
+   List<Integer> numbers = Arrays.asList(1, 2, 3, 4, 5);
+   int sum = numbers.stream()
+                    .reduce(0, Integer::sum);
+   ```
+
+4. **count**：计算元素个数
+   ```java
+   List<String> list = Arrays.asList("a", "b", "c");
+   long count = list.stream().count();
+   ```
+
+### 并行Stream
+
+Stream API还支持并行处理，可以通过`parallelStream()`方法或`parallel()`方法将Stream转换为并行流，以利用多核处理器的优势提高性能。
+
+```java
+List<Integer> numbers = Arrays.asList(1, 2, 3, 4, 5);
+int sum = numbers.parallelStream()
+                 .reduce(0, Integer::sum);
+```
+
+### 示例
+
+以下是一个综合示例，展示了如何使用Stream API对集合进行一系列操作：
+
+```java
+List<String> names = Arrays.asList("Alice", "Bob", "Charlie", "David", "Edward");
+
+List<String> filteredAndSortedNames = names.stream()
+                                           .filter(name -> name.length() > 3)
+                                           .sorted()
+                                           .map(String::toUpperCase)
+                                           .collect(Collectors.toList());
+
+filteredAndSortedNames.forEach(System.out::println);
+```
+
+以上代码首先过滤掉长度小于等于3的名字，然后对剩下的名字进行排序，将名字转换为大写，最后收集到一个新的列表中，并打印出来。
+
+## Method Reference 方法引用的四种类型
+
+1. **引用静态方法**：
+   - 语法：`ClassName::staticMethodName`
+   - 示例：
+     ```java
+     Function<Integer, String> func = String::valueOf;
+     ```
+
+2. **引用实例方法**：
+   - 语法：`instance::instanceMethodName`
+   - 示例：
+     ```java
+     String str = "Hello";
+     Supplier<Integer> func = str::length;
+     ```
+
+3. **引用特定类型实例方法**：
+   - 语法：`ClassName::instanceMethodName`
+   - 示例：
+     ```java
+     Function<String, Integer> func = String::length;
+     ```
+
+4. **引用构造器**：
+   - 语法：`ClassName::new`
+   - 示例：
+     ```java
+     Supplier<List<String>> func = ArrayList::new;
+     ```
+
+**Lambda表达式与方法引用的对比**：
+
+1. **Lambda表达式**：
+   ```java
+   List<String> list = Arrays.asList("a", "b", "c");
+   list.forEach(s -> System.out.println(s));
+   ```
+
+2. **方法引用**：
+   ```java
+   List<String> list = Arrays.asList("a", "b", "c");
+   list.forEach(System.out::println);
+   ```
+因为它是一种引用，所以方法必须事先存在。
