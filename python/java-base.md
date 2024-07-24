@@ -2013,7 +2013,7 @@ filteredAndSortedNames.forEach(System.out::println);
 
 **示例**:
 - 在Java中，使用`Thread`类或`Runnable`接口创建和管理线程。
-- 使用Python的`threading`模块实现多线程。
+- 使用Python的`threading`模块实现多线程。`thread.join()`将等待进程。
 - 多媒体应用可以同时播放音乐、渲染视频和响应用户输入。
 
 **优点**:
@@ -2039,7 +2039,7 @@ filteredAndSortedNames.forEach(System.out::println);
 ### 并发与多线程在Java中的应用
 
 - **Java多线程**:
-  - 使用`Thread`类或实现`Runnable`接口来创建线程。
+  - 使用`Thread`*类*或实现`Runnable`*接口*来创建线程。
   - Java 5引入了`java.util.concurrent`包，提供了更高层次的并发工具，如线程池、并发集合和同步辅助工具。
 
 - **Java并发工具**:
@@ -2050,3 +2050,622 @@ filteredAndSortedNames.forEach(System.out::println);
 - **并发**关注任务的管理和调度，可以通过多种技术实现。
 - **多线程**是一种具体的并发实现方式，适用于需要在同一进程中执行多个任务的场景。
 - **设计并发系统时，需要考虑资源共享、安全性和性能优化**。
+
+## Atomic Classes
+
+在Java编程中，**Atomic Classes**是Java并发编程（Java Concurrency）中的一部分，属于`java.util.concurrent.atomic`包。它们用于处理多线程环境下的共享变量操作，提供了对基本类型和对象引用的原子操作支持。这些类通过使用**无锁（lock-free）**算法来提高性能和线程安全性。
+
+### 常见的Atomic Classes
+
+以下是Java中常用的原子类：
+
+1. **`AtomicInteger`**
+   - **简介**: 用于对`int`类型的变量进行原子操作。
+   - **常用方法**:
+     - `get()`: 获取当前值。
+     - `set(int newValue)`: 设置新的值。
+     - `incrementAndGet()`: 增加1并返回增加后的值。
+     - `decrementAndGet()`: 减少1并返回减少后的值。
+     - `addAndGet(int delta)`: 增加指定的值并返回增加后的值。
+     - `compareAndSet(int expect, int update)`: 如果当前值等于预期值，则设置为更新值。
+
+   ```java
+   AtomicInteger atomicInteger = new AtomicInteger(0);
+   atomicInteger.incrementAndGet();  // 增加1
+   atomicInteger.compareAndSet(1, 2);  // 如果当前值是1，更新为2
+   ```
+
+2. **`AtomicLong`**
+   - **简介**: 用于对`long`类型的变量进行原子操作。
+   - **常用方法**:
+     - `getAndIncrement()`: 获取当前值并递增。
+     - `getAndDecrement()`: 获取当前值并递减。
+     - `addAndGet(long delta)`: 增加指定的值并返回增加后的值。
+
+   ```java
+   AtomicLong atomicLong = new AtomicLong(100L);
+   atomicLong.addAndGet(10L);  // 增加10
+   ```
+
+3. **`AtomicBoolean`**
+   - **简介**: 用于对`boolean`类型的变量进行原子操作。
+   - **常用方法**:
+     - `get()`: 获取当前值。
+     - `set(boolean newValue)`: 设置新的值。
+     - `compareAndSet(boolean expect, boolean update)`: 如果当前值等于预期值，则设置为更新值。
+
+   ```java
+   AtomicBoolean atomicBoolean = new AtomicBoolean(false);
+   atomicBoolean.compareAndSet(false, true);  // 如果当前值是false，更新为true
+   ```
+
+4. **`AtomicReference<V>`**
+   - **简介**: 用于对对象引用进行原子操作。
+   - **常用方法**:
+     - `get()`: 获取当前引用。
+     - `set(V newValue)`: 设置新的引用。
+     - `compareAndSet(V expect, V update)`: 如果当前引用等于预期引用，则设置为更新引用。
+
+   ```java
+   AtomicReference<String> atomicReference = new AtomicReference<>("initial");
+   atomicReference.compareAndSet("initial", "updated");  // 如果当前引用是"initial"，更新为"updated"
+   ```
+
+5. **`AtomicIntegerArray` 和 `AtomicLongArray`**
+   - **简介**: 提供对`int`和`long`数组元素的原子操作。
+   - **常用方法**:
+     - `get(int i)`: 获取索引i处的值。
+     - `set(int i, int newValue)`: 设置索引i处的新值。
+     - `compareAndSet(int i, int expect, int update)`: 如果索引i处的当前值等于预期值，则设置为更新值。
+
+   ```java
+   AtomicIntegerArray atomicArray = new AtomicIntegerArray(5);
+   atomicArray.set(0, 10);
+   atomicArray.incrementAndGet(0);  // 增加索引0处的值
+   ```
+
+### 使用场景
+
+- **计数器**: 可以用于实现线程安全的计数器。
+- **标志位**: `AtomicBoolean`可以用来实现线程间的标志位。
+- **非阻塞算法**: 用于实现无锁的数据结构和算法。
+
+### 优势
+
+- **线程安全**: 在多线程环境中保证原子性，避免数据竞争。
+- **性能优越**: 由于无锁实现，通常比传统的同步锁（如`synchronized`）性能更高。
+- **简单易用**: 提供了简单的API来执行复杂的线程安全操作。
+
+### 示例代码
+
+以下是一个简单的示例，展示了如何使用`AtomicInteger`来实现线程安全的计数器：
+
+```java
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class AtomicCounter {
+    private final AtomicInteger counter = new AtomicInteger(0);
+
+    public void increment() {
+        counter.incrementAndGet();
+    }
+
+    public int getValue() {
+        return counter.get();
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        AtomicCounter atomicCounter = new AtomicCounter();
+
+        // 创建多个线程来同时增加计数器
+        Thread t1 = new Thread(() -> {
+            for (int i = 0; i < 1000; i++) {
+                atomicCounter.increment();
+            }
+        });
+
+        Thread t2 = new Thread(() -> {
+            for (int i = 0; i < 1000; i++) {
+                atomicCounter.increment();
+            }
+        });
+
+        t1.start();
+        t2.start();
+        t1.join();
+        t2.join();
+
+        // 输出计数器的最终值
+        System.out.println("Final Counter Value: " + atomicCounter.getValue());
+    }
+}
+```
+
+Java中的Atomic Classes为开发者提供了一种高效、线程安全的方式来操作共享变量。这些类通过支持无锁操作来减少线程间的争用，从而提高应用程序的并发性能。在需要保证线程安全且性能要求较高的场景下，它们是非常有用的工具。
+
+## Synchronized
+
+在Java编程中，**synchronized**关键字用于实现线程同步，以确保多个线程访问共享资源时不会出现数据不一致或竞争条件。通过在方法或代码块上使用synchronized关键字，可以保证同时只有一个线程执行同步代码，从而实现线程安全。
+
+synchronized关键字可以用于方法和代码块。
+
+#### 1. 同步方法
+
+在方法上使用synchronized关键字，可以确保同时只有一个线程可以执行该方法。
+
+**实例方法同步**
+
+```java
+public class Counter {
+    private int count = 0;
+
+    public synchronized void increment() {
+        count++;
+    }
+
+    public synchronized int getCount() {
+        return count;
+    }
+}
+```
+
+**静态方法同步**
+
+```java
+public class Counter {
+    private static int count = 0;
+
+    public static synchronized void increment() {
+        count++;
+    }
+
+    public static synchronized int getCount() {
+        return count;
+    }
+}
+```
+
+#### 2. 同步代码块
+
+使用synchronized关键字锁定特定的对象，从而实现对代码块的同步。*相较于同步方法，代码块同步可以减少同步范围，提高并发性能。*
+
+```java
+public class Counter {
+    private int count = 0;
+    private final Object lock = new Object();
+
+    public void increment() {
+        synchronized (lock) {
+            count++;
+        }
+    }
+
+    public int getCount() {
+        synchronized (lock) {
+            return count;
+        }
+    }
+}
+```
+
+### synchronized锁的概念
+
+synchronized通过一个锁机制来实现同步。当一个线程访问synchronized代码时，它必须获得锁。其他线程如果试图访问相同的同步代码块，则必须等待，直到锁被释放。锁可以是任何对象。
+
+- **实例方法同步**：锁是当前实例对象。
+- **静态方法同步**：锁是当前类的类对象（`Class`对象）。
+- **代码块同步**：锁是代码块中指定的对象。
+
+### synchronized的特性
+
+- **可重入性**：一个线程可以多次获得相同的锁。即一个线程可以进入它已经拥有锁的代码块或方法。
+
+  ```java
+  public synchronized void outer() {
+      inner();
+  }
+
+  public synchronized void inner() {
+      // 因为可重入性，线程可以进入此方法
+  }
+  ```
+
+- **阻塞性**：如果一个线程持有锁，其他线程必须等待锁被释放后才能继续。
+
+### synchronized的优缺点
+
+#### 优点
+
+- **简单易用**：提供了一种简单的方式来确保线程安全。
+- **自动释放锁**：当线程执行完同步代码或抛出异常时，锁会被自动释放。
+
+#### 缺点
+
+- **性能开销**：由于同步机制，可能会增加程序的执行时间。
+- **可能导致死锁**：如果不小心，多个线程可能会相互等待，导致死锁。
+
+- **最好保证在finally代码块中进行unlock**
+
+### synchronized与其他同步机制的比较
+
+- **ReentrantLock**：提供更灵活的锁机制，如可定时锁、非阻塞锁等。比synchronized更复杂，但也提供了更丰富的功能。
+- **volatile**：只能保证可见性，而不能保证原子性。通常用于状态标志。
+- **Atomic Classes**：提供无锁的线程安全操作，性能通常优于synchronized，适用于基本类型和对象引用。
+
+## Concurrent Collections
+
+在Java中，**Concurrent Collections**是`java.util.concurrent`包的一部分，为多线程环境设计的集合类。它们提供了一种更高效的方式来处理并发访问，避免了传统集合类在多线程环境中可能出现的同步问题。相比于使用`synchronized`关键字进行显式同步，Concurrent Collections提供了更细粒度的锁和无锁机制，从而提高性能和可扩展性。
+
+### 为什么需要Concurrent Collections
+
+在多线程编程中，如果多个线程同时访问共享的集合对象，可能会导致以下问题：
+
+- **数据不一致**：线程之间相互干扰，导致数据状态不正确。
+- **竞争条件**：多个线程争夺同一资源，可能导致程序行为不确定。
+- **阻塞性能**：传统集合需要通过`synchronized`进行显式同步，可能导致线程阻塞和性能瓶颈。
+
+Concurrent Collections通过提供线程安全的集合实现，解决了这些问题。
+
+### 常见的Concurrent Collections
+
+以下是Java中常用的并发集合：
+
+#### 1. **ConcurrentHashMap**
+
+- **简介**: 是线程安全的哈希表实现。相较于`Hashtable`或同步包装的`HashMap`，它使用了分段锁（segment locking）机制来提高并发性能。
+- **特点**:
+  - 分段锁机制，允许多个线程并发访问不同的分段。
+  - 提供了额外的并发方法，如`computeIfAbsent`、`compute`、`merge`等。
+  - 支持非阻塞的`put`、`get`、`remove`等基本操作。
+
+**示例代码**:
+
+```java
+import java.util.concurrent.ConcurrentHashMap;
+
+public class ConcurrentHashMapExample {
+    public static void main(String[] args) {
+        ConcurrentHashMap<String, Integer> map = new ConcurrentHashMap<>();
+
+        map.put("A", 1);
+        map.put("B", 2);
+
+        map.computeIfAbsent("C", k -> 3); // 如果"C"不存在，插入key和计算的value
+
+        map.forEach((key, value) -> System.out.println(key + ": " + value));
+    }
+}
+```
+
+#### 2. **CopyOnWriteArrayList**
+
+- **简介**: 是线程安全的`ArrayList`实现，使用写时复制（Copy-On-Write）机制。
+- **特点**:
+  - 在修改时（如`add`、`set`）会创建底层数组的新副本，保证读取时的线程安全。
+  - 适合读操作频繁、写操作较少的场景。
+
+**示例代码**:
+
+```java
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+public class CopyOnWriteArrayListExample {
+    public static void main(String[] args) {
+        List<String> list = new CopyOnWriteArrayList<>();
+
+        list.add("A");
+        list.add("B");
+
+        list.forEach(System.out::println); // 遍历列表
+    }
+}
+```
+
+#### 3. **CopyOnWriteArraySet**
+
+- **简介**: 是线程安全的`Set`实现，基于`CopyOnWriteArrayList`。
+- **特点**:
+  - 在修改时创建底层数组的新副本。
+  - 适合读操作频繁、写操作较少的场景。
+
+**示例代码**:
+
+```java
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
+
+public class CopyOnWriteArraySetExample {
+    public static void main(String[] args) {
+        Set<String> set = new CopyOnWriteArraySet<>();
+
+        set.add("A");
+        set.add("B");
+
+        set.forEach(System.out::println); // 遍历集合
+    }
+}
+```
+
+#### 4. **ConcurrentLinkedQueue**
+
+- **简介**: 是一个线程安全的无界非阻塞队列，基于链表实现。
+- **特点**:
+  - 使用CAS（Compare-And-Swap）机制来实现无锁并发。
+  - 适合高并发场景下的队列操作。
+
+**示例代码**:
+
+```java
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
+public class ConcurrentLinkedQueueExample {
+    public static void main(String[] args) {
+        Queue<String> queue = new ConcurrentLinkedQueue<>();
+
+        queue.offer("A");
+        queue.offer("B");
+
+        String head = queue.poll(); // 移除并返回队列头
+        System.out.println("Head: " + head);
+    }
+}
+```
+
+#### 5. **BlockingQueue接口及其实现**
+
+- **简介**: 是线程安全的队列接口，提供了阻塞操作（如等待队列为空或队列满）。
+- **常见实现**:
+  - `ArrayBlockingQueue`: 有界阻塞队列，基于数组实现。
+  - `LinkedBlockingQueue`: 可选有界阻塞队列，基于链表实现。
+  - `PriorityBlockingQueue`: 支持优先级排序的无界阻塞队列。
+  - `DelayQueue`: 支持延迟元素的无界阻塞队列。
+
+**示例代码（ArrayBlockingQueue）**:
+
+```java
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+
+public class BlockingQueueExample {
+    public static void main(String[] args) throws InterruptedException {
+        BlockingQueue<String> queue = new ArrayBlockingQueue<>(10);
+
+        queue.put("A"); // 将元素放入队列，若队列满则等待
+        String head = queue.take(); // 获取并移除队列头，若队列空则等待
+
+        System.out.println("Head: " + head);
+    }
+}
+```
+
+#### 6. **ConcurrentSkipListMap 和 ConcurrentSkipListSet**
+
+- **简介**: 是线程安全的跳表实现，分别用于有序映射和有序集合。
+- **特点**:
+  - 提供了线程安全的有序集合操作。
+  - 性能接近于平衡树结构，适合需要排序的并发场景。
+
+**示例代码（ConcurrentSkipListMap）**:
+
+```java
+import java.util.concurrent.ConcurrentSkipListMap;
+
+public class ConcurrentSkipListMapExample {
+    public static void main(String[] args) {
+        ConcurrentSkipListMap<String, Integer> map = new ConcurrentSkipListMap<>();
+
+        map.put("A", 1);
+        map.put("B", 2);
+
+        map.forEach((key, value) -> System.out.println(key + ": " + value));
+    }
+}
+```
+
+### 使用场景
+
+- **高并发环境**: 当多个线程同时读写集合时，使用Concurrent Collections可以避免数据不一致和竞争条件。
+- **性能要求高**: 相较于使用`synchronized`进行显式同步，Concurrent Collections提供了更高的性能和可扩展性。
+- **线程安全需求**: 在需要保证线程安全的场景下，使用这些集合可以简化代码，实现更高效的同步。
+
+### Concurrent Collections的优缺点
+
+#### 优点
+
+- **线程安全**: 提供了内置的线程安全机制，无需显式同步。
+- **高性能**: 通过细粒度锁和无锁机制，提高并发性能。
+- **简化开发**: 减少显式同步代码的复杂性。
+
+#### 缺点
+
+- **内存开销**: 某些集合（如CopyOnWriteArrayList）在修改时可能会增加内存开销。
+- **使用限制**: 对于一些场景，可能需要根据具体需求选择合适的集合实现。
+
+
+## ExecutorService and Thread Pools
+
+Java中的`ExecutorService`和线程池是并发编程中非常重要的工具，它们提供了一种有效管理和执行多线程任务的方法。通过使用这些工具，开发者可以更轻松地控制线程的创建和执行，从而提高应用程序的性能和可维护性。
+
+### ExecutorService
+
+`ExecutorService`是Java提供的一个接口，位于`java.util.concurrent`包中。它是一个更高级的线程管理机制，相较于手动创建和管理线程，`ExecutorService`提供了以下优势：
+
+- **线程复用**：减少创建和销毁线程的开销。
+- **任务提交**：可以提交任务而不是直接操作线程。
+- **生命周期管理**：提供了更好的线程生命周期管理（启动、关闭等）。
+- **调度和管理**：提供了任务的调度和管理功能。
+
+#### 主要方法
+
+- **`submit(Runnable task)`**: 提交一个实现`Runnable`接口的任务进行执行。
+- **`submit(Callable<T> task)`**: 提交一个实现`Callable`接口的任务进行执行，并返回一个`Future`对象。
+- **`invokeAll(Collection<? extends Callable<T>> tasks)`**: 执行批量任务，等待所有任务完成。
+- **`invokeAny(Collection<? extends Callable<T>> tasks)`**: 执行批量任务，返回第一个完成任务的结果。
+- **`shutdown()`**: 启动一次顺序关闭，执行以前提交的任务，但不接受新任务。
+- **`shutdownNow()`**: 尝试停止所有正在执行的任务，并返回等待执行的任务列表。
+
+#### 示例代码
+
+以下是一个简单的`ExecutorService`使用示例：
+
+```java
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+public class ExecutorServiceExample {
+    public static void main(String[] args) {
+        // 创建一个固定线程数的线程池
+        ExecutorService executorService = Executors.newFixedThreadPool(3);
+
+        // 提交Runnable任务
+        executorService.submit(() -> {
+            System.out.println("Runnable Task 1 executed by: " + Thread.currentThread().getName());
+        });
+
+        executorService.submit(() -> {
+            System.out.println("Runnable Task 2 executed by: " + Thread.currentThread().getName());
+        });
+
+        // 提交Callable任务并获取结果
+        executorService.submit(() -> {
+            System.out.println("Callable Task executed by: " + Thread.currentThread().getName());
+            return "Result from Callable Task";
+        });
+
+        // 关闭线程池
+        executorService.shutdown();
+    }
+}
+```
+
+### 线程池（Thread Pools）
+
+线程池是Java中管理多个线程的一种机制，旨在通过减少线程创建和销毁的开销来提高性能。线程池可以重复使用已经创建的线程来执行多个任务，从而避免频繁的线程创建和销毁所带来的性能损耗。
+
+#### 线程池的优势
+
+1. **减少资源消耗**：通过重用线程，减少线程创建和销毁所需的资源。
+2. **提高响应速度**：线程池中的线程可以及时响应任务需求，而无需等待新线程的创建。
+3. **更好的管理**：可以通过配置线程池的大小和策略来优化应用程序的并发行为。
+4. **任务排队**：可以通过配置任务队列来处理任务的排队和执行。
+
+#### 常见的线程池类型
+
+Java通过`Executors`工厂类提供了多种常用的线程池实现：
+
+1. **FixedThreadPool**
+   - **简介**: 创建一个固定大小的线程池。
+   - **适用场景**: 当你需要一个固定数量的线程来处理一组任务时。
+
+   ```java
+   ExecutorService fixedThreadPool = Executors.newFixedThreadPool(5);
+   ```
+
+2. **CachedThreadPool**
+   - **简介**: 创建一个按需创建线程的线程池，空闲线程会被回收。
+   - **适用场景**: 适合执行许多短期异步任务的小程序，或者负载较轻的服务器。
+
+   ```java
+   ExecutorService cachedThreadPool = Executors.newCachedThreadPool();
+   ```
+
+3. **SingleThreadExecutor**
+   - **简介**: 创建一个只有单个线程的线程池。
+   - **适用场景**: 需要保证任务按顺序执行，并且同一时刻只有一个任务在执行。
+
+   ```java
+   ExecutorService singleThreadExecutor = Executors.newSingleThreadExecutor();
+   ```
+
+4. **ScheduledThreadPool**
+   - **简介**: 创建一个线程池，可以在指定延迟后执行任务，或定期执行任务。
+   - **适用场景**: 适合需要定时任务调度的场景。
+
+   ```java
+   ScheduledExecutorService scheduledThreadPool = Executors.newScheduledThreadPool(3);
+   ```
+
+#### 线程池示例
+
+以下是一个使用`FixedThreadPool`的示例：
+
+```java
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+public class ThreadPoolExample {
+    public static void main(String[] args) {
+        // 创建一个固定大小为3的线程池
+        ExecutorService executorService = Executors.newFixedThreadPool(3);
+
+        // 提交多个任务
+        for (int i = 0; i < 10; i++) {
+            final int index = i;
+            executorService.submit(() -> {
+                System.out.println("Task " + index + " executed by: " + Thread.currentThread().getName());
+            });
+        }
+
+        // 关闭线程池
+        executorService.shutdown();
+    }
+}
+```
+
+### 线程池参数配置
+
+在Java 8中，可以通过`ThreadPoolExecutor`类自定义线程池配置：
+
+- **corePoolSize**: 线程池维护的最小线程数。
+- **maximumPoolSize**: 线程池维护的最大线程数。
+- **keepAliveTime**: 线程空闲时，线程终止之前的最大存活时间。
+- **workQueue**: 用于保存等待执行任务的队列。
+
+```java
+import java.util.concurrent.*;
+
+public class CustomThreadPoolExample {
+    public static void main(String[] args) {
+        // 创建自定义线程池
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(
+            2,  // corePoolSize
+            4,  // maximumPoolSize
+            60, // keepAliveTime
+            TimeUnit.SECONDS, // keepAliveTime单位
+            new ArrayBlockingQueue<>(10) // 工作队列
+        );
+
+        // 提交任务
+        for (int i = 0; i < 10; i++) {
+            final int index = i;
+            executor.submit(() -> {
+                System.out.println("Custom Task " + index + " executed by: " + Thread.currentThread().getName());
+            });
+        }
+
+        // 关闭线程池
+        executor.shutdown();
+    }
+}
+```
+
+### 线程池中的任务排队策略
+
+Java线程池使用不同的排队策略来处理任务：
+
+1. **直接提交（SynchronousQueue）**: 不保持任务，任务会直接提交给线程执行。
+2. **无界队列（LinkedBlockingQueue）**: 任务可以无限制排队，适用于任务多且长时间执行的情况。
+3. **有界队列（ArrayBlockingQueue）**: 设置队列大小，适用于需限制等待任务数量的情况。
+
+### 使用线程池的注意事项
+
+1. **合理配置线程池大小**: 根据应用程序需求和硬件资源，合理配置线程池的大小。
+2. **管理线程池生命周期**: 在合适的时间关闭线程池，以释放系统资源。
+3. **处理异常**: 捕获和处理线程中的异常，以避免影响线程池的其他线程执行。
+4. **避免资源泄漏**: 确保任务执行完成后释放资源。
+
+### 总结
+
+Java中的`ExecutorService`和线程池提供了强大的并发任务管理功能，帮助开发者更高效地执行多线程任务。通过使用这些工具，可以减少线程管理的复杂性，提高应用程序的性能和可维护性。在实际应用中，合理选择和配置线程池将有助于实现高效的并发编程。

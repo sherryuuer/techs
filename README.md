@@ -86,7 +86,7 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [Databricks-ML-spark](ml/databricks-ml-spark.md)
 - [机器学习系统设计：设计流程，特征工程，和Pipeline技巧](ml/ml-system-design.md)
 
-## Python & Programming
+## Programming
 - [编程的历史和分类：声明式和命令式](python/programing-lang.md)
 - [用Python进行统计分析](python/statistics-with-python.md)
 - [网络基础：使用Python实现的套接字编程](python/python-sockets-programming.md)
