@@ -1,4 +1,4 @@
-## 回溯算法：排列（Combinations）
+## 回溯算法：组合（Combinations）
 
 ---
 
@@ -154,5 +154,3 @@ class Solution(object):
 ```
 
 - 电话号码的字母组合[leetcode17 题目描述](https://leetcode.com/problems/letter-combinations-of-a-phone-number/description/)
-
-

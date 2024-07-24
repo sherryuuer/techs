@@ -93,6 +93,10 @@
 - 数据建模（Data Modeling）是指设计和定义数据结构和关系的过程，以便在数据库系统中有效存储、管理和检索数据。
 - 模式演变（Schema Evolution）是指在数据库或数据仓库中随着业务需求变化对数据模式进行修改和扩展的过程。
 - 数据血缘（Data Lineage）是指追踪数据从源头到最终目的地的流动路径及其所经历的所有处理步骤的过程。
+- 数据采样（Data Sampling）是从一个大数据集中选取子集以便进行分析或建模的方法，其常见的方法包括随机采样、系统采样、分层采样和聚类采样等。
+- 数据倾斜机制（Data Skew Mechanisms） 是指在分布式计算或数据存储中，数据不均匀分布导致的负载不平衡问题，其主要机制包括分区键选择不当、数据倾斜以及资源分配不均衡等。应当进行数据分布的调查。*salting*是一个很有趣的方法，比如有的key非常热门，可以给他们加上随机的修饰，将他们打散。
+- 数据验证（Data Validation）通过一系列规则和约束条件来检查和确保数据的*完整性，一致性，准确性和有效性*。其目的是保证数据符合预期的格式和业务规则。
+- 数据分析（Data Profiling）是一种通过*统计和分析技术*来检查和总结数据集特征的过程。它帮助识别数据的结构、内容和质量问题。
 
 ### 数据库性能提升方法
 
@@ -100,7 +104,49 @@
 - Partitioning：分区，并行计算
 - Compression：列式压缩
 
+- *SQL回顾*：
+  - aggregation聚合函数：count，sum，avg，max，min，case
+  - grouping，nested grouping and sorting：聚合之外的都是group健
+  - pivoting：可以使用CASE语句或 PIVOT函数实现，在不支持Pivot函数的数据中用case可以实现，但是如果列很长的话写起来就会很痛苦
+  - inner join，left outer join，right outer join，full outer join，cross outer join
+  - Regular Expressions：like语句
+
+### Git也是数据工程的重要工具！
+
 ## Storage
+
+### S3
+
+- **Object**存储，网站hosting，数据湖
+- globally unique name
+- *key*是除了bucket名之外的**full path**，其中，文件名之外的都是*prefix*，他只是看起来很长的key而已
+  - *key = prefix + object_name*
+- Object最大*5TB*，超了就需要*multi-part upload*功能进行上传
+- *Version*ID，版本控制，没开启这个功能前，id只是null，删除了特定最新版本后，会变成前一个版本
+- Metadata功能，存储key-value
+- tags功能
+- **为什么你可以打开（open按钮）自己上传的文件**：因为那是一个pre-signed URL，它识别了你是文件的上传者
+- **安全Security**：
+  - User-Based：IAM Policies控制
+  - Resource-Based：三种
+    - Bucket Policies，是json控制，比如控制匿名用户的*数据访问范围*
+    - Object Access Control List又叫ACL，这个太细致了似乎没有被用
+    - Bucket Access Control List也是ACL，是桶级别的访问控制
+  - 其他AWS资源的访问，使用*IAM Roles*
+  - **Cross-Account**的访问，使用*Bucket Policy*
+  - 防止数据泄漏，AWS设置了*block public access*
+  - 能访问对象的*条件*是，你拥有任何一个base的权限，并且没有被显式deny
+  - 数据加密，使用加密key进行加密
+- **Replication**：复制，两种，CRR跨区，和SRR同区
+  - 必须开启版本控制功能，复制规则可以细致设置
+  - 可以是不同账户之间的复制
+  - 是一种非同步复制
+  - 必须给予bucket相应的IAM权限进行object的读取等操作
+  - 应用场景：低延迟，跨区合规审查，日志聚合等
+  - 只有你开启功能后的新object会被复制，对于没有被复制成功的，和老的项目，可以用*S3 Batch Replication*功能进行复制
+  - *可以复制已经删除的版本markers*，比如你想保留一些记录，注意，当删除origin的对象后，会被复制，但是**如果你删除origin的特定version，则不会被复制**，这说明delete marker是一般的对象删除操作，而对特定version的删除，则有些违规了，这不会被复制！
+  - *没有*桶之间的连锁chaining复制功能
+  - **注意：桶的区域选择不是从右上角而是在桶自己的页面。**
 
 ## Database
 
@@ -127,7 +173,6 @@
   * VPCPeering，VPCEndpoint，VPN，DX
   * Route53
   * CloudFront
-
 
 ## Management & Governance
 
