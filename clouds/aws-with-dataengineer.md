@@ -147,6 +147,63 @@
   - *可以复制已经删除的版本markers*，比如你想保留一些记录，注意，当删除origin的对象后，会被复制，但是**如果你删除origin的特定version，则不会被复制**，这说明delete marker是一般的对象删除操作，而对特定version的删除，则有些违规了，这不会被复制！
   - *没有*桶之间的连锁chaining复制功能
   - **注意：桶的区域选择不是从右上角而是在桶自己的页面。**
+- **S3 Lifecycle**设置：Class之间的数据移动
+  - Glacier（after60days）Deep Archive（after180days）/Intelligent-Tiering/One-Zone（easyToBeCreatedObjects）
+  - Rules：Transition Actions：用于设置tier之间的object移动
+  - Rules：Expiration Actions：用于设置object合适被删除，包括versioning的/可删除未完成的multi-part文件上传
+  - 可以设置于特定的prefix对象，也可用于对象tags
+- **S3 Analytics**：分析class使用，建议lifecycle rules，适用于Standard的class，开启后需要一两天生效
+- **S3 Event Notification**：对象事件通知，需要通知的对象服务，通过服务的ResourcePolicy开启S3的对自己的访问权限，比如S3->invoke/send/push->Lambda/SNS/SQS
+  - 联动**EventBridge**，就可以用EB的各种高级功能，比如objects过滤（用JSONrules）和多目的地（StepFunctions，Kinesis等）触发
+- BaselinePerformance：高性能读写
+  - prefixs数量无上限
+  - 3500PUT/COPY/POST/DELETE
+  - 5500GET/HEAD(若均匀分布，可达22000)
+  - HEAD请求方式是只返回头部，可用于确认object是否存在
+- **Multi-Part Upload**：推介100MB以上使用，5GB以上文件必须使用
+- **S3 Transfer Acceleration**：传输加速使用的是edge location
+- **S3 Byte-Range Fetches**：说白了就是支持部分下载，只得到想要的部分数据
+- **S3 Select&Glacier Select**：也是一种变相的部分取得数据的方式，使用SQL进行Object的过滤，降低CPU和网络负荷
+- **Encryption**：
+  - *存储中的加密：*
+  - SSE-S3：AES-256
+  - SSE-KMS：因为是API，可以被CloudTrail记录，GenerateDataKeyAPI/DecryptAPI
+  - SSE-C：必须使用HTTPS，EncryptionKey必须加在每个HTTP请求上，AWS不会保存你的EncryptionKey，你要自己加密自己key
+  - CSE：完全自己管理，上传（*强制使用HTTPS*）前加密，拿到后自己解密
+  - *传输中的加密：*
+  - 两种端点HTTP/HTTPS
+  - Policy设置HTTPS：aws：SecureTransport：true/false，另外还可以使用Policy强制加密
+- **Access Points**：
+  - 文件夹级别的访问点，可以设置自己的DNS源名和Policy
+  - 可以在*VPCEndpoint*的Policy中设置只能访问某个AccessPoint
+  - 可以对*同一个*桶中的*不同AccessPoint*，使用*LambdaFunctions*进行数据加工处理后返回给用户，比如数据过滤和数据丰富enrich等
+
+### EBS Volume
+
+（可参考SAP内容）
+
+- 块存储的实质是attach在你的实例上的网络驱动*Network Drive*，想象成一个*network USB stick*！
+- 一次只能mount一个实例，instance对EBS是一对多的关系
+- 绑定（locked）于*一个AZone*，跨区复制你需要snapshot它
+- 每个月30GB免费SSD存储
+- 可以设置是否在删除instance的时候保留卷，可以选择只保留root卷
+- 不需要detach就可以改变他们的参数比如size，type等，因为他们是*Elastic Volumes*
+
+### EFS - Elastic File System
+
+（可参考SAP内容）
+
+- 是一种Network File System，可以被mount到*许多instances*
+- 可以跨*多个AZ*和EC2一起工作
+- Protocol：NFSv4.1
+- 使用*SG*进行访问控制
+- 适用于**Linux based AMI**（POSIX：UNIX系统接口标准规范），而*不是windows*
+- 使用KMS进行存储中的加密
+- **Storage Class**：
+  - Standard：频繁访问
+  - IA：不频繁访问（Infrequent access）
+  - Archive
+  - 有*LifeCycle Policy*可以设置
 
 ## Database
 
