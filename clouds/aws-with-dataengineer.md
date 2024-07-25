@@ -158,10 +158,10 @@
 - BaselinePerformance：高性能读写
   - prefixs数量无上限
   - 3500PUT/COPY/POST/DELETE
-  - 5500GET/HEAD(若均匀分布，可达22000)
+  - 5500GET/HEAD(若均匀分布，可达22000)perSecond/perPrefix
   - HEAD请求方式是只返回头部，可用于确认object是否存在
 - **Multi-Part Upload**：推介100MB以上使用，5GB以上文件必须使用
-- **S3 Transfer Acceleration**：传输加速使用的是edge location
+- **S3 Transfer Acceleration**：传输加速使用的是edge location，并且是私有传输
 - **S3 Byte-Range Fetches**：说白了就是支持部分下载，只得到想要的部分数据
 - **S3 Select&Glacier Select**：也是一种变相的部分取得数据的方式，使用SQL进行Object的过滤，降低CPU和网络负荷
 - **Encryption**：
