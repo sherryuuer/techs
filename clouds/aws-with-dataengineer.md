@@ -168,6 +168,7 @@
   - *存储中的加密：*
   - SSE-S3：AES-256
   - SSE-KMS：因为是API，可以被CloudTrail记录，GenerateDataKeyAPI/DecryptAPI
+  - DSSE-KMS：dual的D，是双层加密的意思，为了符合一些公司的安全标准的一种高级加密方式，反正就是两层嵌套加密
   - SSE-C：必须使用HTTPS，EncryptionKey必须加在每个HTTP请求上，AWS不会保存你的EncryptionKey，你要自己加密自己key，必须使用CLI，GUI中没有相关选项
   - CSE：完全自己管理，上传（*强制使用HTTPS*）前加密，拿到后自己解密
   - *传输中的加密：*
@@ -205,7 +206,29 @@
   - Archive
   - 有*LifeCycle Policy*可以设置
 
+### AWS Backup
+
+- 全自动备份的集中管理，托管型服务
+- 支持*跨区域，跨账户*备份
+- 服务：EC2/EBS/S3/RDS/Aurora/DynamoDB/DocumentDB/Neptune/EFS/FSx/StorageGateway
+- PITR（Point to time Recovery）
+- On-Demand/Scheduled 备份支持
+- Tag-based备份Policies（叫做Backup Plans）
+- 最后还是备份到了S3中
+- *Vault Lock*：支持WORM（write once read many）防止被删除，甚至root用户也不可删
+
 ## Database
+
+### DynamoDB
+
+- NoSQL*非关系型*数据库，*分布式*数据库，其他比如MongoDB
+- scale主要通过*水平扩展*（传统关系型数据库可以提升CPU和内存等垂直扩展方式）
+- 需要的数据都以行*ROW*出现
+- *多AZ*复制，高可用性
+- 低延迟，高速读取和存储
+- 集成IAM的认证和安全
+- 支持通过**DynamoDB Streams**的事件驱动编程作业（event driven programming）
+- Table Class：Standard/Infrequent Access（IA）
 
 ## Migration & Transfer
 
