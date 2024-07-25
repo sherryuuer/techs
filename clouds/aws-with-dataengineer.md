@@ -168,7 +168,7 @@
   - *存储中的加密：*
   - SSE-S3：AES-256
   - SSE-KMS：因为是API，可以被CloudTrail记录，GenerateDataKeyAPI/DecryptAPI
-  - SSE-C：必须使用HTTPS，EncryptionKey必须加在每个HTTP请求上，AWS不会保存你的EncryptionKey，你要自己加密自己key
+  - SSE-C：必须使用HTTPS，EncryptionKey必须加在每个HTTP请求上，AWS不会保存你的EncryptionKey，你要自己加密自己key，必须使用CLI，GUI中没有相关选项
   - CSE：完全自己管理，上传（*强制使用HTTPS*）前加密，拿到后自己解密
   - *传输中的加密：*
   - 两种端点HTTP/HTTPS
