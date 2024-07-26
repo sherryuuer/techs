@@ -188,7 +188,7 @@
 - 绑定（locked）于*一个AZone*，跨区复制你需要snapshot它
 - 每个月30GB免费SSD存储
 - 可以设置是否在删除instance的时候保留卷，可以选择只保留root卷
-- 不需要detach就可以改变他们的参数比如size，type等，因为他们是*Elastic Volumes*
+- *Elastic Volumes*：不需要detach就可以改变他们的参数比如size，type等
 
 ### EFS - Elastic File System
 
@@ -205,6 +205,10 @@
   - IA：不频繁访问（Infrequent access）
   - Archive
   - 有*LifeCycle Policy*可以设置
+
+- 创建EFS的时候重要是你创建自己的*SG*，用来控制访问，attach在EFS上的*SG*会允许来自mount的EC2的访问
+- 可以在创建EC2的时候就mount你创建的EFS系统，必须*先选择subnet*，从而可以选择相应AZ的EFS
+- 这个很像是sharepoint，大家共享一个文件系统，高级
 
 ### AWS Backup
 
@@ -229,6 +233,94 @@
 - 集成IAM的认证和安全
 - 支持通过**DynamoDB Streams**的事件驱动编程作业（event driven programming）
 - Table Class：Standard/Infrequent Access（IA）
+- **Partitions**：数据存储于内部分区
+  - 通过hash算法进行数据的分布选择
+  - 计算分区有多少：取capacity和size中最大的：
+    - partitionsCapacity = （RCUs/3000） + （WCUs/1000）
+    - partitionsSize = totalSize / 10GB
+- **PrimaryKey**：在创建table的时候添加
+  - PartitionKey（Hash）：必须具有唯一性，必须种类多diverse以利于数据分布
+  - PartitionKey+SortKey（Hash+Range）：该组合必须具有唯一性（比如P相同S不同），数据被PartitionKey集群（Grouped）
+- Row/item：attributes可以在之后添加，每一个item的大小上限是400KB
+- 支持的数据类型：
+  - ScalarTypes：String/Number/Binary（图片文件等也是）/Boolean/Null
+  - DocumentTypes：List/Map
+  - SetTypes：StringSet/NumberSet/BinarySet
+- 大数据UseCase：游戏，手机应用，即时投票，日志提取，S3对象metadata / 不适合传统数据库的复杂join管理，不适合大量IO率的对象存储
+
+- **强一致性读取（Strongly Consistent Read）和最终一致性读取（Eventually Consistent Read）**
+  - *最终*一致性读取是默认选项，每次写入后有可能不一致
+  - *强*一致性在每次写入后都可以得到正确读取结果，用API设置参数*ConsistentRead*为True，这个模式会消费两倍的RCU
+
+- Read/Write Capacity Modes：（两种，可变更，变更时间24hours）
+  - **Provisioned Mode（default）**
+    - 读取容量单元RCU-ReadCapacityUnit/写入容量单元WCU-WriteCapacityUnit
+    - 突然高读写会使用Burst Capacity模式，这个模式下也被消费了，则get**ProvisionedThroughputExceededException**：这说明WCU和RCU被用完了，可能的*原因*有：
+      - Hot Keys：一个分区键被读了太多次
+      - Hot Partitions：某个分区负载太高
+      - Very Large items：因为读写依存于item的大小
+    - 建议使用指数退避策略*Exponential Backoff*，或者尽量多分区
+    - 如果是RCU问题，使用*DynamoDB Accelerator（DAX）*解决问题（后面单独说）
+  - **On-Demand Mode**
+    - 这个模式是上面那个的2.5倍
+    - 通过RRU（ReadRequestUnits）和WRU（WriteRequestUnites）进行付费（他们和RCU，WCU一样的）
+    - 自动伸缩，无计划瓶颈，无限WCU/RCU
+    - 对于你也无法预测的workload，比较适合这个
+  - **WCU**：是指每秒（每个item为1KB单位）需要的写入单位，比如每秒写入10个items，每个项目2kb，那么每秒所需WCU就是20WCUs（10*2/1）
+  - **RCU**：是指每秒（每个item为4KB单位）需要的读取单位，比如每秒读取10个items，每个项目4kb，那么每秒所需RCU就是10RCUs（10*4/4），这个是强一致性读取模式，如果是最终一致性模式，则只需要一半的RCU，除以2，为5RCUs
+
+- 数据写入：PutItem/UpdateItem（这个也可以写入新item，可利用无锁的*AtomicCounters*方法）/ConditionalWrites
+- 数据读取：GetItem：通过PrimaryKey读取，默认最终一致性读取，可设置强一致性，可以通过**ProjectionExpresion**来取得特定item的特定attributes
+  ```python
+  import boto3
+  # Create a DynamoDB resource
+  dynamodb = boto3.resource('dynamodb')
+  # Select your table
+  table = dynamodb.Table('Movies')
+  # Perform a query with a ProjectionExpression
+  response = table.query(
+      KeyConditionExpression=boto3.dynamodb.conditions.Key('Title').eq('Inception'),
+      ProjectionExpression='Title, Year'
+  )
+  # Print the items retrieved
+  for item in response['Items']:
+      print(item)
+  ```
+- 使用**Query**读取数据：
+  - *KeyConditionExpression*是基于key的条件，key=xxx或者sortkey><=between等
+  - *FilterExpression*这个必须是非key的attri，不能用hash或range键的attri进行过滤，过滤key条件用第一个
+  - *Limit*，和sql一样可以限制items的数量
+  - 支持*pagination*，结果分页表示，以节省流量
+- 使用**Scan**读取数据：
+  - 一种效率不高的方式，因为要先扫描整个table然后过滤数据
+  - 最多返回1MB数据，然后用分页*pagination*方法持续读取
+  - 提高速度可以用多个workers进行*Parallel Scan*
+  - 可以使用*ProjectionExpression* & *FilterExpression（不消耗RCU）*
+- 数据删除：DelteItem（支持Conditional delete）/ DeleteTable（想删除所有item的话用这个比较快）
+
+- **Batch Operations**：
+  - 一种比较省钱的处理方式，降低API的call数量
+  - 并行处理parallel，效率比较高，但是可能会有个别处理失败，需要重试
+  - *BatchWriteItem*：不能update，只能put和delete，失败的operations是*UnprocessedItems*
+  - *BatchGetItem*：可以从多个table提取，并行提取减少延迟，失败的operations是*UnprocessedKeys*
+  - 失败对应策略：增加RCU或者指数退避策略
+
+- **PartiQL**：
+  - 一种和SQL适配的语言，和SQL很像，基本就是SQL
+  - select/insert/update/delete
+  - 可以跨table操作
+  - Run方式：Console / NoSQL Workbench for DynamoDB / DynamoDB APIs / CLI / SDK
+
+- **LSI（LocalSecondaryIndex） & GSI（GlobalSecondaryIndex）**：
+  - LSI是本地二级索引，在*同一分区键*下，使用不同的排序键进行查询，必须使用与主表相同的分区键，只能指定不同的排序键
+  - GSI是全局二级索引，可以使用*与主表不同的分区键和排序键*，也就是允许在表的任意属性上进行查询
+  - LSI必须在表创建的时候指定，GSI则可以在表创建后添加或删除
+  - LSI最多一个表5个，GSI最多一个表20个
+  - 支持*强一致性*的只有*LSI*，两者都支持最终一致性
+  - *GSI*的吞吐限流throttling会影响主表，要特别注意
+
+- **DynamoDB Accelerator（DAX）**
+
 
 ## Migration & Transfer
 
