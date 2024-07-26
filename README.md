@@ -86,16 +86,17 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [Databricks-ML-spark](ml/databricks-ml-spark.md)
 - [机器学习系统设计：设计流程，特征工程，和Pipeline技巧](ml/ml-system-design.md)
 
-## Programming
-- [编程的历史和分类：声明式和命令式](python/programing-lang.md)
-- [用Python进行统计分析](python/statistics-with-python.md)
-- [网络基础：使用Python实现的套接字编程](python/python-sockets-programming.md)
-- [Python代码单元测试](python/codetest.md)
-- [使用Python调用OpenAI的API](python/open-ai.md)
-- [Python的break和continue如何影响循环](python/break-continue.md)
-- [面向对象编程设计模式Java&Python的Cheatsheet总结](python/oop-design-pattern.md)
-- [*Python自动化Automation](python/python-automation.md)
-- [Java基础学习笔记](python/java-base.md)
+## Software Engineer 101
+- [编程的历史和分类：声明式和命令式](software/programing-lang.md)
+- [用Python进行统计分析](software/statistics-with-python.md)
+- [网络基础：使用Python实现的套接字编程](software/python-sockets-programming.md)
+- [Python代码单元测试](software/codetest.md)
+- [使用Python调用OpenAI的API](software/open-ai.md)
+- [Python的break和continue如何影响循环](software/break-continue.md)
+- [面向对象编程设计模式Java&Python的Cheatsheet总结](software/oop-design-pattern.md)
+- [*Python自动化Automation](software/python-automation.md)
+- [Java基础学习笔记](software/java-base.md)
+- [软件工程师101学习笔记](software/software-engineer-101.md)
 
 ## Clouds
 - [关于云服务构架，系统设计等的上层思考](clouds/high-level-thinking.md)
