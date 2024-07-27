@@ -83,10 +83,11 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [Transformers编码器构架各个模块的代码实践](ml/transformers-encoder.md)
 - [*GNN：图基础和图论的数学-Graph-Neural-Networks](ml/gnn.md)，
 - [*GCN图卷积神经网络和它的实现-Graph-Convolutional-Networks](ml/gcn.md)
-- [Databricks-ML-spark](ml/databricks-ml-spark.md)
+- [Databricks-ML-spark-snowflake](ml/databricks-ml-spark.md)
 - [机器学习系统设计：设计流程，特征工程，和Pipeline技巧](ml/ml-system-design.md)
 
 ## Software Engineer 101
+- [软件工程师101学习笔记](software/software-engineer-101.md)
 - [编程的历史和分类：声明式和命令式](software/programing-lang.md)
 - [用Python进行统计分析](software/statistics-with-python.md)
 - [网络基础：使用Python实现的套接字编程](software/python-sockets-programming.md)
@@ -96,7 +97,6 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [面向对象编程设计模式Java&Python的Cheatsheet总结](software/oop-design-pattern.md)
 - [*Python自动化Automation](software/python-automation.md)
 - [Java基础学习笔记](software/java-base.md)
-- [软件工程师101学习笔记](software/software-engineer-101.md)
 
 ## Clouds
 - [关于云服务构架，系统设计等的上层思考](clouds/high-level-thinking.md)
@@ -118,9 +118,9 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [IaC工具Terraform部署Bigquery表的心得笔记](clouds/terraform_bq.md)
 
 ## Principal & Base
-- [程序员原则](principals/whats-not-change.md)
-- [计算机思维](principals/computeritize.md)
+- [工程师原则](principals/whats-not-change.md)
 - [工程师心得](principals/engineer.md)
+- [计算机思维](principals/computeritize.md)
 - [数学&机器学习](principals/math-ml.md)
 - [数学思维模型](principals/math-theory.md)
 

@@ -1418,3 +1418,49 @@ Scala 和 Apache Spark 之间有着密切的关系，Scala 是 Spark 的首选�
 [Documentation](https://docs.databricks.com/en/machine-learning/index.html)
 
 [Full Code](https://github.com/sherryuuer/machine-learning-lab/tree/main/Databricks)
+
+# 6 - Apache Spark相关学习笔记
+
+Databricks是Apache Spark的一个平台，是他的开发平台，方便开发者进行合作
+
+**ApacheHadoop生态系统**：
+- （管理者）ZooKeeper：集群node协调管理，管理和协调分布式应用中的各种服务
+- （预言者）Cassandra：开源的分布式 NoSQL 数据库，对等节点构架
+- （太阳）Solr：大规模全文信息搜索
+- （风暴闪电）Storm：实时数据处理的开源分布式计算框架
+- （星星）Spark：大规模数据处理和分析，real-time流星
+- （光）Beam：统一编程模型，执行和处理数据管道，大数据超级API
+- （猪猪）Pig：面向数据流ETL，处理结构化和非结构化数据
+- （松鼠）Flink：开源流数据处理框架，不提供数据存储，像KDFirehose
+- （蜜蜂）Hive：数据仓库，HiveQL查询和分析HDFS系统
+- （海豚）HBase：基于列的 NoSQL 分布式数据库
+- （小象）Mahout 创建可扩展的ML应用程序
+- （大象）Hadoop+YARN系统 ->> MapReduce
+- （海洋）Kafka：分布式流处理平台，队列服务
+
+*Spark结构*：
+- Spark Core Engine
+- Driver Program SparkContext -> Cluster Manager
+- Worker Node (Cache + Task)
+- Spark 是一个计算引擎，不在意你把数据放在什么样的地方，湖或者数据库，它拿过来自己放在自己的系统中进行计算
+
+**Databricks**：
+- *WorkSpace*是团队交互和合作的地方：Account-Workspace-Tools
+- 不管在哪个云服务都是一样的，使用*notebook*，易于交互
+- 集成的*Blob File System*（binary large object），S3，GCS等
+- *Cluster Creation*
+- *Job Scheduler*
+- *Secure Collaborate*：安全和权限管理
+- *Spark Optimization*：性能优化
+- Azure：*Libraries*：安装其他包
+- 语言：Java，Scala，Python，R，SQL
+- 从Spark到Databricks就像是乐高城堡到真的城堡，从框架到平台
+
+- 当你从云登录，基本上就是选择了参数，地区后，背后使用terraform等*IaC*在云中自动化地创建环境
+- 基本云大部分的服务构架都是通过**基础设施即代码**的方式来执行你的设置的，比如AWS，它内部就用CloudFormation给你创建
+
+**Snowflake**
+- 构架引擎也是三层，集成云的管理框架（infra，安全，网络，元数据管理）+ 虚拟仓库计算引擎 + 底层存储使用云blob存储
+- ⬆️抄袭Spark + DWH功能？？
+- 和Databricks很相似的登录框架，在各个云内集成
+- 功能上可以和Databricks以及Bigquery比较，都具有版本管理，分布式计算，时间回溯，clone等功能

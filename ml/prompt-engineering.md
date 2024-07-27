@@ -278,6 +278,12 @@ Chain of Density Prompting的优点是能够充分利用人工示例,更高效�
 
 - [谷歌人员开发的界面工具](https://promptchainer.io/)
 
+### Compress Prompt & Code-like syntax
+
+`simul8-IRC(historical_figures); /summon; act_as_IRCclient; realism+emoji`
+
+用更少的提示获得答案，LLM不是一个对话机器人，而是建立在无数的词汇token基础上的，那么我*何必说人话呢*？说的更少更精确，更像code岂不是更酷。
+
 ## resources links
 
 - [Anthropic prompt library](https://docs.anthropic.com/claude/prompt-library)

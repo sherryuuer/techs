@@ -230,7 +230,11 @@
 - 需要的数据都以行*ROW*出现
 - *多AZ*复制，高可用性
 - 低延迟，高速读取和存储
-- 集成IAM的认证和安全
+- 集成**IAM**的认证和安全，集成**WebIdentityFederation**或者**CognitoIdentityPools**的认证发放功能
+  - IAM的Condition设置可以进行更细致的API权限管理
+  - Condition：*LeadingKeys*：可以限制只访问PrimaryKey
+  - Condition：*Attributes*：可以特定限制用户能看到的attributes
+- 可以用DatabaseMigrationService来进行数据迁移，从other到DDB
 - 支持通过**DynamoDB Streams**的事件驱动编程作业（event driven programming）
 - Table Class：Standard/Infrequent Access（IA）
 - **Partitions**：数据存储于内部分区
@@ -246,7 +250,10 @@
   - ScalarTypes：String/Number/Binary（图片文件等也是）/Boolean/Null
   - DocumentTypes：List/Map
   - SetTypes：StringSet/NumberSet/BinarySet
-- 大数据UseCase：游戏，手机应用，即时投票，日志提取，S3对象metadata / 不适合传统数据库的复杂join管理，不适合大量IO率的对象存储
+- 大数据UseCase：
+  - 游戏，手机应用，即时投票，日志提取
+  - *S3对象metadata管理，用于S3的对象索引数据库，可以通过invoke Lambda来写入数据*
+  - 不适合传统数据库的复杂join管理，不适合大量IO率的对象存储
 
 - **强一致性读取（Strongly Consistent Read）和最终一致性读取（Eventually Consistent Read）**
   - *最终*一致性读取是默认选项，每次写入后有可能不一致
@@ -267,8 +274,9 @@
     - 自动伸缩，无计划瓶颈，无限WCU/RCU
     - 对于你也无法预测的workload，比较适合这个
   - **WCU**：是指每秒（每个item为1KB单位）需要的写入单位，比如每秒写入10个items，每个项目2kb，那么每秒所需WCU就是20WCUs（10*2/1）
-  - **RCU**：是指每秒（每个item为4KB单位）需要的读取单位，比如每秒读取10个items，每个项目4kb，那么每秒所需RCU就是10RCUs（10*4/4），这个是强一致性读取模式，如果是最终一致性模式，则只需要一半的RCU，除以2，为5RCUs
+  - **RCU**：是指每秒（每个item为4KB单位）需要的读取单位，比如每秒读取10个items，每个项目4kb，那么每秒所需RCU就是10RCUs（10*4/4）**注意这里的4kb，如果不是4的倍数，则加上去一个成为整数**，这个是强一致性读取模式，如果是最终一致性模式，则只需要一半的RCU，除以2，为5RCUs
 
+- **APIs**：
 - 数据写入：PutItem/UpdateItem（这个也可以写入新item，可利用无锁的*AtomicCounters*方法）/ConditionalWrites
 - 数据读取：GetItem：通过PrimaryKey读取，默认最终一致性读取，可设置强一致性，可以通过**ProjectionExpresion**来取得特定item的特定attributes
   ```python
@@ -320,6 +328,24 @@
   - *GSI*的吞吐限流throttling会影响主表，要特别注意
 
 - **DynamoDB Accelerator（DAX）**
+  - 是一种和DynamoDB无缝连接的*cache*功能
+  - 低延迟，解决HotKey问题，也就是过多reads的问题
+  - 默认5分钟的TTL
+  - Multi-AZ，推介生产环境最少3个node
+  - 安全性高，集成KMS，VPC，IAM，CloudTrail等服务
+  - *ElasticCache*可以存储*聚合数据结果*，DAX一般是存储*单个的objects，query/scan*等
+
+- **DynamoDB Streams**
+  - 似乎在学习Kinesis的时候看到过，他和KinesisDataStream很像，是通过**Shards**分区数据流的，它自动扩展
+  - table中的*有序的，基于item变化（create/update/delete）*的数据流，数据是可以设定的，比如只发送key，或者新的，老的item数据等
+  - 可以送到：KinesisDataStreams / Lambda / KinesisClientLibraryApplications
+  - 数据可以retention（存留）24小时
+  - UseCases：实时数据反映，实时分析，OpenSearch服务，*跨区复制*
+  - *Lambda*同步数据处理：需要赋予Lambda相应的权限，以及设置*Event Source Mapping*来读取数据流
+
+### RDS
+
+- 托管型传统关系型数据库，Not For BigData
 
 
 ## Migration & Transfer
