@@ -250,9 +250,10 @@
   - ScalarTypes：String/Number/Binary（图片文件等也是）/Boolean/Null
   - DocumentTypes：List/Map
   - SetTypes：StringSet/NumberSet/BinarySet
+- **TTL**：必须使用number类型*Unix Epoch timestamp*作为TTL的时间属性，它实质上是要**手动**创建了一个新的属性，然后设定开启该功能，内部会定期扫描你设置的TTL属性列（column），取得要删除的数据，进行删除操作，它不会消耗WCU
 - 大数据UseCase：
   - 游戏，手机应用，即时投票，日志提取
-  - *S3对象metadata管理，用于S3的对象索引数据库，可以通过invoke Lambda来写入数据*
+  - *S3对象metadata管理，用于S3的对象索引数据库，可以通过invoke Lambda来写入DynamoDB数据*
   - 不适合传统数据库的复杂join管理，不适合大量IO率的对象存储
 
 - **强一致性读取（Strongly Consistent Read）和最终一致性读取（Eventually Consistent Read）**
@@ -318,6 +319,7 @@
   - select/insert/update/delete
   - 可以跨table操作
   - Run方式：Console / NoSQL Workbench for DynamoDB / DynamoDB APIs / CLI / SDK
+  - 使用它的PartiQL查询的时候，也就只能用设定的key们查询
 
 - **LSI（LocalSecondaryIndex） & GSI（GlobalSecondaryIndex）**：
   - LSI是本地二级索引，在*同一分区键*下，使用不同的排序键进行查询，必须使用与主表相同的分区键，只能指定不同的排序键
@@ -328,25 +330,235 @@
   - *GSI*的吞吐限流throttling会影响主表，要特别注意
 
 - **DynamoDB Accelerator（DAX）**
-  - 是一种和DynamoDB无缝连接的*cache*功能
+  - 是一种和DynamoDB无缝连接的*cache*功能，是一种*cluster*，它会有一个endpoint，API咯
   - 低延迟，解决HotKey问题，也就是过多reads的问题
   - 默认5分钟的TTL
   - Multi-AZ，推介生产环境最少3个node
   - 安全性高，集成KMS，VPC，IAM，CloudTrail等服务
-  - *ElasticCache*可以存储*聚合数据结果*，DAX一般是存储*单个的objects，query/scan*等
+  - *ElasticCache*可以存储*聚合数据结果*，DAX一般是存储*单个的objects，query/scan*等，可以将两者*结合*，将DDB的结果存储到ElasticCache中，重复使用
 
 - **DynamoDB Streams**
   - 似乎在学习Kinesis的时候看到过，他和KinesisDataStream很像，是通过**Shards**分区数据流的，它自动扩展
   - table中的*有序的，基于item变化（create/update/delete）*的数据流，数据是可以设定的，比如只发送key，或者新的，老的item数据等
   - 可以送到：KinesisDataStreams / Lambda / KinesisClientLibraryApplications
   - 数据可以retention（存留）24小时
+  - *无法取得回溯数据*，也就是过去数据，这种性质很像*GA*，也是只能得到新的数据，过去的数据不可重复获得
   - UseCases：实时数据反映，实时分析，OpenSearch服务，*跨区复制*
-  - *Lambda*同步数据处理：需要赋予Lambda相应的权限，以及设置*Event Source Mapping*来读取数据流
+  - *Lambda*同步数据处理：需要赋予Lambda相应的权限，以及设置*Event Source Mapping*来读取数据流，*Lambda主动*从DDBstream拉取poll数据的方式
 
 ### RDS
 
-- 托管型传统关系型数据库，Not For BigData
+- 托管型传统关系型数据库，各种关系型数据库的引擎，Not For BigData
+- 满足ACID：原子性，一致性，隔离性，耐久性
+- 使用CW进行监控CPU，memory，storage，replica lag（滞后）等是一个好的实践
+- VPC + PrivateSubnet + SG + EBS
+- 自动备份，point-to-time 恢复
+- Snapshots：Cross-region复制
+- RDS Events：操作和过期的通知 - SNS
+- failover：Multi-AZ 实例复制和同步
+- Read Replicas：Cross-region读取操作
+- 分布式read构架：
+  - 通过Route53的weighted record set设置，给不同的read备份不同的权重用于用户访问权重控制
+- RDS Proxy：
+  - 数据库连接管理
+  - 和IAM认证集成
+  - 自动清理非活跃的连接，提高应用访问性能
+- *APIGateway*：如果db坐在它后面，它的*rate limits*可以用于保护数据库
 
+- Security：
+  - KMS加密
+  - Transparent Data Encryption（for Oracle and SQL Server）透明加密
+  - SSL传输功能
+  - CloudTrail无法trackRDS中的queries，因为不是API操作吧
+  - EC2到RDS的IAM Role访问，依靠对RDS的API call，获取一个Auth Token
+
+- Cross-Region Failover构架
+  - 数据read replica
+  - 通过Health Check和CW Alarm驱动CW Event
+  - 驱动Lambda更新DNS，指向备份的read replica
+
+- **Query Optimizations**
+  - 使用indexes加速搜索
+  - 避免全表scan
+  - 简化where语句
+  - 使用 `analyze table`：更新数据库的统计信息，这些统计信息对于数据库查询优化器（Query Optimizer）生成高效的查询执行计划至关重要
+  - 控制表的大小，使用足够的RAM来存放indexes，表的数量不要太多，10000个就太多了
+  - 对于PostgreSQL，在loading数据的时候，关闭数据库backup和multi-az功能，使用*autovacuum*，执行清理任务以回收这些死元组所占用的存储空间，并更新表的统计信息以优化查询性能
+
+- **Lock command**：为了保持数据一致性的SQL语句
+  - 用于数据共享的*Shared Locks*：防止同时写入，但是允许读取 -> `for share`
+  - 用于数据更新的*Exclusive（排他性） Locks*：写入和读取都无法同时进行，以进行数据更新 -> `for update`
+  - `lock tables table_name write;`，`unlock tables;`
+
+### Aurora
+
+（突出关键特性）
+
+- 速度是MySQL的5倍，是PostgreSQL的3倍
+- database volume最多可以有128TB
+- 最多可以有*15个read replica*
+- *Cross-region and zones* read replica复制的是整个database
+- 直接从S3，load/offload 数据，*持续备份*到S3
+- 30秒内实现master的failover
+- 储存中加密使用KMS，传输中加密为SSL
+
+- DB Cluster：
+  - 一个Writer Endpoint - MasterDB
+  - 多个Reader Endpoint - Read replica - 连接Load balancer，有Auto Scaling功能
+  - Optional：分出两个read replica 作为Custom Endpoint比如进行客户自己的分析查询
+
+- Troubleshooting
+  - Performance Insights：可视化查询等待时间和用户使用情况
+  - CloudWatch Metrics：CPU，Memory，Swap Usage
+  - Enhanced Monitoring Metrics：at host level，process view，per-second metric
+  - Slow Query logs
+
+- Data API
+  - 一种安全的用HTTPS端点，运行SQL的途径
+  - 没有JDBC连接，没有持续的数据库连接
+  - 必须赋予权限；Data API和Secret Manager
+
+- RDS Proxy可以只对Read Replica进行端点连接
+
+- Global Aurora：
+  - Cross-Region read replica：高灾难恢复能力
+  - Global Database：最多可以有5个备用region，每个region最多可以有16个read replica
+  - Write Forwarding：通过对副DB的写入操作可以，forward到Primary的DB，主DB永远都会先更新，然后再复制到副DB
+
+- 将RDS转换为Aurora：
+  - 使用RDS的Snapshot可以重新Aurora数据库实例
+  - 或者使用RDS可以直接创建Aurora的Read Replica然后直接升级为Aurora DB实例
+
+### OpenSearch
+
+- Use Cases：
+  - Log分析
+  - 实时应用监控
+  - 安全分析
+  - 全文本搜索
+  - 点击流分析
+  - 索引
+- Logstash：
+  - 是CW Logs的替代品
+  - 使用Logstash Agent管理
+- OpenSearch Dashboard（以前叫Kibana）：
+  - 提供实时仪表盘服务
+  - 是CW仪表盘的替代方案
+- 构架
+  - 可以收集和存放DynamoDB的数据流结果
+  - 可以实时收集Kinesis Data Firehose的数据结果
+
+### DocumentDB
+
+- Aurora是AWS自己implement的替代PostgreSQL/Mysql的数据库的话，*DocumentDB*也是针对于*MongoDB*的一种同样的存在
+- 用于存储，查询，和索引JSON数据
+- 设计理念和Aurora是一样的，高可用性，跨3个AZ冗余复制
+- DocumentDB的存储容量会自动以10GB速度增长
+- 自动扩展workloads到每秒百万级响应规模
+
+### Amazon MemoryDB for Redis
+
+- NoSQL键值对数据库，高耐久，in-memory数据库
+- 耐久性来自于，Multi-AZ的事务性处理日志log
+- 可以无缝扩展，从10sGB规模扩展到100sTB规模的存储
+- Use Case：网络和手机app，在线游戏，流媒体
+
+### Amazon Keyspaces（for Apache Cassandra）
+
+- 开源的分布式NoSQL数据库管理系统
+- 高度可扩展性和无单点故障的特点，Cassandra采用了去中心化的对等架构（peer-to-peer architecture），所有节点都具有相同的权重，避免了传统主从架构中的单点故障问题
+- 使用Cassandra Query Language（CQL）
+- Capacity：On-demand mode或者Provisioned mode with auto-scaling
+- 安全加密，backup功能，和PITR（Point-in-time Recovery）35days
+- Use Case：存储IoT设备数据，time-series数据
+
+### Amazon Neptune
+
+- 全托管的Graph数据库，为高度互联的数据设计
+- 罗马神话中的海神尼普顿，象征着海量数据之间的深层关系和连接
+- 高可用性来自于跨3个AZ，15个read replicas，Aurora也是这样
+- 构建和运行，需要*高度连接性数据集*的应用
+- 存储上亿级别的关系和查询，延迟则为毫秒milliseconds级别
+- Use Case：社交网络分析、推荐引擎、欺诈检测和知识图谱等
+
+### Amazon Timestream
+
+- 全托管型可扩展的时间序列数据库
+- 每天可以存储和分析*兆*数量级别的events数据
+- 在时间序列数据的处理上，速度是关系型数据库的1000s倍，价格则是1/10
+- 适配SQL，可以schedule执行
+- 最近的数据会存在memory中，历史数据则会存储于价格优化的storage中
+- 内置时间序列数据分析functions，可以近实时地进行分析
+- 数据当然也是加密的
+- Use Case：IoT/Kinesis/ApacheFlink数据，实时时间序列数据分析
+- 下游服务：QuickSight/Sagemaker/Grafana/AnyJDBC连接
+
+### Redshift
+
+- 全托管，PB级别的DataWarehouse
+- 面向OLAP的数据库（col索引），而不是OLTP（row索引）
+- SQL，ODBC，JDBC连接
+- 很快很便宜，官方说很厉害，适合分析
+- 内置replication和backup功能
+- Monitoring：CloudWatch，CloudTrail
+- **构架**：Leader Node - Compute Node x N - Node Slides （每个Node有自己的计算资源和存储）
+- MPP：Massively Parallel Processing
+- 列式存储，列式数据压缩
+
+- **Redshift Spectrum**：
+  - 可以处理*EB*（PBx1024）级别的S3中的非结构化数据，它和Athena的理念很像，但是Athena有自己的界面，但是Spectrum看起来只是Redshift中的一个表格
+  - 无限制的*并行处理能力*，*水平扩展能力*，使用的是区分开的存储和计算资源
+  - 支持数据压缩Gzip，Snappy压缩，以及各种数据格式
+
+- **Durability & Scaling**：耐久性何来
+  - Cluster内的replication
+  - 持续性地S3备份，可以*非同步*地备份到另一个region的S3桶
+  - 自动*snapshots*备份，帮我恢复了我删除的表格
+  - 对于不可用的dirve和nodes，他会*内部自动replace*，毕竟是全托管的
+  - 过去它只能在一个AZ中使用，现在有*Multi-AZ for RA3 clusters*了
+  - 水平和垂直扩展都可以
+  - 当创建新的Cluster后，旧的集群会用作read，会并行转移数据，使用CNAME切换到新的集群endpoint
+
+- **Distribution Styles**：
+  - Auto：自动分配
+  - Even：所有row均匀分配，这没啥效果吧
+  - Key：根据col进行分区，这个最常用
+  - All：整个表复制到所有nodes，这也太大了
+
+- **Importing/Exporting Data**：
+  - *Copy*命令：
+    - 并行，高效，从S3，EMR，DynamoDB，remote host导入数据
+    - S3的导入需要manifest file和IAM role设置，在导入时候，如果数据是加密的，数据会被解密
+    - 注意这个Copy是针对外部数据的，内部数据需要`insert into`或者`create table as`命令
+    - 支持数据压缩以提速
+    - 如果数据表格很narrow（就是col很少row很多）的情况，使用一次Copy会比较好，不然元数据会很大
+    - *Cross-region*加密snapshot复制：要在目标region创建新的KMSkey用于加密，以及相应的copy grant权限，在本region中允许该权限进行copy行为
+  - *Unload*命令，将数据导出到S3
+  - *Enhanced VPC Routing*：最好设置好VPC，不然数据走的公网，就会很慢
+  - *Auto-Copy from S3*：检测到S3的数据有变化就会自动导入
+  - *Auraro 到 Redshift*的 Zero-ETL 自动 integration 数据复制功能
+  - *Redshift Streaming Ingestion*，是从Kinesis Data Streams或者MSK的自动数据摄取
+  - *DBLink*：同步和复制PostgreSQL（or RDS）数据库数据的功能，`create extension dblink;`
+
+- *服务集成*：S3肯定，EMR，EC2，DynamoDB，DataPipeline，DataMigrationService，Glue
+- *WLM（Workload Management）*：优化和管理 Amazon Redshift 集群中的查询性能。通过 WLM，用户可以配置查询队列，指定每个队列的内存和并发查询数，以确保资源的合理分配，比如有的查询时间太长，就会让优先级高的，和更短的查询优先执行
+  - 默认的queue并发优先级别是5，superuser的优先级别则为1，最多设置8个queue，level可以多达50级
+  - SQA（*Short Query Acceleration*）短查询可以有自己的专有查询space，避免被长的查询占用资源
+    - select / CTAS
+    - 内部使用ML预测查询花费的时间，你也可以自己定义，多少秒才是short
+  - *Queue 设置方式*：
+    - Priority
+    - Concurrency Scaling Mode
+    - User groups
+    - Query groups
+    - Query monitoring rules
+- *并发扩展Concurrency Scaling*：支持多用户多查询的高并发扩展，自动增加cluster容量，通过WLM控制查询，发送查询到cluster的queue中
+- **VACUUM**：recovers spaces from deleted rows
+
+- **Redshift Resize**：
+  - Elastic Resize：是通过增加和减少node数量实现的，cluster可能会有一些downtime，但是你的查询不会失败，会尽量保持连接
+  - Classic Resize：会更改node的type之类的，cluster可能会在几小时到几天内变成read-only
+  - Snapshot，restore，resize：如果不想让cluster不可用，可以用这种方式来创建新的cluster
 
 ## Migration & Transfer
 
