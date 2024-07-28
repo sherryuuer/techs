@@ -119,7 +119,6 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 
 ## Principal & Base
 - [工程师原则](principals/whats-not-change.md)
-- [工程师心得](principals/engineer.md)
 - [计算机思维](principals/computeritize.md)
 - [数学&机器学习](principals/math-ml.md)
 - [数学思维模型](principals/math-theory.md)
@@ -162,6 +161,7 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [航海日志：定期思维检修1-202404](principals/checkmind1.md)
 - [航海日志：定期思维检修2-202405](principals/checkmind2.md)
 - [航海日志：定期思维检修3-202406](principals/checkmind3.md)
+- [成为工程师路上的乱七八糟的思考](principals/engineer.md)
 
 ## Tools
 - [外部链接：Fake RestAPI](https://jsonplaceholder.typicode.com/)

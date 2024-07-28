@@ -604,4 +604,16 @@ Thompson Sampling 是一种有效的策略，用于解决探索与利用的权�
 
 ![系统构架图](feed-ranking-service.png)
 
-这是高可用性的系统构架图
+## 广告点击推介系统
+
+![系统构架图](ad-click-recommand-ml-system.png)
+
+## 租房搜索排行
+
+Airbnb 租赁搜索排名应用程序
+
+![系统构架图]()
+
+## 预计送餐时间系统
+
+![系统构架图]()

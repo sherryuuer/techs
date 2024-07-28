@@ -504,6 +504,11 @@
 - **构架**：Leader Node - Compute Node x N - Node Slides （每个Node有自己的计算资源和存储）
 - MPP：Massively Parallel Processing
 - 列式存储，列式数据压缩
+- *RA3 nodes类型*：SSD-based，有跨region数据分享
+- 支持空间数据（Spatial Data）是指与地理位置和形状相关的数据，进行地理相关的分析
+- 支持*数据糊输出Data lake export*，特点就是unload到S3的时候是*Apache Parquet*格式，高速且适配Spectrum，Athena，EMR，SageMaker等，*自动分区*
+- **权限管理**使用Grant和Revoke命令
+- 安全和加密*使用HSM*，硬件安全模型，但是很麻烦哦，如果migrate没加密的数据到加密的数据库需要重建cluster，然后转移数据
 
 - **Redshift Spectrum**：
   - 可以处理*EB*（PBx1024）级别的S3中的非结构化数据，它和Athena的理念很像，但是Athena有自己的界面，但是Spectrum看起来只是Redshift中的一个表格
