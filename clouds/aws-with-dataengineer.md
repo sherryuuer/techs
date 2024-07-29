@@ -429,25 +429,6 @@
   - 使用RDS的Snapshot可以重新Aurora数据库实例
   - 或者使用RDS可以直接创建Aurora的Read Replica然后直接升级为Aurora DB实例
 
-### OpenSearch
-
-- Use Cases：
-  - Log分析
-  - 实时应用监控
-  - 安全分析
-  - 全文本搜索
-  - 点击流分析
-  - 索引
-- Logstash：
-  - 是CW Logs的替代品
-  - 使用Logstash Agent管理
-- OpenSearch Dashboard（以前叫Kibana）：
-  - 提供实时仪表盘服务
-  - 是CW仪表盘的替代方案
-- 构架
-  - 可以收集和存放DynamoDB的数据流结果
-  - 可以实时收集Kinesis Data Firehose的数据结果
-
 ### DocumentDB
 
 - Aurora是AWS自己implement的替代PostgreSQL/Mysql的数据库的话，*DocumentDB*也是针对于*MongoDB*的一种同样的存在
@@ -504,11 +485,24 @@
 - **构架**：Leader Node - Compute Node x N - Node Slides （每个Node有自己的计算资源和存储）
 - MPP：Massively Parallel Processing
 - 列式存储，列式数据压缩
-- *RA3 nodes类型*：SSD-based，有跨region数据分享
+- *RA3 nodes类型*：SSD-based，有*跨region数据分享的能力*
 - 支持空间数据（Spatial Data）是指与地理位置和形状相关的数据，进行地理相关的分析
-- 支持*数据糊输出Data lake export*，特点就是unload到S3的时候是*Apache Parquet*格式，高速且适配Spectrum，Athena，EMR，SageMaker等，*自动分区*
+- 支持*数据糊输出Data lake export*，特点就是unload到S3的时候是*Apache Parquet*格式（更快更省空间），高速且适配Spectrum，Athena，EMR，SageMaker等，*自动分区*
 - **权限管理**使用Grant和Revoke命令
-- 安全和加密*使用HSM*，硬件安全模型，但是很麻烦哦，如果migrate没加密的数据到加密的数据库需要重建cluster，然后转移数据
+- 安全和加密*使用HSM*，硬件安全模型，但是很麻烦哦
+  - 需要建立Redshift和HSM之间的*client-server*认证的*信任连接（trusted connection）*
+  - 如果migrate没加密的数据到加密的数据库需要重建cluster，然后转移数据
+
+- **Redshift Serverless**：
+  - 自动伸缩，优化成本和性能，更容易搭建开发环境，使用机器学习进行内部优化
+  - 会通过一个endpoint和JDBC/ODBC连接，或者只是控制台，进行Query操作等
+  - 需要设置：IAM Role，Database Name，管理者认证， VPC，加密设置，Audit Logging
+  - 在创建后，也可以管理snapshots / recovery points
+  - 内部通过RPU（*Redshift Processing Units*）进行性能扩展，按per second计费，可以设置其max-limit来限制成本
+  - 不支持Maintenance Windows / version tracks，所以有时候会掉线
+  - 必须通过VPC访问
+  - monitoring views是通过`SYS_`开头的view进行的
+  - 支持CloudWatch logs，`/aws/reshift/serverless/`中，支持各种metrics，似乎都以Query开头
 
 - **Redshift Spectrum**：
   - 可以处理*EB*（PBx1024）级别的S3中的非结构化数据，它和Athena的理念很像，但是Athena有自己的界面，但是Spectrum看起来只是Redshift中的一个表格
@@ -565,7 +559,93 @@
   - Classic Resize：会更改node的type之类的，cluster可能会在几小时到几天内变成read-only
   - Snapshot，restore，resize：如果不想让cluster不可用，可以用这种方式来创建新的cluster
 
+- **Materialized Views**：物化视图
+  - 进行了预计算和*结果预保存*的view，所以是一种需要不断和原表同步的view
+  - 速度快是因为不断刷新结果，预先保存
+  - 对于需要预先生成dashboard等使用情况很有用，比如下游是QuickSight
+  - 创建`create materialized view`，自动刷新set `AUTO REFRESH` option on creation
+  - MV的也可以基于其他MV创建
+
+- **Redshift Data Sharing**：
+  - 安全地将live的数据以*只读*的方式分享给其他cluster
+  - 有助于workload隔离，降低主cluster的负荷
+  - 有助于环境隔离，比如生产开发测试环境分开
+  - 在数据交换的时候可以licensing data，这意味着可以进行数据买卖了
+  - 细粒度控制，可以通过DB，schemas，tables，views和UDFs等来分享
+  - 通过*Producer / Consumer*构架进行分享，这个真的好流行，两方数据都必须加密
+  - 必须使用RA3nodes，Cross-region数据分享会产生transfer charges
+  - 数据分享方式类型：Standard / AWS Data Exchange / AWS Lake Formation - managed
+
+- **Redshift Lambda UDF**：
+  - 可以在SQL中使用自定义的Lambda Function
+  - 需要Lambda有相应的权限比如`AWSLambdaRole`，或者使用语句进行权限赋予`grant usage on language exfunc`for permissions
+  - 使用SQL注册UDF：`create external function udf_name(int,int) returns int func_name`
+  - 使用的时候比如可以在where中用UDF进行计算
+  - *原理*：是Redshift将想要执行的内容通过*json格式*发送给Lambda，计算后的结果通过API返回给Redshift
+
+- **Redshift Federated Queries**：
+  - 联合查询意味着可以直接和其他RDS，Aurora等数据库进行join等操作，进行数据处理
+  - 这种联合查询是单方面的：Redshift -> RDS/Aurora
+  - 意味着可以使用其他数据库的live数据，并且甚至可以不需要ETL的Pipeline了，对其他数据库是*只读*权限
+  - 将计算负荷分担到了其他的数据库，其他数据库要多花点钱
+  - *原理*：通过建立连接，这不废话吗，其实Spectrum也是同样的原理来连接S3数据
+    - 连接其他数据库，需要他们在同一个subnet或者通过VPC Peering进行连接，相互是可以看见的数据源
+    - 权限：IAM Role -> Secret Manager
+    - 语句：`create external schema ... URI endpoint IAM_ROLE ... SECRET_ARN ...`，spectrum也是这样的语句来建立S3的数据表
+    - External Schema的详细信息存储在view中：`SVV_EXTERNAL_SCHEMAS`
+
+
 ## Migration & Transfer
+
+### Application Discovery Service
+
+- 完全的应用迁移，两种模式，Agentless 和 Agent-based，用于收集你本地的应用的各种参数
+- 会被发现到S3中，所以可以用Athena进行查询
+
+### Application Migration Services
+
+- 原为Server Migration Services（SMS）
+- rehost的方式，将本地服务持续地复制到云，使用AWS Replication Agent
+
+### Snow Family
+
+- 两种功能：Data Migration和Edge Computing
+- Snow家族是离线数据传输设备，解决大量数据传输过慢的问题，AWS会发送你设备，你把数据装进去再发回给AWS
+- Snowcone有离线发回数据的方式，还有使用DataSync发回数据的方式
+- 需要安装snowball client/AWS OpsHub在你的服务器上
+- Data Migration：
+  - Snowcone
+  - Snowball Edge（Storage Optimized）
+  - Snowmobile（10PB-100PB）
+- Edge Computing：edge location基本是一个离线的网络不行的地方，进行数据处理，机器学习等，甚至最后可以发回AWS
+  - Snowcone
+  - Snowball Edge（Compute Optimized）
+  - 可以跑EC2或者AWS Lambdafunctions（使用AWS IoT Greengrass）
+- 可以使用OpsHub来管理snow家族，是一个可安装的软件（以前需要用CLI）
+- 本地传输加速：Amazon S3 Adapter for Snowball
+
+### DMS
+
+- Database Migration Service
+- 构架很简单：SourceDB - 安装了DMS的EC2 - targetDB
+- SCT：DMS中自带Schema Conversion Tool，转换数据库结构用的，数据库相同就不用了谢谢
+- 数据转移过程中SourceDB是可以使用的
+- Source和Target可以是众多的本地或者云的数据库和服务，很多，但是*下面三个只能是target*：
+  - Amazon Redshift，Kinesis Data Stream，OpenSearch
+
+- Works over VPC Peering, VPN, DX
+- 支持以下load方式：
+  - Full Load
+  - Full Load + CDC（**Change data Capture**）
+  - CDC
+- Continuous Data Replication实时或近实时地将数据从源系统复制到目标系统的过程目的，是保持两个或多个数据存储的同步。
+- CDC在此过程中持续监控源数据库的变更，实时捕获这些变更，将变更以最小延迟传输到目标系统
+- 支持Multi-AZ持续发布，使数据冗余和同步在不同的AZ
+
+**Snowball + DMS 数据迁移过程**
+- 本地用SCT将你数据进行转换并放进snowball设备，发给AWS
+- AWS将数据load进S3
+- DMS将S3的数据载入你的数据库
 
 ## Compute
 

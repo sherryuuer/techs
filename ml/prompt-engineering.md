@@ -284,6 +284,12 @@ Chain of Density Prompting的优点是能够充分利用人工示例,更高效�
 
 用更少的提示获得答案，LLM不是一个对话机器人，而是建立在无数的词汇token基础上的，那么我*何必说人话呢*？说的更少更精确，更像code岂不是更酷。
 
+### XML Tags
+
+- Tag是一种*关联连接*，比如在上文中提到的单词，在下一个文本中用XML tags就会在内部建立关联
+- Claude在训练的时候特别对XML tags进行了训练
+- *各种层面上说，针对LLM我们可以用各种代码形式来进行交流*
+
 ## resources links
 
 - [Anthropic prompt library](https://docs.anthropic.com/claude/prompt-library)
