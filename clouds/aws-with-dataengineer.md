@@ -607,21 +607,33 @@
 - 原为Server Migration Services（SMS）
 - rehost的方式，将本地服务持续地复制到云，使用AWS Replication Agent
 
+### DataSync
+
+- **数据迁移**transfer（S3，EFS，FSx之间），**数据同步**（S3，EFS，FSx），数据备份和归档，混合云构架
+- 数据同步，可以是双向的，因为哪个修改都要进行同步咯
+- 数据传输，可以*在AWS storage services*的服务之间进行*data*和*metadata*的复制（S3，EFS，FSx）
+- 可以维持文件原有的*permissions*和*metadata*
+- 下载并安装 DataSync Agent 到你的本地文件服务器
+- 使用文件共享协议NFS，SMB
+- 构架：一个*agent task*可能会用10GB带宽，当带宽不足，可以用*Snowcone*，它预安装了agent
+  - 本地DataSync Agent - DX - PublicVIF - DataSync
+  - 本地DataSync Agent - DX - PrivateVIF - PrivateLink - Interface VPC Endpoint - DataSync
+
 ### Snow Family
 
 - 两种功能：Data Migration和Edge Computing
-- Snow家族是离线数据传输设备，解决大量数据传输过慢的问题，AWS会发送你设备，你把数据装进去再发回给AWS
+- Snow家族是离线数据传输设备，解决大量数据传输过慢（**网络传输带宽不足的问题**）的问题，AWS会发送你设备，你把数据装进去再发回给AWS
 - Snowcone有离线发回数据的方式，还有使用DataSync发回数据的方式
 - 需要安装snowball client/AWS OpsHub在你的服务器上
-- Data Migration：
-  - Snowcone
-  - Snowball Edge（Storage Optimized）
-  - Snowmobile（10PB-100PB）
-- Edge Computing：edge location基本是一个离线的网络不行的地方，进行数据处理，机器学习等，甚至最后可以发回AWS
+- **Data Migration**：
+  - Snowcone（可以物理传输，也可以用DataSync传输回AWS）
+  - Snowball Edge（Storage Optimized）（TB or PB）
+  - Snowmobile（10PB-100PB）（安全，控温，GPS定位）
+- **Edge Computing**：edge location基本是一个*离线的网络不行的地方，进行数据处理，机器学习等，甚至最后可以发回AWS*
   - Snowcone
   - Snowball Edge（Compute Optimized）
   - 可以跑EC2或者AWS Lambdafunctions（使用AWS IoT Greengrass）
-- 可以使用OpsHub来管理snow家族，是一个可安装的软件（以前需要用CLI）
+- 可以使用**OpsHub**来管理snow家族，是一个可安装的软件（以前需要用CLI）
 - 本地传输加速：Amazon S3 Adapter for Snowball
 
 ### DMS
@@ -647,9 +659,158 @@
 - AWS将数据load进S3
 - DMS将S3的数据载入你的数据库
 
+### AWS Transfer Family
+
+- 用于S3和EFS的文件in/out服务，重点是**就是想使用FTP协议**的情况
+- 可以集成现有的认证系统比如AD，AWS Cognito
+- AWS Transfer for FTP/FTPS/SFTP
+- 构架方式：Client - Route53 - Transfer（IAM Role） - S3/EFS
+- Endpoint类型：
+  - 完全被AWS托管的public类型，没法设置任何控制
+  - VPC Endpoint类型的内部访问类型，可以在自己的VPC内部有私有IP和完全的访问控制（SG）
+  - VPC Endpoint类型的internet-facing访问类型，可以在VPC内部设置，并通过ElasticIP设置公有IP，同时可以通过SG进行访问控制
+
+
 ## Compute
 
+### EC2
+
+（记点新的东西吧）
+- AutoScaling模式，**EMR**就是依靠自动扩张，其他的还有DynamoDB，AutoScaling Group等
+- 在EMR中，EC2是它的军队：MasterNode -> ComputeNodes(contain data) + TasksNodes(not contain data)
+
+**AWS Graviton**：自己的处理器processors家族
+- 支持的服务：MSK，RDS，MemoryDB，ElastiCache，OpenSearch，EMR，Lambda，Fargate
+
+### Lambda
+
+- 无服务器管理的网络构架方式，跑代码就行了，**感觉单一的小任务，无状态的任务，非动态网站，用Lambda足够了，虽然package管理很麻烦的，但是可以IaC**
+- 构架：
+  - *Serverless Website*：Client - API Gateway - Lambda - 集成Cognito - 后端使用DynamoDB
+  - *Older history app*：ServerLog - KDS - Lambda - DynamoDB - ClientAPP
+  - *Transaction rate alarm*：TransactionLog - KDS - KDA - KDS - Lambda - SNS
+  - 作为S3和*ElasticSearch/OpenSearch*之间的粘合剂和桥梁
+  - 事件数据处理流：S3 - Lambda - *DataPipeline*
+  - *Data Copy to RedShift*：S3 - Lambda（DynamoDB管理数据load状态） - RedShift
+- 处理Kinesis数据流的时候，太大的batch可能会timeout15min，另外payload限制为6MB，遇到error，会不断重试，有时会无法处理错误
+- **File System Mounting**：
+  - 可以挂载到EFS文件系统，通过*EFS Access Points*
+  - 需要Lambda设置在相应的VPC中，而不是AWS的云中
+  - EFS有ConnectionLimit，所以要注意挂载的Lambda数量等
+- Use Case:
+  - 实时文件处理
+  - 实时流数据处理
+  - ETL
+  - Cron的替代
+  - 处理Events事件
+- Lambda Triggers：S3/SES/SNS/SQS/KDF/KDS（*poll the stream*）/DynamoDB/Config/CW/CloudFormation/APIGateway/CloudFront/Cognito/CodeCommit/IoT Button/Lex
+
+### SAM
+
+- AWS SAM（Serverless Application Model）是一个用于**构建和部署无服务器应用的框架**。它是一个开源框架，专门设计用于简化*AWS Lambda、API Gateway、DynamoDB、Step Functions*等无服务器资源的定义和管理。
+- 使用简化的模板语法（基于AWS CloudFormation）来定义无服务器应用。SAM模板是*对CloudFormation模板的扩展*，提供了特定于无服务器应用的简化语法。
+- SAM与*AWS CodePipeline、CodeBuild*等持续集成和持续交付（CI/CD）工具紧密集成，支持*自动化构建和部署*流程。
+- 语法：官方Github中有所需要的一切代码示例，kami！
+  - `sam init`初始化一个项目
+  - `Type: 'AWS::Serverless::Function'`
+  - `sam package`或者用`aws cloudformation package`将代码打包到云端
+  - `sam deploy`或者用`aws cloudformation deploy`发布代码
+  - `sam sync --watch`，`sam sync --code --(options)`快速同步本地变更，是**SAM Accelerate**功能，它使用服务API将变更*直接作用于*比如Lambda等服务，它之所以快速且同步，是因为它*Bypass CloudFormation*，直接自己干了
+- 使用sam可以轻松添加*APIGateway到Lambda的event语法部分*，从而创建一个新的RestAPI端点
+- 它的package，deploy功能，可以CI/CD持续集成，快速发布
+- 使用Cloud9或者IDE插件就可以在本地开发
+
+### AWS Batch
+
+- **Run batch job as Docker Images**
+- 两种方式一种是**AWS Fargate**，一种是Dynamic Provisioning for instance（EC2&Spot可设置price上限）
+- fully serverless
+- 处理高并发任务
+- 可以用EventBridge设置schedule
+- 可以用Step functions进行服务编排
+- 构架方式：
+  - 可以是我们案件那样的S3上传文件后Event驱动
+    - 通过Lambda驱动APIcall启动Batch
+    - 或通过EventBridge进行Batch trigger
+  - 驱动后Batch会从ECR拉取镜像进行文件处理
+  - 输出结果到S3或者DynamoDB等地方
+- 这个构架很像我测试的GCP的*Cloud Run*的CICD方式，而且run的镜像部署是自动集成的
+- AWS Batch和Lambda进行比较，就很像Cloud Run和Cloud Functions进行的比较
+
+- **比较Glue和Batch**：
+  - Glue是专用于ETL的，Apache Spark代码运行，Scala/Python服务，专注于ETL，拥有Data Catalog提高数据的可用性
+  - Batch可以用于所有的计算相关的job，不只是ETL，ETL工作可以交给Glue，其他的可以交给Batch
+
+- *比较App runner和Batch：*
+  - AWS App Runner 如果你需要快速、简便地部署和运行 web 应用和 API 服务，而不想管理底层基础设施。像AppEngine
+  - AWS Batch 则更适合那些需要运行大规模批处理作业、数据分析和高性能计算工作负载的用户，它提供了强大的资源管理和调度能力。
+
+- *Multi Node Mode*
+  - 高扩展能力，适合HPC高性能计算机
+  - 适合高耦合的workloads
+  - 只是为了一个job而创建了许多的nodes来执行它
+  - 对Spot Instance不起作用
+  - 如果EC2的lanch mode是placement group cluster就能工作的更好
+
 ## Container
+
+* 容器的优点在于*无需依存于OS*，可以在任何机器上执行可预测行为的任何代码和服务。它是**微服务构架**的基础。
+* DockerImage存放于DockerHub（公有），或者AWS的ECR，有公有仓库/私有仓库（自建）
+* VM是操作系统级别的隔离，不共享资源，Docker是进程级别的隔离，共享底层设施资源
+* build - push/pull - run
+
+### ECS
+
+- ECS use case：
+  - Run MicroServices
+  - Run Batch processing/Scheduled Tasks
+  - Migrate Apps to Cloud
+- ECS concepts:
+  - ECS Cluster
+  - ECS Services
+  - Task Definitions(json file )
+  - ECS Task
+  - ECS IAM Roles
+- **ECS 集成 ALB/NLB**：
+  - ECS作为服务expose的时候使用LB
+  - 使用Dynamic Port Mapping，分配流量：可以在一个EC2实例上发布多个container
+  - ALB是标配，NLB的使用场景：需要高throughput，高性能，或者需要PrivateLink配对创建端点
+
+- **数据存储**：使用EFS文件系统，ECS container可以进行 EFS 数据和文件节点的Mount，结合Fargate就是完全的serverless
+  - 适合Multi-AZ的持久性存储分享
+  - 注意，*S3不可以mount*为它的文件系统
+
+- ECS安全：集成SSM ParameterStore和Secret Manager
+- ECS Task Networking：None，host（使用底层host的interface），bridge（虚拟网络），awsvpc（使用自己的ENI和私有IP）
+
+- **Launch方式1:使用EC2**:
+- 也就是说Cluster的集群是通过EC2组成的，只要在EC2中安装*ECS agent*，就可以将他们集成到ECS的Cluster中去
+- ECS Agent使用EC2 Instance Profile定义IAM Role，用于访问ECS，ECR，CloudWatch，SecretManager，SSM Parameter等
+- 不同的服务需要不同的*ECS Task Role*，task role是在*task definition*中定义的
+- **Launch方式2:使用Fargate**：
+- 无需管理服务器，只需要定义*task definitions*
+
+### EKS
+- 开源框架
+- ELB - AutoScaling - nodes - Pods
+- with Fargate（use EFS）：完全托管
+- Managed Node Group
+- Self-Managed Nodes
+- 支持On-demand/Spot Instance
+
+### Amazon Fargate work with ECS/EKS
+
+- Fargate是一个Serverless的服务，无需构架基础设置，直接添加container
+
+### ECR
+- 支持image漏洞扫描（on push），版本控制和lifecycle
+  - 基础漏洞扫描由ECR进行，并触发EventBridge发布通知
+  - 高级Enhanced扫描通过Inspector进行，由Inspector触发EventBridge发布通知
+- 通过CodeBuild可以register和push image到ECR
+- 可以cross-region 或者 cross-account 地 replicate image
+
+
+
 
 ## Analytics
 
