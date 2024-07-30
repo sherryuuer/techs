@@ -791,12 +791,14 @@
 - 无需管理服务器，只需要定义*task definitions*
 
 ### EKS
+
 - 开源框架
 - ELB - AutoScaling - nodes - Pods
-- with Fargate（use EFS）：完全托管
-- Managed Node Group
-- Self-Managed Nodes
+- Nodes托管模式：*Managed Node Group*和*Self-Managed Nodes*和*with Fargate*（use EFS）：完全托管
 - 支持On-demand/Spot Instance
+- CloudWatch监控：*CloudWatch Container Insights*
+- DataVolumes：使用*CSI（Container Storage Interface）driver*，连接到EBS，EFS，FSx
+- Kubernetes中的*Taints和Tolerations*是一种机制，用于控制哪些Pods可以调度到哪些Nodes上。这种机制通过向节点（Node）施加“污点”（Taint）来排斥Pods，然后Pods通过“容忍”（Toleration）这种污点来选择性地允许调度。
 
 ### Amazon Fargate work with ECS/EKS
 
@@ -808,11 +810,81 @@
   - 高级Enhanced扫描通过Inspector进行，由Inspector触发EventBridge发布通知
 - 通过CodeBuild可以register和push image到ECR
 - 可以cross-region 或者 cross-account 地 replicate image
+- 私有和公有，公有的叫ECR Public Gallery，后端是S3
+- 通过IAM管理访问权限
 
+### ECS/EKS Anywhere
 
+- ECS部署在包括你的数据中心的任何地方
+- 安装*ECS Container Agent和SSM Agent*
+- 使用EXTERNAL的launch type
+- 必须要有稳定的AWS Region连接
+
+- EKS则需要安装在数据中心，使用EKS Anywhere Installer
+- 使用*EKS Connector*从AWS连接到本地的EKS Cluster
+- 以上是有连接的设置
+- 无连接的设置需要安装EKS Distro，以及依赖开源工具管理Clusters
 
 
 ## Analytics
+
+### AWS Glue
+
+- 用途：*数据发现和管理（S3/RDS/Redshift/其他数据库）*，以及*ETL（事件驱动，时间驱动和on-demand）*
+- 不适合Multiple ETL engines，它基于Spark，如果需要其他引擎，用Data Pipeling，EMR比较好，但是基本Spark无所不能了现在
+
+- **Glue Crawler / Data Catalog**：
+- 构架：S3 -> Glue -> (Redshift Spectrum/Athena/EMR) -> QuickSight
+- 扫描S3数据，将数据schema化，可以并行执行，生成Data Catalog，只管理数据结构用于后续查询，数据还是在S3中
+- 数据在S3中的*文件夹结构*，将决定Crawler如何生成数据*分区partition*方式，比如yyyy/mm/dd/hh等
+- **Modify Data Catalog**：使用ETL脚本，重跑Crawler，更新schema和partitionKey，开启功能和option：*enableUpdateCatalog*和*partitionKeys*options，只支持S3，各种文件格式支持，但是parquet有自己独特代码格式，另外不支持嵌套的schema变更
+- **Glue + Hive**：
+* Hive（EMR）可以让你用SQL化等语言进行数据查询
+* Glue Data Catalog则为它提供了一个元数据
+* 也可以自主import一个Hive的元数据仓库到Glue中
+
+- **Glue ETL**：以second计费
+- 有自动代码生成/Scala/Python/PayForUse/在*Spark*平台上运行
+- 加密：Server-Side at rest，SSL in transit
+- 性能提升上，可以增加*DPU*（data processing units）来为底层Spark Jobs提速
+  - 通过Job Metrics来帮助用户理解需要多少DPU
+- Errors会传送到CloudWatch，后续可以发布SNS消息
+- Glue Scheduler：进行jobs的schedule管理
+- Glue Triggers用于自动化事件驱动的job运行
+- *Bookmarks*：执行中防止重新处理re-run已经处理过的数据
+- 集成*CW Events*：后续基于job的成功失败，执行LambdaFunction或者SNS通知，可以invoke EC2，发送events到Kinesis，或者驱动Step Function
+- *Glue Development Endpoints*：用notebook作为开发环境开发ETLjobs，通过VPC和SG进行控制，以分钟计费
+
+- **现在支持 Streaming 数据处理**：
+- 支持serverless流数据处理ETL：Kafka/Kinesis -> transform in-flight -> S3/other data stores
+- 依赖*Apache Spark Structured Streaming*库
+
+- **DynamicFrame**：
+  - 是*DynamicRecords*的集合，自描述，并且还有自己schema
+  - 很像是*SparkDataFrame*，但是有更多的ETL功能
+  - 有Scala和Python的API
+
+- **Transformations**：
+  - 内置处理：DropFields / DropNullFields / Filter / Join / Map
+  - FindMatches ML：使用机器学习查找数据集中的匹配数据或重复数据
+  - 文件格式转换，比如转换成Parquet就很好
+  - 所有ApacheSpark可以做的转换都可以做到比如Kmeans机器学习
+
+- **Glue resolveChoice**：
+- 用于解决DynamicDataFrame中的数据歧义问题，比如同名的数据但是type不一样
+- 数据合并或转换过程中，某个字段有多个数据类型时，resolveChoice 用于选择一个确定的数据类型，以确保数据的一致性
+- 常用策略：
+  - *cast*：将字段的数据类型转换为指定类型。
+  - *project*：选择其中一个类型并放弃其他。
+  - *make_cols*：将不同类型的数据分成不同的列。
+  - *nullify*：将无法解析的数据转换为 null。
+  - *match_catalog*：使用AWS Glue数据目录中的表定义来解决类型冲突。
+  - *delete_col*：删除带有冲突的列。
+
+
+### 知识补充：Hive
+
+Apache Hive是一个构建在Hadoop之上的数据仓库系统，用于在Hadoop分布式文件系统（HDFS）上进行数据的查询和分析。它提供了一种类似于SQL的语言，称为HiveQL（Hive Query Language），使用户能够使用SQL语法来查询存储在Hadoop中的大规模数据集。Hive将SQL查询转换为MapReduce作业，以便在Hadoop集群上并行处理数据。Hive适用于批处理、ETL（提取、转换、加载）操作和数据分析。它支持用户自定义函数（UDFs），并能与其他大数据工具如Pig和Spark集成。通过抽象复杂的MapReduce操作，Hive大大降低了大数据分析的门槛，方便数据工程师和分析师高效处理和分析海量数据。
 
 ## Application Integration
 ## ⬆️数据工程的各种组件⬇️全面统筹和ML加持

@@ -488,6 +488,48 @@ Layered Model 是一种经典的架构模式，通过分层实现系统的职责
 * *对象内聚（Object Cohesion）*：指的是对象内部方法和属性之间的关联性和一致性程度。对象内聚确保一个对象的所有行为和数据都与其所承担的单一职责或功能密切相关。一个对象的所有方法和属性共同协作来实现一个清晰明确的功能或目标。
 
 ## Implementation & Deployment
+
+### Implementation
+
+- 技术债（Technical Debt）是软件开发过程中，由于赶工、资源限制、或决策失误而产生的代码质量欠佳或架构不佳的问题。这种“债务”就像金融债务一样，需要在未来进行“偿还”，即通过重构、修复、优化等手段改善代码质量。
+- **代码实现（implementation）**是一个很重要的部分。
+  * 统一的编码原则和指导
+  * 更短更好更容易理解，代码是写给人看的
+  * 可以试验但是记得清理
+  * 做每件事之前有一个plan
+
+- **Coding Principal**：[链接](https://www.makeuseof.com/tag/basic-programming-principles/)
+  - 1. Keep It Simple, Stupid (KISS)：保持代码简洁
+  - 2. Write DRY Code：不要重复你自己
+  - 3. Open/Closed：对扩展开放，对变化封闭
+  - 4. Composition Over Inheritance：组合优于继承
+  - 5. Single Responsibility：简化依赖关系
+  - 6. Separation of Concerns：分离原则
+  - 7. You Aren't Going to Need It (YAGNI)：不要试图去解决一个还不存在的问题
+  - 8. Document Your Code：留下注释
+  - 9. Refactor：不断优化代码
+  - 10. Clean Code at All Costs：不惜一切代价写出干净的代码
+
+- Buy Or Build：**不要重新发明轮子，如何可以找到template和开源范本，为何不用**
+
+### Deployment
+
+*built with the idea of retreat*
+
+- **Deployment Planing**：
+  - 计划的内容多少，取决于作出变化的size的大小
+  - 主要关注的是哪里会发生大的问题，也就是风险在哪里，*failure point*在哪里
+  - 关注点：比如如下部分
+    * 数据库活动监控
+    * 第三方软件集成
+    * Runtime变化
+    * Training确保用户和利益相关方了解系统的变化
+    * 如何应对Downtime
+    * Backups备份该如何进行
+    * Network是否有问题
+    * Memory监控是否没问题
+  - 最后，还需要一个撤退计划，如何跳回上一个节点
+
 ## Testing
 ## Software Development
 ## Agile
