@@ -881,6 +881,76 @@
   - *match_catalog*：使用AWS Glue数据目录中的表定义来解决类型冲突。
   - *delete_col*：删除带有冲突的列。
 
+- **Glue Studio**：
+  - 可视化界面，用于创建ETL工作流
+  - Job编辑（设置源，目的地和转换内容）
+  - 监视Job执行的dashboard
+
+- **Glue Data Quality**：
+  * 实质上是一种数据的*规格合集*（rule set），可以自己定义也可以用官方推介的
+  * 使用*DQDL*语言（Data Quality Definition Language）
+  * 其结果可以用于决定是否让job失败成功，或者也可以发送到Cloud Watch
+
+- **Glue DataBrew**：
+  * 可视化*数据预处理工具*，导入数据集，在界面上解析数据，转换数据
+  * 通过创建*Recipes*来进行数据转换工作
+  * 可以定义Data Quality Rules
+  * 可以通过custom SQL从RedShift和Snowflake中创建数据集
+  * 集成IAM，KMS，SSL安全，集成CW和CloudTrail
+  * 转换好的数据可以用于创建一个Job，并且可以cron执行，还可以直接在界面上下载转换好的数据结果
+  * *Studio*是用于定义*工作流*，这个是用于*可视化数据转换*的非常详细的操作的
+  * 处理**PII数据**：替换substitution，打乱shuffling，加密encrypt，删除delete，隐藏部分信息Mask，哈希化Hash
+
+- **Glue Workflows**：
+  * 编排服务，编排目标主要是Glue中的job，可以通过控制台，blueprint，或者API创建
+  * Trigger可以是Schedule，On-demand，或者EventBridge的events事件
+
+- 对比**Glue ETL和GCP的Dataproc**：
+  - 服务类型：AWS Glue更侧重于ETL任务和自动化数据管道，而GCP Dataproc则侧重于通用的大数据处理和分析。
+  - 技术栈：Glue支持PySpark等，而Dataproc则完全支持Apache Spark、Hadoop及其生态系统。
+  - 集成性：两者均与各自平台的其他服务深度集成，Dataproc可以更好地与GCP的数据分析工具结合，如BigQuery和Dataflow。
+  - 灵活性：Dataproc提供更灵活的集群管理和配置选项，适合复杂的大数据分析场景。
+  - Google Cloud Dataproc 是GCP中使用Apache Spark的主要服务，对应AWS Glue的某些功能，但更专注于全面的大数据处理和分析能力。
+  - AWS Glue 则是一种全面的ETL解决方案，适用于构建和管理数据管道，特别是处理ETL任务时具有便利性。
+
+### Lake Formation
+
+- **旨在让创建安全数据湖变得简单！**
+- 自动导入数据和监控数据流，可设置分区，数据源可以是S3或者其他数据库等
+- 统一的数据集中管理权限，加密和keys管理，高度*数据访问控制管理*
+- 提供了ETL（提取、转换、加载）功能，帮助转换原始数据到分析就绪的格式，支持使用AWS Glue进行数据转换
+- *数据治理*：审计和监控，支持对数据访问的监控和审计，帮助用户跟踪数据使用情况和权限变更
+- 集成S3，下游使用Athena，RedShift，EMR进行高级分析
+- Cost：本身没有费用，但是底层的Glue，S3，EMR，Athena，Redshift需要付费
+- 支持Cross-account数据访问
+- 支持*Governed Tables*
+  * 是一种S3表的新形态
+  * 这种表支持ACID事务处理
+  * 可以和Kinesis流式数据集成，可以用Athena进行分析
+  * 可以在row行和cell的级别上可以进行安全访问控制
+  * 使用*Automatic Compaction*技术进行存储优化：自动合并存储系统或数据库中的小文件或小数据块，以减少碎片化，提高读写性能和存储效率。
+
+- **安全和数据权限**：数据湖中，感觉安全真的很重要，也就是*数据治理*方式
+  * 集成IAM users/roles，SAML或者external AWS accounts
+  * 可以在databases，tables或者columns上用Policy tags
+  * **Data Filters**：列，行，单元格cell级别的*安全管理*
+    - 在进行`grant select`permission的时候用的
+    - `All columns` + `row` filter = row-level security
+    - `All rows` + specfic `columns` = column-level security
+    - specific `columns` + specific `rows` = cell-level security
+    - 可以如上通过控制台console创建，也可以通过`CreateDataCellsFilter`API
+
+
+- 使用*步骤*：
+  * 数据导入：定义数据源（例如S3、RDS），并使用Lake Formation导入数据到数据湖。
+  * 数据转换：使用AWS Glue进行数据转换，准备分析就绪的数据。
+  * 数据编目和元数据管理：自动生成数据目录，编目数据集并为其添加元数据。
+  * 权限管理：设置细粒度的权限策略，确保用户和服务仅能访问他们被授权的数据。
+  * 数据共享和分析：将数据湖中的数据与其他AWS服务集成，如Athena进行分析，或通过QuickSight进行可视化。
+  * 治理和审计：使用Lake Formation的审计功能监控数据访问，确保数据使用符合治理政策。
+
+- 在GCP中，与AWS Lake Formation 对应的服务是 **BigLake**：统一的数据湖分析平台，旨在简化大规模数据分析和管理。它集成了Google Cloud Storage和BigQuery，并扩展支持多种存储格式。
+
 
 ### 知识补充：Hive
 
