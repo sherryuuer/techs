@@ -1433,6 +1433,9 @@ GCP的PubSub对标的是SQS和SNS两个服务。
   - Grafana 是一个流行的开源分析和监控平台，支持多种数据源，包括 Amazon CloudWatch、Prometheus、Opensearch，Timestream，Athena，Redshift，X-Ray 等，集成其他比如Github，Google，Azure，Mysql等
   - 集成了 AWS 的安全功能，如 IAM 身份验证（Identity Center）和 VPC 网络，确保数据的安全性
 
+- Cost & Budget
+- API Gateway
+
 ## Machine Learning
 
 - SageMaker
@@ -1463,3 +1466,7 @@ GCP的PubSub对标的是SQS和SNS两个服务。
   * CDK + SAM：可以用cdk发布到CF，然后用sam invoke进行本地测试
   * 比如通过用js创建一个app的项目构建方式，完全就是做react时候的项目方式最后export app
     - 同时可以同时发布用Python写的lambda代码
+- CodeDeploy
+- CodeCommit 2024/6/25废止了，以后迁移到Github
+- CodeBuild
+- CodePipeline：编排CI/CD服务
