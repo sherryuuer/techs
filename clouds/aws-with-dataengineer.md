@@ -1397,7 +1397,7 @@ GCP的PubSub对标的是SQS和SNS两个服务。
 - IAM：全球Global服务 / MFA / IAM Roles
 - KMS：加密资源换region，需要新的key，也就是key不能在两个region共用，跨账户使用by key policy
 - *Macie*：PII，with ML：S3 -> Macie -> EventBridge -> Topic
-- Secret Manager：自动更新 / Multi-region Secret
+- Secret Manager：自动更新rotetion / Multi-region Secret
 - WAF：7layer应用保护，ACL / Global Accelerator的固定IP + WAF + ALB
 - Shield：DDos，保护对象*ALB，CloudFront等*
 - 在JDBC上使用TLS安全传输
@@ -1420,8 +1420,46 @@ GCP的PubSub对标的是SQS和SNS两个服务。
   * Metrics（namespaces，attributes），Metrics Stream（near-real-time）- firehose - S3 - Athena
   * Logs groups / streams / Logs Insights（query engine not real time）
   * CW Logs Subscription is real-time -> Kinesis -> log aggragation (通过policy设置可以跨账户)
-  * Unified Agent
+  * Unified Agent：比原本的安装在虚拟机EC2上的agent能收集更多的信息（disk，CPU，network，RAM，swap space），并且可以使用SSM Parameter Store进行中心化设置
+  * Alarm：Composite Alram用来监控其他alarms
+- CloudTrail
+- AWS Config
+- CloudFormation
+- SSM Parameter Store：权限 - SSM，KMS解密
+- Well-Architected tool
+
+- **AWS Managed Grafana**：
+  - 使用户能够轻松创建和管理基于 Grafana 的数据可视化仪表板，主要分析logs和metrics
+  - Grafana 是一个流行的开源分析和监控平台，支持多种数据源，包括 Amazon CloudWatch、Prometheus、Opensearch，Timestream，Athena，Redshift，X-Ray 等，集成其他比如Github，Google，Azure，Mysql等
+  - 集成了 AWS 的安全功能，如 IAM 身份验证（Identity Center）和 VPC 网络，确保数据的安全性
 
 ## Machine Learning
 
+- SageMaker
+- SM Feature Store：
+  * 数据摄取方式：streaming / batch
+  * KMS / IAM / PrivateLink
+- SM ML Lineage Tracking
+  * 创建和存储ML workflow
+  * 记录模型学习历史，追踪合规和审计信息
+  * 有数据血缘图表表示，有PythonAPI
+- SM Data Wrangler：数据准备工具，从各种数据源
+  * import data
+  * visualize data
+  * transform data
+  * quick model and measure res
+
 ## Developer Tools
+
+- Access Keys
+- CLI：命令行工具，command line interface
+- SDK for code，API：software development kit
+  * 是一组代码库，代码，手机应用，IoT等，比如Python的boto3
+- CDK：cloud development kit - 代码定义基础设施
+  * CloudFormation 代码版
+  * 可以同时发布设施和内部代码，比如lambda的
+  * deploy的目标是到CloudFormation
+  * SAM对发布Lambda和serverless非常好用，CDK则更加广泛
+  * CDK + SAM：可以用cdk发布到CF，然后用sam invoke进行本地测试
+  * 比如通过用js创建一个app的项目构建方式，完全就是做react时候的项目方式最后export app
+    - 同时可以同时发布用Python写的lambda代码
