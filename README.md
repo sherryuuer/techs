@@ -39,7 +39,7 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [位运算：bit操作](algo/bit-operations.md)/[bit运算相关问题](algo/bit-problems.md)
 - [自定义数据结构：数据结构的调整和组合](algo/custom-ds.md)
 
-## Machine Learning
+## Machine Learning & Big Data
 - [对大语言模型的简单解释](ml/ai-4-prompt.md)/[日文版](ml/ai-4-prompt-jp-version.md)
 - [Prompt-Engineering-Framework](ml/prompt-engineering.md)
 - [LangChain大模型框架](ml/langchain.md)
@@ -84,6 +84,7 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [*GNN：图基础和图论的数学-Graph-Neural-Networks](ml/gnn.md)，
 - [*GCN图卷积神经网络和它的实现-Graph-Convolutional-Networks](ml/gcn.md)
 - [Databricks-ML-spark-snowflake](ml/databricks-ml-spark.md)
+- [✨Spark✨基础学习笔记](ml/spark_base.md)
 - [机器学习系统设计：设计流程，特征工程，和Pipeline技巧](ml/ml-system-design.md)
 
 ## Software Engineer 101

@@ -290,6 +290,11 @@ Chain of Density Prompting的优点是能够充分利用人工示例,更高效�
 - Claude在训练的时候特别对XML tags进行了训练
 - *各种层面上说，针对LLM我们可以用各种代码形式来进行交流*
 
+### Emotional Stimuli
+
+- 情感刺激，告诉它这件事很着急，对我很重要之类的哈哈。
+- 这种精确性的提高，来自于注意力机制attention，这提高了token之间的关联，提高了对原有句子中重要词汇的关注度
+
 ## resources links
 
 - [Anthropic prompt library](https://docs.anthropic.com/claude/prompt-library)

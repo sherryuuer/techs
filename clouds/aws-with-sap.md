@@ -1108,32 +1108,32 @@ GCP的PubSub对标的是SQS和SNS两个服务。
 
 - No ordering，No retention数据留存
 - SNS主要是发布订阅服务PubSub
-- Event Producer发布到Topic：
+- *Event Producers*主要有：
   - CWAlarm，Budgets，Lambda，ASG，S3Bucket Events，DynamoDB，CloudFormation state change，RDS Events and so on
 - 10万个topic上限，1250万个Subscriptions上限
-- Publish方法：
+- *SNS的Publish方法*：
   - Topic Publish（使用SDK）：创建topic和subscriptions，然后发布到topic
   - Direct Publish（为mobile apps SDK）
     - 创建platform application，创建platform endpoint
     - publish到endpoint，这更像是push操作
-- publish的目的地：
-  - SQS，Lambda，Kinesis Data Firehose，HTTP（S）endpoints，Emails
-- Security
+- *SNS的publish的目的地*：
+  - SQS，Lambda，Kinesis Data Firehose，HTTP（S）endpoints，Emails（是一种端点）
+- *Security*
   - HTTPSAPI通信加密
   - KMS存储加密
   - IAM Policy访问限制
-  - SNS访问Policy限制
+  - SNS Access Policy：支持跨账户访问（就像S3的bucket access policy）
 
 - **SQS + SNS fan out 构架**
   - 一个 SNS topic，多个 SQS subscriber
   - 比如一个S3 Event可以通过该构架发布给多个后续服务
+  - SNS FIFO - SQS FIFO：FIFO的SNS只能以FIFO的SQS作为订阅者
+  - **Message Filtering**
+    - 如果subscription不过滤信息就会收到所有的message
+    - 通过条件过滤可以收到各自想要的信息，Json Policy格式
 
 - **Kinesis Data Firehose**
   - SNS Topic - KDF - S3/other services
-
-- **Message Filtering**
-  - 如果subscription不过滤信息就会收到所有的message
-  - 通过条件过滤可以收到各自想要的信息
 
 - 服务器端发生错误则会自动应用重传策略
 - 只有Http/s支持Custom delivery policies

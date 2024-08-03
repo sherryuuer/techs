@@ -113,6 +113,11 @@
 
 ### Git也是数据工程的重要工具！
 
+### 数据保护
+- **Data Mask**：掩盖一部分敏感数据：替换，打散，加密，hash，或者一开始就不要import敏感数据
+- **Key Salting**：加一个random的数字之后，给数据加密，TB案件就是这样，可以防止同样的数据hash成一样的数据，最好是每条数据都有不同的salt，但是TB是共享一个salt不太好
+- **Keep data where it belongs**：出于合规原因，将数据保存在它因该在的地理region，所以在数据库replica的时候要格外小心。使用OU service control和S3的region设置都是有效手段
+
 ## Storage
 
 ### S3
@@ -951,14 +956,451 @@
 
 - 在GCP中，与AWS Lake Formation 对应的服务是 **BigLake**：统一的数据湖分析平台，旨在简化大规模数据分析和管理。它集成了Google Cloud Storage和BigQuery，并扩展支持多种存储格式。
 
+### Athena
 
-### 知识补充：Hive
+- S3御用SQL查询工具，无需load数据，直接查S3
+- 可用于分析所有存储在S3中的其他服务数据：CloudTrail，CloudFront，VPC，ELB等服务的*logs*
+- 底层是*Prosto*：开源的分布式SQL查询引擎，专门用于高性能地查询大规模数据集
+- 支持各种格式和数据类型：
+  * 文件格式支持CSV，TSV，Json等人类可读格式
+  * 文件格式支持*列式分布的ORC，Parquet*和*行式分布的Avro*格式
+  * 注意：**使用列式文件可以提高性能，查询大文件比很多小文件的性能更高，使用分区键也可以提高性能**
+  * 使用分区命令提升性能：`MSCK REPAIR TABLE`，是一个用于 Hive 和其他兼容 SQL 查询引擎（如 Amazon Athena）的命令。它用于修复分区表，更新 Hive 元存储中有关表分区的信息
+  * `ALTER TABLE ADD PARTITION` 是手动指定新分区的方法，而 `MSCK REPAIR TABLE` 是自动发现和注册新分区的方法
+  * 数据类型支持结构化，非结构化，半结构化数据
+- Use Case：查询web logs，或者在数据load到Redshift之前进行预查询
+- 集成：Jupyter，Zeppelin
+- 集成：QuickSight
+- 集成：ODBC/JDBC等的其他可视化工具
+- 集成**Glue**的DataCatalog，当然其他各种query工具都可以集成，通过**Athena查询掌握DataCatalog**获取数据，并可以通过QuickSight可视化
+- 通过IAM-based policy来限制database和tables级别的安全限制（database和Glue data catalog）
 
-Apache Hive是一个构建在Hadoop之上的数据仓库系统，用于在Hadoop分布式文件系统（HDFS）上进行数据的查询和分析。它提供了一种类似于SQL的语言，称为HiveQL（Hive Query Language），使用户能够使用SQL语法来查询存储在Hadoop中的大规模数据集。Hive将SQL查询转换为MapReduce作业，以便在Hadoop集群上并行处理数据。Hive适用于批处理、ETL（提取、转换、加载）操作和数据分析。它支持用户自定义函数（UDFs），并能与其他大数据工具如Pig和Spark集成。通过抽象复杂的MapReduce操作，Hive大大降低了大数据分析的门槛，方便数据工程师和分析师高效处理和分析海量数据。
+- **通过CTAS转换格式存储**：
+  * 通过命令将数据重新存储为新的数据格式存储在S3中
+  * `Create tabel new_table with (format = 'Parquet', write_compression = 'Snappy') as select ~`
+  * `Create table new_orc_table with (extarnal_location = 's3 path~', format = 'ORC') as select ~`
+
+- **Athena Workgroups**：
+  - 是一种集成*IAM，CW，SNS*的工具，用于管理*users/teams/apps/workloads*的权限，以及他们能使用何种query等
+  - 这个工具拥有自己的：Query记录，Data Limits，IAM Policies，和Encryption设置
+
+- **Cost**：
+  * 用多少花多少，1TB花5刀，*查询失败不花钱哈哈*，对于*DDL（Create/Alter/Drop）不花钱*
+  * 查询ORC和Parquet这样的*列式文件*会省钱30%～90%
+  * 其他的服务S3和Glue需要另行付费
+
+- **Security**：
+  * 访问控制使用IAM，ACLs，和S3 bucket policies
+  * 相关的权限：AmazonAthenaFullAccess / AWSQuicksightAthenaAccess
+  * S3的数据加密就用S3自己的就好了，跨账户的访问也是依靠S3的*bucket policy*
+  * S3和Athena之间的数据传输加密靠*TLS传输层加密*
+
+- **Ahena ACID tanssaction**：对原子事务处理的支持
+  - Powered By Apache Iceberg：只需在创建表的时候加上`table_type` = `ICEBERG`即可，用户可以在row层级之行安全变更操作
+  - 可以适配任何支持iceberg的服务比如EMR和Spark
+  - 移除了custom record locking功能
+  - 支持时间旅行功能`select statement`
+  - Lake Formation的*Governed tables*也是另一种实现ACID的功能
+  - 性能是通过*定期压实Periodic compaction*实现的，这翻译很绝
+
+- **Amazon Athena for Apache Spark**:
+  * 可以在Athena的控制台中跑Jupyter notebook，是KMS自动加密的
+  * serverless，是可扩展的分析引擎（另一个是Athena SQL）
+  * 依靠Firecracker快速扩张资源
+  * 可以通过编程式的API和CLI进行访问
+  * DPU：基于DPU付费，内部可以自动调节DPU的调度和执行size
+  * 总之就是有这么个功能，除非是非常喜欢Athena，不知道用的人多不多
+
+### EMR（Elastic MapReduce）
+
+- 在EC2上跑的**Hadoop框架**，正因为是在EC2上跑，所以用户的*控制权更多*，可以选择安装Spark在集群上，自己掌控更多行为
+- 内部工具包括*Spark，HBase，Presto，Flink，Hive*等
+- 拥有*EMR Notebooks*可用
+- EC2在集群中称为*节点Node*
+  * Master node：leader node，就是一台EC2，感觉单点障碍，追踪任务，监控健康
+  * Core node：HDFS数据节点，并且可以跑任务，至少要有一个core node
+  * Task node：不存储数据，只跑任务，可有可无，用Spot instance很棒，省钱，并且不会丢失数据
+- 两种集群：*Transient（临时）和Long-Running（长期）*
+  - 前者跑完任务就自动删除了，后者可以买长期的，适合需要一直执行的任务
+- 框架Frameworks和应用Applications是在cluster launch的时候就决定好的，**如何跑任务**：
+  * 一种*直接接入master node*来踢，跑任务
+  * 一种在*console定义任务steps*然后在console中invoke任务
+  * 可以在*S3或者HDFS*中跑数据，输出到S3或其他地方，S3支持*强一致性*
+  * 本地数据*local file system data*，以buffer和cache的形式存在，会随着node的关闭而消失
+  * 存储还可以attach*EBS*，当集群关闭，会被删除，如果你手动删除cluster上的EBS，集群会以为EBS卷失败了他会替换一个新的！
+- 集成各种AWS服务，包括IAM，VPC，CloudTrail等，DataPipeline可以用来schedule和start集群
+
+- **EMR Managed Scaling**：支持*instance groups*和*instance fleets*的自动伸缩，增加从core node开始，减少从task node开始
+- **EMR Serverless**：
+  - 设置参数设置job然后就可以跑任务了，不需要管理底层server
+  - 设置spark script，Hive query等定义job
+  - All within one region（跨多个AZ）
+  - 即使如此还是需要一定的知识，知道自己需要多少workers和设置
+  - 初始化容量（*pre-Initialized capacity*）的时候为jobs多预留10%的capacity，防止spark的overhead
+  - 全程加密，安全性OK
+- **EMR on EKS**：支持在k8s上跑Spark作业，全托管服务，和k8s上的其他apps进行资源分享
+
+- **数据加密**：
+  - 在S3和node也就是EC2本地都会被加密
+  - 在node中的disk加密分为：
+    * EBS加密，KMS加密可以用于Root，但是LUKS加密无法用于Root
+    * EC2 instance store的加密可以用NVMe加密和LUKS加密的方式
+
+- NVMe加密：通常指的是硬件级别的加密，由NVMe固态硬盘自带的加密引擎执行，能够提供透明和高效的数据保护。
+- LUKS加密：是一个软件加密方案，通过Linux内核的加密模块（dm-crypt）提供灵活的分区加密功能，通常用于加密整个磁盘或分区。
+
+### Kinesis
+
+- 托管的，实时流数据处理，3AZ自动同步复制
+- 数据可以是logs，IoT数据，客户点击数据
+- Kinesis Stream是低延迟的，可扩展的，流数据摄取
+- Kinesis Analytics是实时数据分析平台，可用SQL
+- Kinesis Firehose将数据流载入S3，Redshift，ElasticSearch和Splunk
+- 者三个服务可以相连的
+- 安全：KMS，IAM，VPC endpoints，HTTPS
+
+**Kinesis Stream**
+
+- 关键组件，*有序的Shard*，生产者，和消费者，有PubSub类似的功能
+- *数据存留*为1天到一年，而KDF没有数据存留机制，只能传输
+- 实时处理和可扩展吞吐能力
+- KDS是*real-time*的，这是它和KDF的一个区别
+- KDS可以通过自己编写代码来控制生产和消费逻辑
+- 一旦数据被插入，就无法被删除，它很像是放大版的SQS，但是SQS的message是可以被删除的
+- 关于*Shard*：
+  - 里面的records是有序的，是有**partitionKey**的，同分区的数据会进入同shard
+  - 批处理或单个信息处理
+  - 两种capacity模式：On-demand 或者 Provisioned
+  - **Shards的数量变更**是可以evolve，也就是演变的，可以重新分割*split shard*（hot shard就是流量较大的shard），或者*merge shards*，增加和减少数量
+    - 注意，这种变更可能会导致顺序错误！比如先取得了child shard的数据3和4，然后才取得parent shard的数据1和2，导致顺序错误
+    - 所以，要注意代码逻辑，先读完所有parent shard的数据，然后再读取child shard的数据
+
+- 消息生产者：**Producer**
+  - SDK是一种简单的生产者
+  - **Kinesis Producer Library（KPL）**是 Amazon Kinesis 的一个关键组件，用于帮助开发者高效地将数据发送到 Kinesis 数据流中。它提供了优化的数据发送和处理机制，支持大规模、实时数据处理和分析，适用于需要快速处理和分析大量实时数据的应用场景。
+    * 有同期和非同期（同步和异步）处理API可以用，*异步API*的性能更高
+    * 可以进行*batching*处理，对数据进行*收集collect*和*集合aggregate*
+  - Kinesis Agent：直接将服务器的log等送到Kinesis
+  - 生产者每秒每shard，能发1000messages或者*1MB*消息
+  - **SDK的API**的*PutRecord*是发送一条记录，*PutRecords*是复数体，发送很多记录
+  - **ProvisionedThroughputExceeded**意味着发送的量超过了上限
+    - 可以通过*backoff*进行retires重试
+    - 可以*扩张shards的数量*
+    - 确保你的*分区键*具有良好的分区功能而不是不平衡数据
+  - **RecordMaxBufferedTime**参数设置较长会导致大的延迟，如果无法容忍这种延迟，就需要直接用SDK
+  - **Producer处理重复数据**：生产者会发送重复数据的原因，一般是因为网络原因的timeout，消费者无法ack，导致生产者重复发送信息
+    - *去重的方法是*：embed unique record ID到数据中去，来去重
+
+- 消息消费者：**Consumer**
+  - SDK，感觉内部都是通过api代码走的
+  - Lambda，通过Event source mapping -> S3/DynamoDB/RedShift/OpenSearch
+  - **KCL（Kinesis Client Library）**是亚马逊 Kinesis 的客户端库，用于开发消费者应用程序（Consumer Applications），这些应用程序从 Kinesis 数据流中读取和处理数据，可以分布式使用，并将checkout写入DynamoDB进行检查点管理
+  - 两种消费者模式，*Classic*和**Enhanced Fan-Out**模式：Classic模式中所有消费者总共可以每shard读取*2MB*信息，以及最多5个APIcall，在Fan-out模式中，每个消费者每个shard可以读取2MB模式，并且没有APIcall需求，因为是*push model*
+  - **Comsumer会重复读取数据两次的原因**：
+    * 一个worker工作节点突然被终止
+    * worker instances被增加或者移除
+    * shards 被合并或者分割
+    * 一个application被deployed
+    - *解决方案*来说，确保app处理数据的幂等性，或者确保下游可以处理unique ID，确保更新比如merge处理
+
+
+**Kinesis Data Firehose**
+
+- 不能存储数据，就是一个管子
+- 数据源中可以包括Kinesis Data Stream
+- Record批大小最小可以有1MB
+- 在KDF，可以用Lambda进行Data transformation，比如格式转换，数据变换，和压缩
+- 数据写入目标：
+  - *S3*
+  - *Redshift*（是一种copy方法，需要通过从S3复制到redshift）
+  - *OpenSearch*
+  - 第三方：MongoDB，Datadog，*Splunk*等（Splunk收集机器生成的数据，未来IoT好像会很有用）
+  - HTTP/S Endpoint
+- 它是一种近乎实时的*near real time*，因为它是batch写入的，根据buffer的时间或者size来决定
+  - buffer interval，可以从0到900秒
+  - buffer size，可以设置几个MB
+  - 一旦到达buffer设置rule，就会进行批处理，flushed（冲走）
+- 如果需要实时构架，需要Kinesis Data Stream + Lambda的构架
+- 可以将数据备份送往S3
+- 注意：*Spark Streaming和KCL不会从KDF读取数据*
+
+**Kinesis Data Analytics**
+
+- 可以对KDS和KDF等，实时数据进行分析
+- 还可以结合其他的静态reference数据进行SQL分析
+- 分析结果，可以继续作为流数据输出给KDS或者KDF，输出到S3或者Redshift等
+- Use Case：
+  - Streaming ETL
+  - 持续指标生成，比如一个比赛中的leaderboard
+  - 响应式数据分析
+- 可以用Lambda作为数据pre-processing
+- 数据处理可以用SQL或者*Flink*（under the hood）
+- schema discovery
+- RANDOM_CUT_FOREST：机器学习模型，SQLFunction，用于检测数值异常
+
+### Amazon Managed Apache Flink
+
+- Flink是KDA的底层
+- 实时数据分析、监控系统、事件驱动应用和数据管道等场景
+- 支持复杂的流式和批处理任务，如数据过滤、聚合、窗口操作和机器学习
+- 构架：Kinesis Data Streams/Managed streaming for Apache Kafka -> Managed Service for Apache Flink -> S3/Kinesis Data Streams/Kinesis Data Firehose
+
+**Kinesis Video Stream**
+
+- 它的流输出*不能输出*到S3中去，底层数据是在S3中，但是我们无法直接访问它
+- 它的输出可以接*Rekognition*进行识别任务，后续的识别后数据可以跟Kinesis其他服务
+
+### 流数据工程构架
+
+- KDS数据源 - KDA数据分析 - 生成结果送往KDF - S3 - Redshift，或者ElasticSearch
+- KDF直接摄取数据 - S3
+- *DynamoDB Stream* - Lambda构架十分贵，替代方案就是KDS - Lambda - KDF - S3
+
+### Amazon MSK
+
+- Managed Streaming for Apache Kafka
+- Kafka 是一个分布式流处理平台，用于构建实时数据管道和流应用，以高吞吐量和低延迟可靠地处理数据流。
+- Multi-AZ高可用性
+- 数据存储在EBS中
+- Kafka 的关键组件包括主题（Topic）用于数据流的分类，生产者（Producer）发布消息，消费者（Consumer）读取消息，代理（Broker）存储消息，和 ZooKeeper 管理集群元数据。
+- 多AZ部署高可用性
+- 可以创建删除cluster，MSK会帮你管理nodes
+- MSK的下游消费者：
+  - Kinesis Data Analytics for Apache Flink
+  - Glue Streaming ETL jobs powered by Apache Spark Streaming
+  - Lambda
+  - Application running on EC2，ECS，EKS
+- 网络安全上，通过Kafka client和SG控制
+- 数据安全上，通过KMS，TLS in-flight
+- 认证认可上，Kafka ACLs加上其他的认证功能比如MutualTLS，或者IAM Access Controls全包认证认可
+- *MSK Connect*数据连接
+- *MSK Serverless*
+
+- **对比Kinesis Data Stream的不同**：
+  - KDS的message大小上限是1MB，MSK上限可以设置为10MB
+  - DataStreams with shards - Kafka Topics with partitions
+  - shard可以分割和合并，Topic的partition只能增加
+  - 两者in-flight都可以加密，Kafka也支持不加密的Plaintext
+  - 在认证上KDS只有IAM Policy，Kafka有好几种组合方式
+
+### OpenSearch
+
+- 是一个ElasticSearch和Kibana的*fork*
+- 不适合事务处理OLTP，主要为了检索和分析
+- 查询的对象都是*documents*，在index的基础上搜索，document->shard
+- *Index State Management*
+- *Cross-cluster Replication*：leader - followers
+- *Use Cases*：
+  - Log分析
+  - 实时应用监控
+  - 安全分析
+  - 全文本搜索
+  - 点击流分析
+  - 索引
+- *Logstash*：
+  - 是CW Logs的替代品
+  - 使用Logstash Agent管理
+- *OpenSearch Dashboard（以前叫Kibana）*：
+  - 提供实时仪表盘服务
+  - 是CW仪表盘的替代方案
+  - 安全地访问它需要EC2上一个前端代理服务器，DX连接到VPC，或者VPN连接
+- *构架*
+  - 可以收集和存放DynamoDB的数据流结果
+  - 可以实时收集Kinesis Data Firehose的数据结果
+- 资源的集合为*Domain*
+- 可以*snapshots*到S3中
+- *安全*：
+  - Resource-based policies
+  - Identify-based policies
+  - IP-based policies
+  - Request signing
+  - VPC
+  - Cognito
+- *Storage*：
+  - Hot Storage：EBS
+  - UltraWarm/Warm Storage：S3 + Caching
+  - Cold Storage：S3
+- *稳定性stability的影响因素*：
+  - 影响稳定性的第一原因经常是disk磁盘空间不够了，用完了
+  - 有时候需要限制每个node的shards数量
+  - shard/cluster不平衡，会影响，增加JVM的内存压力 -> 删除old或者不用的index
+- *OpenSearch Serverless*：
+  - On-demand autoscaling
+  - 两种collections类型：timeseries / search
+  - 通过KMS加密
+  - 通过OCUs计算capacity（Opensearch compute unites）
+
+### QuickSight
+
+- 更像是一个BI网络应用，可视化，分页报告，分析仪表盘
+- 数据源可以是文件，数据库，其他服务比如Athena，Redshift，还有Opensearch等
+- **SPICE**：并行，in-memory，列存储数据，高速计算，machine code generation，载入数据超过30分钟会超时
+- *安全*：多要素认证，VPC连接，私有VPC通过ENI连接，DX连接，可在row和col等level上设置访问安全权限
+- QuickSight + RedShift，需要两个服务在同一个region
+  - 两个服务在不同region的解决方案是通过设置Redshift的SG，允许QuickSight的IP range的访问
+  - *跨账户*连接两个服务：
+    * 可以设置Transit Gateway连接前提是需要是同一个组织和region
+    * 或者设置不同region的Transit Gateway的Peering
+    * 可以通过PrivateLink进行私有连接
+    * 可以使用VPC Sharing来连接他们
+
+- 用户安全管理：
+  - 使用IAM或者用email登录
+  - 集成AD connector（只有Enterprise Edition可以）
+
+- 嵌入式仪表盘embedded dashboard用于嵌入应用中
+  - 集成AD，cognito，SSO
+  - JavaScript SDK/QuickSight API
+  - 通过设置白名单domain，控制谁可以访问
+
+- ML功能嵌入
+  - 引以为豪的*Random cut forest*模型进行异常数值检测，forecasting预测
+  - 为你的仪表盘增加 story of the data
+
+
+### 知识补充
+
+**Apache Hive**是一个构建在Hadoop之上的数据仓库系统，用于在Hadoop分布式文件系统（HDFS）上进行数据的查询和分析。它提供了一种类似于SQL的语言，称为HiveQL（Hive Query Language），使用户能够使用SQL语法来查询存储在Hadoop中的大规模数据集。Hive将SQL查询转换为MapReduce作业，以便在Hadoop集群上并行处理数据。Hive适用于批处理、ETL（提取、转换、加载）操作和数据分析。它支持用户自定义函数（UDFs），并能与其他大数据工具如Pig和Spark集成。通过抽象复杂的MapReduce操作，Hive大大降低了大数据分析的门槛，方便数据工程师和分析师高效处理和分析海量数据。
+
+**Custom record locking** 是一种手动实现的机制，用于在数据库中防止多个用户或进程同时访问和修改同一条记录，以避免数据不一致或冲突。尽管这种方法提供了灵活性，可以根据特定业务逻辑实现锁定策略，但其缺点在于可能引入复杂性和错误，增加开发和维护成本。此外，不当的锁定策略可能导致死锁、性能下降、资源浪费，以及更难以处理并发问题，特别是在分布式系统中。使用内置数据库锁定机制通常更可靠和高效。
+
+**Periodic compaction** 是一种定期执行的存储优化技术，用于合并和整理数据文件，以减少碎片化、提高存储效率和提升读写性能。在数据库和大数据系统（如HBase、Cassandra、Kafka）中，数据随时间增多，可能会产生许多小文件或分散的存储块。通过周期性地合并这些文件，系统可以减少I/O开销，降低存储成本，并提高查询效率。这种方法需要在性能和资源利用之间进行平衡，避免频繁合并对系统造成负担。
+
+**Firecracker** 是一种开源虚拟化技术，由 AWS 开发，专为运行无服务器计算和容器化应用而设计。它通过微虚拟机（MicroVMs）提供安全隔离和高效资源利用，启动速度快，资源开销低，非常适合于 FaaS（Function as a Service）和 CaaS（Container as a Service）环境。Firecracker 是用 Rust 语言编写的，具备内存保护和并发安全特性。它被广泛应用于 AWS Lambda 和 AWS Fargate 等服务中，以提供轻量级、高性能的计算实例。
 
 ## Application Integration
+
+### SQS
+
+- 消费者poll消息后被处理然后被queue删除，也就是说一个消息只会被一个consumer消费
+- 无服务器，和IAM认证集成
+- 能处理突然很大的扩展不需要预测provision
+- 解藕服务
+- message的最大size是*256kb*
+- 可以从EC2，Lambda读取数据
+- 可以作为DynamoDB的writebuffer
+- SQS FIFO是先进先出的，原本的 SQS 是没有顺序的，我的天
+- 安全：KMS，HTTPS传输，IAM Policy，SQS Access Policy
+
+- **SQS Extended Client**：
+  - 为了发送超过256kb的数据
+  - 实质是发送实际数据到S3，而message中只发送metadata的信息作为消息发送，然后consumer从S3中提取数据
+
+- **DLQ**：当消息在visibility timeout的时间内多次都没被处理就会被送进dead letter queue，它适合之后的debug
+  - Redrive to source：当你的代码问题修复了，可以将这些message重新放回原本的queue进行处理
+  - 因为你可能会重复处理message，最好确保你的处理具有幂等性（Idempotency）比如upsert处理
+
+- Lambda 的 *Event Source Mapping* 是一个配置，将 Lambda 函数与事件源（如 SQS 队列、DynamoDB 流、Kinesis 流等）关联起来。它使 Lambda 函数能够自动响应这些事件源的事件，无需手动触发。
+  - 支持多种事件源，如 SQS 队列、DynamoDB Streams、Kinesis Streams、Amazon MQ、MSK 等。
+  - 批量处理：Lambda 可以批量读取和处理事件，以提高效率和性能。例如，可以从 SQS 队列或 Kinesis 流中批量读取记录。
+  - 并行处理：对于 Kinesis 和 DynamoDB Streams，Lambda 可以并行处理多个分片中的记录，提高吞吐量。
+  - 重试机制：内置重试机制，确保在处理失败时自动重试，以提高事件处理的可靠性。
+  - 自定义批量大小：可以配置每次读取的记录数量（批量大小），优化处理性能。
+
+- *Kinesis Data Stream vs SQS*
+  - KSD是为了流处理，信息最大可以存留1年，信息删除基于时间和设置，有序，对象大小1MB上限，信息会被消费一次以上
+  - KDF在目的地最多可以有128MB，KDF本身不留存数据
+  - SQS是为了解藕应用，信息被消费后就会被删除，最长存留14天，对象大小256kb，信息被消费一次以上，但是FIFO会正好被消费一次
+
+### SNS
+
+GCP的PubSub对标的是SQS和SNS两个服务。
+
+- No ordering，No retention数据留存
+- SNS主要是发布订阅服务PubSub
+- *Event Producers*主要有：
+  - CWAlarm，Budgets，Lambda，ASG，S3Bucket Events，DynamoDB，CloudFormation state change，RDS Events and so on
+- 10万个topic上限，1250万个Subscriptions上限
+- *SNS的Publish方法*：
+  - Topic Publish（使用SDK）：创建topic和subscriptions，然后发布到topic
+  - Direct Publish（为mobile apps SDK）
+    - 创建platform application，创建platform endpoint
+    - publish到endpoint，这更像是push操作
+- *SNS的publish的目的地*：
+  - SQS，Lambda，Kinesis Data Firehose，HTTP（S）endpoints，Emails（是一种端点）
+- *Security*
+  - HTTPSAPI通信加密
+  - KMS存储加密
+  - IAM Policy访问限制
+  - SNS Access Policy：支持跨账户访问（就像S3的bucket access policy）
+
+- **SQS + SNS fan out 构架**
+  - 一个 SNS topic，多个 SQS subscriber
+  - 比如一个S3 Event可以通过该构架发布给多个后续服务
+  - SNS FIFO - SQS FIFO：FIFO的SNS只能以FIFO的SQS作为订阅者
+  - **Message Filtering**
+    - 如果subscription不过滤信息就会收到所有的message
+    - 通过条件过滤可以收到各自想要的信息，Json Policy格式
+
+- **Kinesis Data Firehose**
+  - SNS Topic - KDF - S3/other services
+
+- 服务器端发生错误则会自动应用重传策略
+- 只有Http/s支持Custom delivery policies
+- 当重传也失败了则会丢弃消息，除非设置了SNS Dead Letter Queues功能
+
+### Step Functions
+
+- 使用 JSON 格式的*状态机state machine*定义，开发人员可以轻松地编排和管理跨多个 AWS 服务的任务
+  * task state：任务单元
+  * choice state：条件单元
+  * wait：delay状态
+  * parallel：增加一些branch并行处理分支
+  * map：也是并行的，对dateset里的每一个元素进行map处理
+  * pass，success，fail状态单元
+- 编排Lambda，Batch，ECS，DynamoDB，EMR，SQS，SNS等200多服务
+- *可视化workflow*的流程，有点像Airflow
+- trigger：Console，SDK，CLI，Lambda，API Gateway，EventBridge，CodePipeline，StepFunctions
+- *不能集成Mechanical Turk*服务（在线人工劳动力），这里能集成它的服务是SWF服务
+- Standard 和 Express Workflow两种类型：
+  - 前者贵后者便宜
+  - 前者执行时间可以长达1年，后者最大5分钟
+  - 启动rate前者是每秒2000，后者是每秒10万
+  - *前者确保执行一次，后者为最少执行一次*
+- Express Workflow：包括*同步和异步驱动*，同步会确保得到API返回执行结果，后者只确保启动，同步的更适合编排服务，错误处理，并行处理，重试策略等
+- Error Handling：重试或者增加alert功能触发EventBridge-SNS
+
+### AppFlow
+
+- 全托管，数据安全传输，从SaaS到AWS，的一种便捷的API解决方案
+- Sources：Salesforce/SAP/Zendesk/Slack等
+- Destination：S3/Redshift/Snowflake/Salesforce
+- 基于时间，基于事件，On-demand
+- 可以公网传输，也可以私网PrivateLink传输
+- 支持数据验证validation和数据过滤filter
+
+### Amazon EventBridge
+
+- 时间cron驱动或者事件event驱动。
+- event实际上是一种json格式数据。
+  - 可以filter events
+  - 源：EC2 Instance，CodeBuild（fail build），S3 Event，Trusted Advisor（new finding），CloudTrai（any API call）
+- 可以发送到集成的组织event bus。
+- 可以重现replay过去的event。
+- event集合：event schema register
+- 可以集成到第三方Partner或者自定义Custom的event bus。
+- 如果跨账户使用，需要设置resource-based-policy。
+
+### MWAA Airflow
+
+- Batch-oriented workflow tool
+- UseCase：复杂work flow，ML数据预处理，ETL流程
+- 代码文件是可以ZIP的
+- Scheduler和Workers使用的是AWS Fargate Container
+- 构架上，需要连接Service VPC中的*Metadata database*和*Web server*的两个服务端点VPCE
+
 ## ⬆️数据工程的各种组件⬇️全面统筹和ML加持
 ## Security & Identity & Compliance
+
+- 参考安全专家内容，只关注重点服务
+- 最小权限原则*Least Privilege*：IAM Access Analyzer
+- IAM：全球Global服务 / MFA / IAM Roles
+- KMS：加密资源换region，需要新的key，也就是key不能在两个region共用，跨账户使用by key policy
+- *Macie*：PII，with ML：S3 -> Macie -> EventBridge -> Topic
+- Secret Manager：自动更新 / Multi-region Secret
+- WAF：7layer应用保护，ACL / Global Accelerator的固定IP + WAF + ALB
+- Shield：DDos，保护对象*ALB，CloudFront等*
+- 在JDBC上使用TLS安全传输
 
 ## Networking & Content Delivery
 
@@ -973,6 +1415,12 @@ Apache Hive是一个构建在Hadoop之上的数据仓库系统，用于在Hadoop
   * CloudFront
 
 ## Management & Governance
+
+- CloudWatch：
+  * Metrics（namespaces，attributes），Metrics Stream（near-real-time）- firehose - S3 - Athena
+  * Logs groups / streams / Logs Insights（query engine not real time）
+  * CW Logs Subscription is real-time -> Kinesis -> log aggragation (通过policy设置可以跨账户)
+  * Unified Agent
 
 ## Machine Learning
 
