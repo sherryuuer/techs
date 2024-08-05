@@ -145,3 +145,19 @@ Spark 通常被视为 Hadoop 的补充，而非完全替代。根据具体的需
 - 将客户的csv等已经处理好的数据同样通过`AutoLoader`载入为银色数据
 - 将银色数据进行数据结合等DM的处理后成为`Gold`数据，就可以用于后续的ML等操作
 - 创建一个job，可选择的处理单位可以是笔记本，也可以是其他脚本，然后就有可视化的界面，进行job的增加和，schedule，notification等的设置
+
+## 必读doc
+
+[官方文档GCP版](https://docs.gcp.databricks.com/en/index.html)
+
+- 这整个文档似乎不大的样子，读读看
+- 关于**data model**方面有几个考虑点很好：
+  * 也是我的现在项目有考虑的，就是*事务处理的数据*的变更，是如何的，对其他数据的影响如何，是独立的吗
+  * *主键和外键*的定义，在数据湖时代不是必须的，但是过去的传统数据库则经常必须
+  * 虽然内部的查询优化器会尽量优化查询，但是有时候*join*太复杂了，会导致失败
+  * 嵌套数据类型和半结构化数据类型的考量，储存在各种数据类型中：variant，json，structs，maps，arrays
+- **Delta Live Tables** datasets are the streaming tables, materialized views, and views maintained as the results of declarative（陈述性） queries.
+- A **pipeline** is the main unit used to configure and run data processing workflows with *Delta Live Tables*.
+  * 处理管道中定义两个内容：一种是处理内容比如notebook和files等，一种是定义设置选项比如依赖关系和如何运行等。
+- 关系：**Delta Live Tables** extends the functionality of **Delta Lake**.
+- All Delta Live Tables *Python APIs* are implemented in the **dlt** module.

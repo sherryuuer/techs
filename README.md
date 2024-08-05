@@ -83,8 +83,8 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [Transformers编码器构架各个模块的代码实践](ml/transformers-encoder.md)
 - [*GNN：图基础和图论的数学-Graph-Neural-Networks](ml/gnn.md)，
 - [*GCN图卷积神经网络和它的实现-Graph-Convolutional-Networks](ml/gcn.md)
-- [Databricks-ML-spark-snowflake](ml/databricks-ml-spark.md)
-- [✨Spark✨&Databricks基础学习笔记](ml/spark_base.md)
+- [Databricks-ML-spark-考试](ml/databricks-ml-spark.md)
+- [✨Spark✨&Databricks学习和文档阅读笔记](ml/spark_base.md)
 - [机器学习系统设计：设计流程，特征工程，和Pipeline技巧](ml/ml-system-design.md)
 
 ## Software Engineer 101
