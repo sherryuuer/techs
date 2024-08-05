@@ -295,6 +295,10 @@ Chain of Density Prompting的优点是能够充分利用人工示例,更高效�
 - 情感刺激，告诉它这件事很着急，对我很重要之类的哈哈。
 - 这种精确性的提高，来自于注意力机制attention，这提高了token之间的关联，提高了对原有句子中重要词汇的关注度
 
+### Self-Consistency
+
+Self-Consistency > Greedy Decoding
+
 ## resources links
 
 - [Anthropic prompt library](https://docs.anthropic.com/claude/prompt-library)

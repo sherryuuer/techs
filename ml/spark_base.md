@@ -125,3 +125,23 @@ inputDF.groupBy($"actions", window($"time", "1hour")).count().writeStream.format
 | **兼容性**            | YARN                                         | YARN、Mesos、Kubernetes                      |
 
 Spark 通常被视为 Hadoop 的补充，而非完全替代。根据具体的需求和应用场景，选择合适的框架可以带来更好的性能和效率。
+
+## Databricks memo
+
+- Delta Lake provides the ACID guarantees of a Databricks lakehouse
+
+- 在AWS中设置workspace通过*CloudFormation*创建环境
+- 对流数据比如kafka的处理语法和一般的代码很像
+- *delta*是一种数据格式
+- JDBC也是一种摄入数据的方式，需要下载jdbc driver上传到环境的library中，相当于安装了一个外部的包
+- 和snowflake的交互也是通过创建option和认证信息的变量，然后呼出API进行交互
+
+**创建简单的ETL Pipeline**
+- 创建一个笔记本，然后编写处理代码
+- ETL data pipeline：Bronze -> Silver(staging,SQL) -> Gold(Bi/AI/ML)
+- 从云Object存储载入`Bronze`数据：`AutoLoader`工具或者`COPY INTO`sql
+  * `readstream`, `writestream`ingest的是json等各种格式的数据
+  * 所谓的铜数据，就是未被处理的数据，经过处理后，进化为`Silver`数据，就可以被SQL查询，处理方式就是Spark的语法
+- 将客户的csv等已经处理好的数据同样通过`AutoLoader`载入为银色数据
+- 将银色数据进行数据结合等DM的处理后成为`Gold`数据，就可以用于后续的ML等操作
+- 创建一个job，可选择的处理单位可以是笔记本，也可以是其他脚本，然后就有可视化的界面，进行job的增加和，schedule，notification等的设置

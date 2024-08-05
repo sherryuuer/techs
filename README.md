@@ -84,7 +84,7 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [*GNN：图基础和图论的数学-Graph-Neural-Networks](ml/gnn.md)，
 - [*GCN图卷积神经网络和它的实现-Graph-Convolutional-Networks](ml/gcn.md)
 - [Databricks-ML-spark-snowflake](ml/databricks-ml-spark.md)
-- [✨Spark✨基础学习笔记](ml/spark_base.md)
+- [✨Spark✨&Databricks基础学习笔记](ml/spark_base.md)
 - [机器学习系统设计：设计流程，特征工程，和Pipeline技巧](ml/ml-system-design.md)
 
 ## Software Engineer 101
@@ -108,7 +108,7 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [AWS专业构架师资格相关内容整理](clouds/aws-with-sap.md)
 - [AWS数据工程师系统学习笔记](clouds/aws-with-dataengineer.md)
 - [AWS开发和运维专家学习笔记](clouds/aws-with-dop.md)
-- [谷歌机器学习工程师学习笔记](clouds/gcp-cloud-ml.md)
+- [GCP机器学习工程师学习笔记](clouds/gcp-cloud-ml.md)
 - [GCP云构架专家学习笔记](clouds/gcp-cloud-architect.md)
 - [GCP数据工程师学习笔记](clouds/gcp-cloud-engineer.md)
 - [AWS-Bedrock项目实践1：Code Generation (APIGateway,S3,bedrock)](clouds/bedrock-pj1.md)

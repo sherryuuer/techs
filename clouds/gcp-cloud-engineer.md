@@ -296,6 +296,9 @@ codelabs：https://codelabs.developers.google.com/codelabs/cloud-bigtable-intro-
   - Real-time use cases you can stream data into BigQuery using the Streaming API
   - Dataflow and [Apache Beam](https://www.cnblogs.com/zlslch/p/7609417.html)：A possible use-case for this is to trigger a Cloud Function when an event happens. The Cloud Function could contain the logic to start an Apache Beam pipeline using a Dataflow runner that would execute transformations required and then save your data into BigQuery when it is done.
 
+- 不需要载入数据就可以query：
+  Dataproc使用Spark在GCS上生成**Hive的分区数据**，然后就可以用BQ进行查询
+
 ### Cloud SQL
 
 - 对标传统关系型数据库MySQL，PostgreSQL，SQLServer，提供这些数据库的托管服务
@@ -324,6 +327,19 @@ codelabs：https://codelabs.developers.google.com/codelabs/cloud-bigtable-intro-
   - Property - > Column
   - Key - > Primary key
 - Firebase 存储在幕后使用storage bucket。所以，它是带有移动SDK（移动软件开发工具包）的云存储。
+
+## Data Transfer
+
+### Storage transfer
+
+* 适合本地数据传送到云
+* S3传送到GCS
+
+### BQ data transfer
+
+### Transfer appliance
+
+和AWS的snow家族一样，是通过物理设备传送数据
 
 ## Networking
 
