@@ -6,7 +6,7 @@ Delta Lake 主要解决了以下几个问题：
 
 1. **数据一致性和事务性**：Delta Lake 支持 ACID（原子性、一致性、隔离性和持久性）事务，可以保证数据的一致性和可靠性。它使用写时复制（copy-on-write）的机制来保证事务的原子性，并提供了事务日志来记录事务的操作历史，以实现数据的回滚和恢复。
 2. **数据版本控制**：Delta Lake 支持数据的版本控制功能，可以跟踪数据的历史变化，并允许用户在不同的数据版本之间进行切换和回滚。这使得数据的管理和追溯变得更加简单和可靠。
-3. **增量数据处理**：Delta Lake 提供了增量数据处理的功能，可以有效地处理大规模数据湖中的数据更新和变更。它支持基于时间戳的增量更新和合并操作，以及基于条件的更新和删除操作。
+3. **增量数据处理**：Delta Lake 提供了增量数据处理CDC的功能，可以有效地处理大规模数据湖中的数据更新和变更。它支持基于时间戳的增量更新和合并操作，以及基于条件的更新和删除操作。
 4. **数据湖优化**：Delta Lake 提供了一系列优化功能，包括数据索引、数据布局优化、数据统计信息和数据压缩等，可以提高数据湖的查询性能和资源利用率。
 
 总的来说，Delta Lake 是一个用于管理大数据湖的开源存储引擎和事务性处理层，它提供了高效、可靠和可扩展的数据湖管理解决方案，帮助用户更好地管理和分析大规模的数据湖中的数据。
@@ -805,14 +805,48 @@ display(prediction_df)
 ```
 
 **Identify that pandas code can be used inside of a UDF function.**
+```python
+@pandas_udf("double")
+def predict(iterator: Iterator[pd.DataFrame]) -> Iterator[pd.Series]:
+    model_path = f"runs:/{run.info.run_id}/model"
+    model = mlflow.sklearn.load_model(model_path) # Load model
+    for features in iterator:
+        pdf = pd.concat(features, axis=1)
+        yield pd.Series(model.predict(pdf))
+
+prediction_df = spark_df.withColumn("prediction", predict(*spark_df.columns))
+```
+
 **Train / apply group-specific models using the Pandas Function API.**
+```python
+# 应用train model对数据进行数据训练
+with mlflow.start_run(run_name="Training session for all devices") as run:
+    run_id = run.info.run_id
+
+    model_directories_df = (df
+        .withColumn("run_id", f.lit(run_id)) # Add run_id
+        .groupby("device_id")
+        .applyInPandas(train_model, schema=train_return_schema)
+        .cache()
+    )
+
+# 应用apply model函数进行部署
+prediction_df = combined_df.groupby("device_id").applyInPandas(apply_model, schema=apply_return_schema)
+```
+
 ## Section 4: Scaling ML Models
 ### Model Distribution
 **Describe how Spark scales linear regression.**
+- Spark使用分布式计算来扩展线性回归。通过将数据分区到集群的不同节点，Spark可以并行处理每个分区的数据。在训练过程中，Spark利用梯度下降算法对每个分区的数据进行局部计算，并将结果汇总来更新模型参数。这样，线性回归模型可以在大规模数据集上进行高效训练。
 **Describe how Spark scales decision trees.**
+- 对于决策树，Spark采用分布式算法来构建树的每一层。数据被划分到不同的节点上，每个节点负责计算其分区中的数据，并为该分区构建局部决策树。在树的每一层，Spark通过并行化节点的分裂过程来加速训练，最后将各个节点的结果合并，形成最终的决策树。
 ### Ensembling Distribution
 **Describe the basic concepts of ensemble learning.**
+- 集成学习是使用多个算法集合来获得一个在偏差和方差之间取得平衡的学习结果的技术。
+- 集成学习是一种通过结合多个模型的预测结果来提高整体模型性能的方法。这种技术的主要目标是同时减少模型的偏差（bias）和方差（variance）。偏差指的是模型对训练数据的拟合能力，而方差则是模型对不同数据集的泛化能力。通过集成多个不同类型或相同类型但不同参数的模型，集成学习可以有效提高模型的预测准确性和稳健性，常见的方法包括Bagging、Boosting和Stacking。
 **Compare and contrast bagging, boosting, and stacking**
+- bagging: ブートストラップ(ランダム復元抽出), 並列で弱学習器を学習⇒分散に適している
+- boosting: イテレートしながら弱学習器を作成する(過去の学習の誤差を修正しながら精度向上を図る)⇒分散処理が難しい
 
 ## 学习笔记本补充参考内容
 

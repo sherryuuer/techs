@@ -161,3 +161,30 @@ Spark 通常被视为 Hadoop 的补充，而非完全替代。根据具体的需
   * 处理管道中定义两个内容：一种是处理内容比如notebook和files等，一种是定义设置选项比如依赖关系和如何运行等。
 - 关系：**Delta Live Tables** extends the functionality of **Delta Lake**.
 - All Delta Live Tables *Python APIs* are implemented in the **dlt** module.
+- Databricks recommends using Unity Catalog to manage access to all data.
+- Model and feature serving endpoints.是API
+- Job是CICD的基础单位
+- Delta Live Table解决的问题：好的数据，Job管理，Query的前后依存关系
+
+- **感受**：果然还是要学习官方文档最有感觉
+  * Notebook应该是最应该学习的地方，包括初始化init脚本之类的，因为Notebook可以作为一个job的单位，这是一个最基本的元素
+  * Workspace算是一个协作的集成环境，包括了Notebook，Job，Git等，可以分配集群资源管理，权限管理，编辑合作，流处理，机器学习等各种工作
+  * Job创建出来，是用脚本，Notebook等组件作为Task，然后进行编排，这种编排是一种DAG
+  * 数据工程中主要有data，compute，job等组件列在左边，他有自己的数据连接功能，直接可以开始进行代码运行，Job运行是DAG
+  * 所以说它是一个结合体：*Glue的所有功能，Job编排，Airflow的编排，流处理，lakehouse，太强大了，它还有自己的file arrival事件驱动*
+  * Job Sceduler也是管理Job在分布式系统中的代码管理的
+  * Hive metastore是传统的元数据管理方式，但是Databricks更推崇自己的Unity Catalog
+  * 基础的表格叫做Delta Live Table，我觉得这是一种更加适应streaming的方式
+  * 机器学习中主要组件：
+    - *Data(Unity Catalog)* -> *Feature Store* -> *Model training(AutoML/Notebook)* -> *Model Tracking(MLflow)* -> *Model Management(Unity Catalog/Workspace model registry)* -> *Production(Model Serving/Batch Inference)*
+    - 监控和统筹：*Lakehouse Monitoring(Data quality metrics/Model quality metrics/Drift)*
+  * 关于模型部署的思考，部署方式如果是LLM机器人，则是通过API直接部署即可，如果是模型作为函数，那使用UDF进行数据处理，然后流入数据库供应用端使用即可
+
+
+![Photon提升运算性能](IMG_7374.PNG)
+![UnityCatalog整合workspaces](IMG_7375.PNG)
+![ControlPlane & DataPlane](IMG_7376.PNG)
+![Classic DataPlane](IMG_7377.PNG)
+![Serverless DataPlane](IMG_7378.PNG)
+![Three-level namespaces](IMG_7379.PNG)
+![Metastore](IMG_7380.PNG)
