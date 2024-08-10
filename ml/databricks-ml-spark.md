@@ -123,7 +123,7 @@ summary = automl.regress(train_df, target_col="price", primary_metric="rmse", ti
 ### Feature Store
 - Describe the benefits of using Feature Store to store and access features for machine learning pipelines.
   - It enables feature sharing and discovery across your organization and also ensures that the same feature computation code is used for model training and inference.
-- Create a feature store table.
+- Create a feature store table.**现在被Feature Engineering替代**
 ```python
 fs = feature_store.FeatureStoreClient()
 
@@ -1072,7 +1072,7 @@ cv_model = cv.fit(train_df) # 这个跑的很慢
 ```python
 cv_model = cv.setParallelism(4).fit(train_df)
 ```
-- 以上为止都是在 pipeline 中进行 cv 操作，反过来在 cv 中也可以加入 pipeline。前者更安全但是开销更大，每一步都会被评估，后者虽然减少了代码重复，但是有可能会数据泄露（因为某些特征处理或数据预处理步骤可能使用了整个训练数据集）。使用交叉验证和 Pipeline 的组合通常能够更准确地评估模型的性能，但在使用时需要注意计算开销和潜在的数据泄露问题。选择合适的方法取决于具体的问题和数据集特征。
+- 以上为止都是在 pipeline 中进行 cv 操作，反过来在 cv 中也可以加入 pipeline。前者更安全但是开销更大，每一步都会被评估，后者虽然减少了代码重复，但是有可能会数据泄露（**因为某些特征处理或数据预处理步骤可能使用了整个训练数据集**）。使用交叉验证和 Pipeline 的组合通常能够更准确地评估模型的性能，但在使用时需要注意计算开销和潜在的数据泄露问题。选择合适的方法取决于具体的问题和数据集特征。
 ```python
 cv = CrossValidator(
    estimator=rf,

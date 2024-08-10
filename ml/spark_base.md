@@ -156,15 +156,48 @@ Spark 通常被视为 Hadoop 的补充，而非完全替代。根据具体的需
   * *主键和外键*的定义，在数据湖时代不是必须的，但是过去的传统数据库则经常必须
   * 虽然内部的查询优化器会尽量优化查询，但是有时候*join*太复杂了，会导致失败
   * 嵌套数据类型和半结构化数据类型的考量，储存在各种数据类型中：variant，json，structs，maps，arrays
-- **Delta Live Tables** datasets are the streaming tables, materialized views, and views maintained as the results of declarative（陈述性） queries.
-- A **pipeline** is the main unit used to configure and run data processing workflows with *Delta Live Tables*.
+- **Delta Live Tables** datasets are the *streaming tables*, *materialized views*, and views maintained as the results of declarative（陈述性） queries.
+- A **pipeline** is the main unit used to configure and run data processing **workflows** with **Delta Live Tables**.
   * 处理管道中定义两个内容：一种是处理内容比如notebook和files等，一种是定义设置选项比如依赖关系和如何运行等。
 - 关系：**Delta Live Tables** extends the functionality of **Delta Lake**.
 - All Delta Live Tables *Python APIs* are implemented in the **dlt** module.
+- Data Quality using **Expectations**
 - Databricks recommends using Unity Catalog to manage access to all data.
 - Model and feature serving endpoints.是API
 - Job是CICD的基础单位
 - Delta Live Table解决的问题：好的数据，Job管理，Query的前后依存关系
+
+
+- **机器学习领域：**
+- MLOps is a set of processes and automated steps for managing code, data, and models to improve performance, stability, and long-term efficiency of ML systems. It combines **DevOps, DataOps, and ModelOps**.
+  * 使用Git进行版本管理
+  * 将数据存储在lakehouse的构架中的Delta tables中
+  * 使用MLflow管理模型，并用Unity Catalog管理模型的生命周期
+- **Depployment Stage**：
+  * Data Source：对于开发dev catalog科学家拥有read-write权限，对于生产prod catalog环境拥有read-only权限，并且可以通过snapshot将生成prod环境的数据
+  * EDA：探索性数据分析，依赖可视化可迭代的分析环境，比如Notebook或者AutoML
+  * Code：完整的代码管理环境和流程
+  * Train Model：这是开发阶段，包括使用开发环境和生产环境的数据进行训练和微调，以及评估，*pipeline的输出*使用MLflow进行追踪。模型存储在MLflow Tracking server中，进行staging或者prod环境的pipeline的构筑。最终训练好的模型存储在*Unity Catalog*中。
+  * Validate and deploy model：模型验证通过获得流水线中的URI获得模型地址，然后从UnityCatalog中载入模型（**模型通过UnityCatalog管理，但是模型地址的追踪还是要用MLflow**）进行验证和比较，冠军模型和挑战者模型通过比较进行更新，模型的发布，实质上就是看要不要替换冠军模型和挑战者模型。
+  * Commit Code：最后可以Commit工作了，这是git的部分
+- **Staging Stage**：
+  * 这个stage的目的是为了测试，包括单元和集成测试，其CI/CD流程的输出是生产环境的部署
+  * Data：这个阶段应该有自己的catalog，数据应该在stage catalog中
+  * Merge Code：在PR中应该有自动化测试的代码集成（CI阶段），如果测试失败，则拒绝PR
+  * Integration tests：CI阶段，集成测试将运行整个pipelines (including feature engineering, model training, inference, and monitoring)，如果ML应用是一个实时推理的项目，那么也要测试基础设置中的服务器，是否可以正常载入模型等
+  * Merge to staging branch：如果代码通过了CI/CD集成测试，则会自动merge部署，反之则通知user或者在PR发布信息
+  * Create a release branch：通过CI测试和代码dev - main的merge，创建发布用的分支（正是因为这样可以看到网上的各种版本控制），通过新版本分支的创建triggers the CI/CD system to update production jobs，比如是一个*用于推理的endpoint*
+- **Production stage**：
+  * 生产环境的pipeline主要将结果发布到下游的table和应用中，科学家拥有read-only权限观察model的结果和日志
+  * 生产环境也和开发环境一样要对模型进行*training和validate*的过程最后发布，在评估过程中，如果有failed的模型，科学家可以在生产环境再次load模型进行调查和微调
+  * 发布模型，对于实时预测，必须设置基础架构以将模型部署为 REST API 端点，可以使用 **Mosaic AI Model Serving** 创建和管理端点，这是他们收购的公司，部署的时候内部CI/CD系统会通过自动比较挑战者和冠军的性能，自动发布
+  * 此外的步骤：模型服务，推理方式选择流还是批，lakehouse监控，以及重新training等
+  * 这部分就比较像运维了
+- **Feature Engineering**：
+  * 每一个feature table必须有一个primary key，没的时候要自己加上去，虽然说是特征表，其实任何delta live table都可以是feature table
+  * Feature Engineering in Unity Catalog or Workspace Feature Store
+
+
 
 - **感受**：果然还是要学习官方文档最有感觉
   * Notebook应该是最应该学习的地方，包括初始化init脚本之类的，因为Notebook可以作为一个job的单位，这是一个最基本的元素
@@ -179,6 +212,7 @@ Spark 通常被视为 Hadoop 的补充，而非完全替代。根据具体的需
     - *Data(Unity Catalog)* -> *Feature Store* -> *Model training(AutoML/Notebook)* -> *Model Tracking(MLflow)* -> *Model Management(Unity Catalog/Workspace model registry)* -> *Production(Model Serving/Batch Inference)*
     - 监控和统筹：*Lakehouse Monitoring(Data quality metrics/Model quality metrics/Drift)*
   * 关于模型部署的思考，部署方式如果是LLM机器人，则是通过API直接部署即可，如果是模型作为函数，那使用UDF进行数据处理，然后流入数据库供应用端使用即可
+
 
 
 ![Photon提升运算性能](IMG_7374.PNG)

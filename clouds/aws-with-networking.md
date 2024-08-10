@@ -1350,20 +1350,20 @@ graph LR
   - AWS 会定期更新这个文件，以反映其 IP 地址范围的变化。可以通过订阅AWS特有的SNStopic来收到更新通知
 - Public VIF可以连接到所有的AWS*全球*服务，*跨区域的*服务。而Private VIF只能接到和DX设置在同区域的VPC，这是一个关键区别
 - ip-ranges脚本例：
-```python
-import requests
-import json
+  ```python
+  import requests
+  import json
 
-# 下载 AWS ip-ranges.json 文件
-url = "https://ip-ranges.amazonaws.com/ip-ranges.json"
-response = requests.get(url)
-ip_ranges = response.json()
+  # 下载 AWS ip-ranges.json 文件
+  url = "https://ip-ranges.amazonaws.com/ip-ranges.json"
+  response = requests.get(url)
+  ip_ranges = response.json()
 
-# 解析并打印所有 Amazon S3 服务的 IP 范围
-for prefix in ip_ranges['prefixes']:
-    if prefix['service'] == 'S3':
-        print(f"IP Range: {prefix['ip_prefix']} in region {prefix['region']}")
-```
+  # 解析并打印所有 Amazon S3 服务的 IP 范围
+  for prefix in ip_ranges['prefixes']:
+      if prefix['service'] == 'S3':
+          print(f"IP Range: {prefix['ip_prefix']} in region {prefix['region']}")
+  ```
 
 - **Public VIF不支持JumboFrames**
 

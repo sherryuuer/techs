@@ -1,6 +1,49 @@
-## 计算机思维
+## BI（Create Report）
 
+```mermaid
+graph LR
+    A[BI Tools]
+    B[Databases]
+    C[Reports&Dashboards]
+    B --> A --> C
+```
 ---
-### 递归思维
+SKILL:
+- BI tool
+- Databases
+- SQL
 
-计算机的自顶向下解决问题的方法，将问题不断分为小问题，直到问题触底然后一层层拿回答案。人的思维是相反的，自底向上从小到大的做，遇到问题解决问题。
+## Data Analytics & Data Architect
+
+```mermaid
+graph LR
+    B[Data Warehouse]
+    C[Reports&Dashboards]
+    D[SQL skill/Python skill]
+    E[Enterprise Management and Strategic Decision-Making]
+    B --> E
+    C --> E
+    D --> E
+```
+---
+SKILL:
+- BI tool
+- SQL expert
+- Databases
+- Data Warehouse
+- **Domain Knowledge**
+
+
+
+
+## Full Picture
+```mermaid
+graph LR
+    A[WebApp/Software/MS360data]
+    B[StreamingData]
+    C[]
+    E[Enterprise Management and Strategic Decision-Making]
+    B --> E
+    C --> E
+    D --> E
+```
