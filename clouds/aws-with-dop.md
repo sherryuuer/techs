@@ -201,6 +201,31 @@ DevOps是一种结合了软件开发（Development）和IT运维（Operations）
   * Repo之间可以有依赖关系，一个repo最多可以有10个upstream的repo作为依赖repo，这样用户可以只用一个endpoint访问所有upstream的代码库（1个repo指向多个upstream的repo）
   * *ExternalConnection*：一个repo最多可以有一个外部连接（外部repo或者public repo比如npm）一个外部连接的repo可以被多个私有repo共享（一个repo被多个downstream的repo指向），外部的package只需cache在连接外部资源的那个repo中即可，中间repo不需要cache
 
+### CodeGuru
+
+- Code Review和Code performance recomendations
+- 代码审查部分，组件是，Code Reviewer
+  * 审查的是静态代码
+  * 依靠机器学习，学习基础是AWS1000多代码库
+  * 检测代码问题，安全漏洞，资源泄露，bugs查找，输入内容验证
+  * 支持Java和Python
+  * Secret Detector：可以检测仓库中是否有硬编码的secret，并提出使用Secrets Manager的相关建议
+- 代码性能建议，组件是，Code Profiler
+  * 针对的是在runtime中的代码提升建议
+  * 识别CPU消耗，最小化app的overhead
+  * 可以通过装饰器`codeguru_profiler_agent`（添加到zip文件或者layer）和`@with_lambda_profiler`被集成到Lambda function（也可以直接在lambda function的configuration中enable profiling功能）
+
+### EC2 Image Builder
+
+- 自动创建和维护EC2的VM镜像AMI
+- 创建后可以被自动test
+- 可以publish到多个regions和多个accounts
+- 可以集成到CICD流程
+- 可以使用*RAM*（Resource Access Manager）进行资源分享
+- **Tracking latest AMIs**构架：
+  - *Image Builder* -payload-> *SNS* -payload-> invoke *Lambda* -> store id to *SSM Parameter Store*
+  - Use Case：用户可以使用**SSM Parameter Store**中的最新ID，或者CloudFormation可以直接reference该最新ID进行构建
+
 ## Configuration & Management & LaC
 
 ## Resilient Cloud Solution
