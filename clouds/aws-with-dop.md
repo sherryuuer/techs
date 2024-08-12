@@ -139,6 +139,68 @@ DevOps是一种结合了软件开发（Development）和IT运维（Operations）
 - 有*可视化的Test Reports*功能：单元unit测试，设置config测试，功能functional测试
   * 需要在*buildspec.yml*文件中增加一个*report Group*设置test report的文件相关信息
 
+### CodeDeploy
+
+- 目的是进行新的版本的部署，**控制部署速度和策略**等
+- 部署目标：EC2，本地服务器，Lambda，ECS
+- 通过**appspec.yml**文件控制如何发布
+- **Deploy到EC2&本地服务器**：
+  * 通过*CodeDeploy Agent*操作：Agent可以通过SystemManage进行安装，需要对S3的get和list权限，因为它需要从S3取得新版本的app部署内容
+  * in-place发布或者blue/green部署
+  * *蓝绿部署*的意思是，同时部署和现有环境一样capacity的另一个新的环境，然后将端点指向新的环境，
+    - 必须要有一个LoadBalancer，可以手动也可通过ASG自动化过程
+    - 可以设置是否关闭蓝环境，以及多长时间后完全关闭蓝环境，BlueInstanceTerminationOption
+    - 该部署方式也可以使用*hook*在各种action前后执行自定义代码
+  * Deploy 速度：AllAtOnce/HalfAtATime/OneAtATime/Custom define x%
+  * 一些部署策略：比如使用LoadBalancer，ASG，或者*EC2的tags*来锁定部署目标
+  * **Deployment Hooks**：意指在部署的整个流程中，根据需要运行一些自定义的代码。
+    - 运作方式，是通过*appspec.yml*文件定义hook group，自定义的代码，通过*Agent*进行提前部署
+    - hook的含义：
+    - *拦截系统事件或函数调用*： 在系统发生某个事件（比如点击按钮、加载页面等）或者调用某个函数时，"hook" 可以拦截这个事件或函数调用，并在原有功能执行之前或之后插入自定义的代码。
+    - *扩展系统功能*： 通过"hook"，开发者可以在不修改原有系统代码的情况下，添加新的功能或修改已有功能的行为。
+  * Trigger：可以在部署后驱动其他服务比如SNS
+- **Deploy到Lambda**：
+  * 集成使用SAM的Framework，使用appspec.yml
+  * 针对*Lambda alias*进行traffic shift，比如环境的端点指向version1，和version2
+  * 也可以使用hooks功能执行自定义代码（lambda）
+  * *traffic shift*方式：
+    - Linear：线性部署，以一定的速率一点点部署
+    - Canary：金丝雀部署，在一开始比如30分钟内，只处理百分之10的流量，觉得没问题了就转移100%的流量到新的版本
+    - AllAtOnce：一次转移所有的流量到新的版本，缺点就是不经过观察测试
+- **Deploy ECS Task Definition**:
+  * 只能使用蓝绿部署，这样以来就是需要并行的两个新旧环境，必须使用LB
+  * 部署方式也是*Linear，Canary，AllAtOnce*三种
+  * 新Artifact被提前push到*ECR，通过新的image*创建新的green环境，然后通过appspec.yml定义绿色环境发布内容
+    - 这个步骤可以通过*CodeBuild*完成
+  * 这里也可以用**Deployment Hooks**执行自定义代码，但是这里只能通过**invoke Lambda Function**执行！
+
+- **Redeploy & Rollback功能**
+  * Rollback就是重新部署redeploy一个过去的版本
+  * Rollback发生的时候，回滚后的也是一个新的版本，而不是restored版本（也就是不是原来的版本号的意思）
+  * Rollback可以手动发生也可以自动发生（比如部署失败或者CloudWatch的alarm满足条件的时候）
+  * 也可以设置完全不允许rollback
+
+- **TroubleShooting**：
+  * InvalidSignatureException：SignatureExpired，<time> is not earlier than <time>：表示你设置的部署时间比EC2上的时间晚，因为在部署的时候需要制定精确的时间
+  * 部署失败或者Lifecycle Event被跳过了，这意味着EC2实例出现了问题，健康实例数量不足等，原因包括CodeDeployAgent没有安装 / Service Role或者IAM Instance profile没有充分的权限 / HTTP Proxy的使用需要设置Agent的Proxy uri：parameter / Agent和CodeDeploy之间的Date或time没有匹配
+  * AllowTraffic失败的原因，一般原因是ELB的Health Checks设置错误
+
+### CodeArtifact
+
+- *Artifact Management*：存储和获取代码和他们之间的dependencies的中央管理系统，和许多熟知的代码依存管理系统一起工作，比如yarn，npm，pip，PyPI，Maven（Java），Gradle等
+- 当各语言的developers获取public artifact repo后，CodeArtifact会存储这些packages，也可以通过手动存储packages进CodeArtifact的方式。
+- CodeBuild在进行构建的时候当然也可从Artifact获取（fetch）代码和依存关系
+- 集成**EventBridge**：当代码package被created，updated，deleted，会触发事件，比如invoke Lambda，Step Function，SNS，SQS，或者启动一个Pipeline等
+- **Domain**：存储的东西放在叫domain的概念中
+  * 可以管理*多账户，资产共享，KMS加密*
+  * 多个账户有重复资产的时候，只需要被存储一次，然后共享资源
+  * 当进行pull package操作的时候，*只有元数据记录metadata record被更新*
+  * *Domain-resource based Policy*可以用于限制domain内的账户，资源，使用权限
+- *ResourcePolicy*：可以设置基于resource的用户使用权限（制定用户的账户号码，和被访问资源的所属账户号码），来允许跨账户的用户访问，这种访问要么可以读取所有all，要么什么都不可读取none of them
+- **Repo树形层级依赖关系**：
+  * Repo之间可以有依赖关系，一个repo最多可以有10个upstream的repo作为依赖repo，这样用户可以只用一个endpoint访问所有upstream的代码库（1个repo指向多个upstream的repo）
+  * *ExternalConnection*：一个repo最多可以有一个外部连接（外部repo或者public repo比如npm）一个外部连接的repo可以被多个私有repo共享（一个repo被多个downstream的repo指向），外部的package只需cache在连接外部资源的那个repo中即可，中间repo不需要cache
+
 ## Configuration & Management & LaC
 
 ## Resilient Cloud Solution
