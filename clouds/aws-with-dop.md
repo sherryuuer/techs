@@ -226,7 +226,42 @@ DevOps是一种结合了软件开发（Development）和IT运维（Operations）
   - *Image Builder* -payload-> *SNS* -payload-> invoke *Lambda* -> store id to *SSM Parameter Store*
   - Use Case：用户可以使用**SSM Parameter Store**中的最新ID，或者CloudFormation可以直接reference该最新ID进行构建
 
+### AWS Amplify
+
+- web&mobile application的快速部署服务，类似于ElasticBeanstalk
+- 将各种服务打包：认证，存储，API，CI/CD，Pubsub，分析，AI/ML，Monitoring等
+- CI/CD：可以将Github不同分支和不同Amplify的环境connect，当在不同的环境push代码后会直接部署到不同Amplify环境（不同的domain网址）
+
 ## Configuration & Management & LaC
+
+### CloudFormation
+
+- IaC的所有好处，Cost上会给每个stack打tag，从而了解每个tag的cost
+- *声明性*编程，Terraform也是，所以不需要考虑执行顺序和编排方式
+- 无需重新造轮子，可以依赖doc和网上的资源
+- **工作方式**：
+  - 需要将template上传S3，然后通过template创建stack（resources的合集）
+  - 当要更新一个stack的时候，无法修改现有template，而是创建一个新的template使用
+  - stacks被name特定
+  - 当删除一个stack，它相关的资源都会被删除
+  - *手动部署*：使用Application Composer或者Code Editor编辑template，然后在console填写各种需要的parameter，创建stack
+  - *自动部署*：编辑yaml文件使用CI/CD方式或者CLI自动部署（推介该方式，terraform也是）
+- 创建动态数量的资源使用*Macros&Transform*
+- **Building Block**：
+  - Template‘s *Components*：
+    - AWSTemplateFormatVersion
+    - Description
+    - Resources：必须有
+    - Parameters：动态，当有些参数一开始无法确定，或者之后需要复用的情况 / 使用`!Ref`语法指示 / 可以指定输入类型等 / 有一些Pseudo变量可以直接使用，比如AccountId，Region，StackId等
+    - Mappings：静态，硬编码的参数，比如region，AMI，或者环境prod/dev
+      * `!FindInMap [RegionMap, !Ref "AWS::Region", HVM64]`
+      * 这种方式对匹配不同区域的AMI很有用，因为AMI是地区specific的
+    - Outputs：适合stack之间的协作，一个stack输出的参数可以在另一个stack中被使用
+    - Conditionals
+  - Template‘s *Helper*：
+    - References
+    - Functions
+
 
 ## Resilient Cloud Solution
 
