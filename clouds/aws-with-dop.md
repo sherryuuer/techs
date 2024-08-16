@@ -257,11 +257,53 @@ DevOps是一种结合了软件开发（Development）和IT运维（Operations）
       * `!FindInMap [RegionMap, !Ref "AWS::Region", HVM64]`
       * 这种方式对匹配不同区域的AMI很有用，因为AMI是地区specific的
     - Outputs：适合stack之间的协作，一个stack输出的参数可以在另一个stack中被使用
-    - Conditionals
+      * `Export` - `!ImportValue`
+    - Conditions
   - Template‘s *Helper*：
     - References
-    - Functions
+    - Functions：`!Ref`，`!GetAtt`，`!ImportValue`，`!Base64`，conditions：`!And`，`!Equals`，`!If`，`!Not`，`!Or`
 
+- **Rollbacks**：
+  - 当创建和更新失败的时候，删除所有新创建的资源
+  - 如果在Rollback的过程中有sb手动修改了资源，这时候Rollback也会失败：需要手动fix资源，然后通过`ContinueUpdateRollbackAPI`重新进行rollback操作
+- **ServiceRole**：
+  * ServiceRole是服务拥有的IAM Role
+  * 当不想给user过多的权力，践行最小权限原则的时候
+  * 用户需要`iam:PassRole`Policy
+- **CloudFormation Capabilities**：
+  * 一些高级扩展能力
+  * `CAPABILITY_NAMED_IAM`（特定IAM资源），和`CAPABILITY_IAM`：在CF需要创建和更新一些IAM资源的时候需要的enable功能
+  * `CAPABILITY_AUTO_EXPAND`：当需要进行动态转换（dynamic transformation）的时候，如使用macros或者nested stacks的时候
+  * 当需要的上述功能不足的时候，会抛出的错误：`InsufficientCapabilitiesException`
+- **DeletionPolicy**：
+  * default是`DeletionPolicy: Delete`，当stack被删除，资源也会被删除，但是当S3bucket不为空的情况下可能不会删除资源
+  * `DeletionPolicy: Retain`，设置在resource中，特定哪些资源在stack被删除后也继续留存
+  * `DeletionPolicy: Snapshot`，针对可以snapshot的资源，该设置会留存资源的snapshot
+- **StackPolicy**：
+  * json表达，policy，allow和deny
+  * 当*更新一个stack的时候显式指定哪些资源不允许被更改*（deny）
+  * 也需要显式指定哪些资源可以被更改，如allow all deny one，语法组块之间没有顺序要求
+- **TerminationProtection**：
+  * 保护创建的stack被误删除的功能，在StackActions中进行enable
+- **CustomResources**：
+  - 用一个例子来说，比如stack删除无法删除不为空的S3桶，通过custom resource（backend lambda functions）可以先运行删除所有S3中资源的function，然后再允许CF删除S3桶
+  - *工作方式*：CF自己不会触发Lambda，而是对Lambda发送API请求（包括一个s3 pre-signed url），获得的Lambda的response结果会存储在S3中
+- **DynamicReferences**：
+  - 动态获取SystemManager的*ParameterStore*（加密和非加密版）或者SecretManager中的用户名和密钥的功能
+  - 语法：'{{resolve:service-name:reference-key}}'
+  - 服务名service-name包括：ssm，ssm-secure，secretmanager
+  - **RDS的动态密码管理的两种方式**：
+    * 一种只需要指定：`ManageMasterUserPassword`为true，RDS会自动管理用户密码（在secret manager中）的创建和rotation
+      - 获取方式：`!GetAtt MyCluster.MasterUserSecret.SecretArn`
+    * 另一种方式就是这里的DynamicReference，通过CF的脚本自动生成，包括三个部分：
+      - `AWS::SecretsManager::Secret`：自动生成密码存储至SecretManager
+      - `AWS::RDS::DBInstance`：创建RDS，通过resolve语法指向创建的secrets
+      - `AWS::SecretsManager::SecretTargetAttachment`：将上述二者关联，自动化rotation
+- **EC2 User data**：
+  - *简单的*EC2的服务器启动初始化脚本执行：`Fn::Base64 |`
+- **cfn-init**：`AWS::CloudFormation::Init`：cfn-init实质是一个命令，在原本的user-data执行的地方，执行该命令，然后在metadata的block中明确记录init的详细内容，详细看一下具体脚本即可：dev-ops/aws/code_v2024-07-29/cloudformation/from-sysops-course/1-cfn-init.yaml
+- **cfn-signal & Wait Condition**：在cfn-init后立刻执行的脚本，当达到指定条件，发送完成信号
+  - cfn-init和cfn-signal都是在AMI上应当自带的命令，如果没有的话可以自己安装
 
 ## Resilient Cloud Solution
 
