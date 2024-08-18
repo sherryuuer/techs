@@ -247,6 +247,7 @@ DevOps是一种结合了软件开发（Development）和IT运维（Operations）
   - *手动部署*：使用Application Composer或者Code Editor编辑template，然后在console填写各种需要的parameter，创建stack
   - *自动部署*：编辑yaml文件使用CI/CD方式或者CLI自动部署（推介该方式，terraform也是）
 - 创建动态数量的资源使用*Macros&Transform*
+
 - **Building Block**：
   - Template‘s *Components*：
     - AWSTemplateFormatVersion
@@ -304,8 +305,233 @@ DevOps是一种结合了软件开发（Development）和IT运维（Operations）
 - **cfn-init**：`AWS::CloudFormation::Init`：cfn-init实质是一个命令，在原本的user-data执行的地方，执行该命令，然后在metadata的block中明确记录init的详细内容，详细看一下具体脚本即可：dev-ops/aws/code_v2024-07-29/cloudformation/from-sysops-course/1-cfn-init.yaml
 - **cfn-signal & Wait Condition**：在cfn-init后立刻执行的脚本，当达到指定条件，发送完成信号
   - cfn-init和cfn-signal都是在AMI上应当自带的命令，如果没有的话可以自己安装
+- **cfn-hup**：
+  - helper script，主要用于在 CloudFormation 更新栈后（对元数据metadata的更新），对 EC2 实例进行配置更新
+  - 检测元数据变化：它会周期性地（比如1分钟一次）检查 EC2 实例的元数据，一旦发现与 CloudFormation 模板中的配置有差异，就会触发相应的动作
+  - 运行用户指定动作：用户可以在 CloudFormation 模板中定义一系列动作，例如重启服务、重新加载配置文件等，cfn-hup 会按照定义的顺序执行这些动作
+- **Cross-stack & Nested-stack**:
+  * Cross-stack是一个stack的输出被Export，然后被另一个stack用ImportValue语法使用，是一种*值复用*的关系
+  * Nested-stack很像是代码中的package，是一种资源复用的方式，是一种*嵌套*关系，通过一个template的URL复用stack
+- **DependsOn**：
+  * 显式表明两个资源的前后creation关系，必须在DependsOn的对象资源被成功创建后才开始创建
+  * 当使用`!Ref`或者`!GetAtt`的时候，内部默认有前后依赖关系
+
+- **StackSets**：堆栈集
+  - 跨account跨region地部署资源的方法，比如部署同样的AWS Config设置到不同的账户和地区
+  - *Administer账户*创建StackSets，当更改了堆栈集，各个target account和region的*stack instance*都会被updated
+  - *Target账户*通过从StackSets进行stack instance的创建，更新，和删除操作
+  - 从表述方式来看，管理账户创建的堆栈集更像是一个class类集合，部署到各个账户和region后，创建的是stack instance一种实例
+  - IAM Role权限管理方式：
+    * Self-managed permission：没有开启OU的情况下，要手动创建和赋予IAM Role，对Administer账户赋予`AWSCloudFormationStackSetAdministrationRole`对target账户赋予`AWSCloudFormationStackSetExcutionRole`
+    * Service-managed permission：当有OU功能的情况，需要 enable all feature in AWS Organizations，StackSets会代替你在OU范围内enable trusted access，有助于在新账户添加的时候就被部署stacksets
+  - 示例资源：dev-ops/aws/code_v2024-07-29/cloudformation/from-sysops-course/stacksets
+- **ChangeSets**：
+  - 当需要update一个stack的时候，创建ChangeSet可以了解要发生什么变化，*但它不能告诉你是否这种变化会成功*
+
+- **Drift**：
+  - 检查创建和配置的资源是否因*手动操作*等原因，发生了设置偏移，整个stack或者stack中的单个资源
+  - *StackSet Drift Detection*：检测stack和他关联的stack instance的变化；但是直接通过CloudFormation对stack instance等的修改不会被认为是drift，但是这不是一个好的实践；该功能也可以关闭
+
+### Service Catalog
+
+- *Admin*设置的一个**Products**，实质是一个*CloudFormation模板*（实质就是CF模板的subset），并对该模版的服务设置了IAM Permission的产品目录
+- *User*就可以在该产品列表中lanch产品（tagged）使用，服务会按照CF的设置进行lanch，并让用户在*相应的权限内*使用服务
+- governance,compliance,consistency
+- 使用CloudFormation StackSets可以设置Product deployment option，设置具体的*限制条件*，比如Account，Region，Permission等
+- **Launch Constraints IAM Role**：
+  - 用户只拥有对service catalog服务的使用权限，其他需要的权限都在这个launch role上
+  - *该role必须有的权限包括*：
+    * CloudFormation full access
+    * AWS Services in the CloudFormation template
+    * Read Access to S3 bucket which contains the template
+- 持续部署新的服务，是通过push推送CloudFormation的代码后，invoke一个sync用的Lambda function来将新的变更部署到Service Catalog中
+
+### Elastic Beanstalk
+
+- 以开发为中心的部署application的服务，典型的三层网络构架快速部署的managed服务（ELB+ASG+RDS）
+- 包括*各种语言*platform的代码和**Docker**部署
+- *Components*：
+  * Application：环境，版本，设置的组合
+  * Application version：应用的版本迭代
+  * Environment
+- Beanstalk *Deployment Options* for update：
+  * All at Once：快速，一次部署，会有一些downtime
+  * Rolling：逐渐部署，可设置批次大小（bucket），低于基本capacity
+  * Rolling with additional batches：设置余量的batch，进行逐步部署，保持原有的capacity，对于prod环境的性能维持比较好
+  * Immutable：在现有的ASG中添加同样数量的server数量，当新版本正常运行后，关闭旧版本的servers，cost较高，对prod环境友好
+  * blue/green（不是内置选项）：重建一个新版本环境，分配一小部分流量比如10%，切换可以（举例）通过Route53切换URL即可
+  * Traffic Splitting（Canary）：在负载均衡中分配一小部分流量给新版本的ASG，进行金丝雀测试，方便回滚，当金丝雀测试结束可以直接将流量都引向新版本
+- **Web tier和Worker tier分离构架**：是一种普通的*解藕服务*实践方式
+  - 如果有运行时间较长的job，比如视频处理，可以通过SQS服务将job推送到worker tier（pull message from SQS）进行处理
+  - 通过cron.yaml定义periodic任务（定期运行任务）
+- Notification和invoke服务集成：事件集成Eventbridge -> invoke Lambda（发送信息到slack）/ trigger SNS（发送邮件）
+
+### SAM（Serverless Application Model）
+
+- AWS SAM（Serverless Application Model）是一个用于构建和部署无服务器应用的框架。它是一个开源框架，专门设计用于简化*AWS Lambda、API Gateway、DynamoDB、Step Functions*等无服务器资源的定义和管理。
+- 使用简化的模板语法（yaml）（基于AWS CloudFormation）来定义无服务器应用。SAM模板是对CloudFormation模板的扩展，提供了特定于无服务器应用的简化语法。
+- SAM与AWS CodePipeline、CodeBuild，CodeDeploy等持续集成和持续交付（CI/CD）工具紧密集成，支持自动化构建和部署流程。
+
+### CDK（Cloud Development Kit）
+
+- 使用熟悉的语言JS，Python，Java，.NET等定义基础设施
+- 代码中包含的high level components called *constructs*，然后代码会被compile为YAML/JSON格式的CloudFormation代码
+- *基础设施代码+runtimeCode*可以同时部署，比如ECS或者Lambda的code
+- CDK CLI：
+  * `cdk bootstrap`，需要在各个region和account启动cdk应用编译代码
+  * `cdk synth`，这会返回被编译的CloudFormation的Yaml代码
+  * `cdk deploy`，将编译的代码通过CloudFormation进行部署
+  * `cdk destory`，销毁stack
+- codes example: dev-ops/aws/code_v2024-07-29/cdk
+
+### Step Functions（base on data engineer note）
+
+- 使用 JSON 格式的*状态机state machine*定义，开发人员可以轻松地编排和管理跨多个 AWS 服务的任务
+  * task state：任务单元，比如invoke服务，发送sqs队列，更新db等
+  * choice state：条件单元
+  * wait：delay状态
+  * parallel：增加一些branch并行处理分支
+  * map：也是并行的，对dateset里的每一个元素进行map处理
+  * pass：传递input到output，或者inject一些固定数据而不做任何处理
+  * success，fail状态单元
+- 编排Lambda，Batch，ECS，DynamoDB，EMR，SQS，SNS等200多服务
+- *可视化workflow*的流程，有点像Airflow
+- trigger：Console，SDK，CLI，Lambda，API Gateway，EventBridge，CodePipeline，StepFunctions
+- *不能集成Mechanical Turk*服务（在线人工劳动力），这里能集成它的服务是SWF服务
+- Standard 和 Express Workflow两种类型：
+  - 前者贵后者便宜
+  - 前者执行时间可以长达1年，后者最大5分钟
+  - 启动rate前者是每秒2000，后者是每秒10万
+  - *前者确保执行一次，后者为最少执行一次*
+- Express Workflow：包括*同步和异步驱动*，同步会确保得到API返回执行结果，后者只确保启动，同步的更适合编排服务，错误处理，并行处理，重试策略等
+- Error Handling：重试或者增加alert功能触发EventBridge-SNS
+
+### AppConfig
+
+- AWS AppConfig 是 AWS Systems Manager 的一项功能，用于管理和部署应用程序配置数据。它帮助开发人员和运维团队在不重启或重新部署应用的情况下**动态地更改应用配置**
+- UseCase：
+  - 动态特性切换（Feature Toggles）：根据需要在运行时打开或关闭应用的某些功能。
+  - 环境特定配置：管理不同部署环境中的配置，如开发、测试和生产环境。
+  - A/B 测试：为一部分用户推送新配置以测试新功能，并根据反馈逐步扩展到更多用户。
+- config的**sources**包括：Parameter Store，SSM Document，S3 bucket
+- 在部署前使用*lambda function或者json schema*进行设置评估**validate**
+- *EC2*等会通过**poll**的方式取得*config changes*，然后进行变更，如果中途发生错误，会通过触发**CloudWatch Alarm**进行**rollback**操作
 
 ## Resilient Cloud Solution
+
+### Lambda
+
+- **Version的概念**：
+  - *$LATEST*：这是一个可变mutable的变量，存储的是你发布的最新version的代码
+  - v1～：version是不可变的immutable，当你发布新版本，这个数字会不断递增，version包括code+configuration
+- **Aliases的概念**：是一个版本指针，point版本，但是不能point其他的aliases
+  - 可变的mutable，比如定义不同版本为prod，test，dev等，通过aliase指向不同的版本
+  - 可以铜通过权重weight设置，进行canary部署
+  - Aliases有自己的ARN
+- **Environment Variables**：
+  - key-value形式的string存储，可以被code引用（`os.getenv("key")`），可以存储secrets，使用KMS或CMK加密
+
+- **Concurrency & Throttling**（并发和限流）:
+  - 通过设置*reserved concurrency*限制并发上限
+  - *一个账户（中所有的functions）的并发上限是1000*，如果一个function就用完了所有的并发数量，其他functions会被throttle
+  - 如果超过了上限的并发执行会引发*throttle*问题：
+    * 同步执行synchronous引起限流error429
+    * 异步执行asynchronous会自动retry，如果失败则任务会被发送到DLQ
+  - 如果需要更高的并发执行上限，可以用*suppor ticket*进行上限申请
+- **Cold Starts & Provisioned Concurrency**：
+  - invoke一个新的Function实质上是新启动了一个instance，会发生code load，以及init，如果init文件很大，会花费很多时间
+  - 使用Provisioned concurrency设置，可以提前进行并发操作，降低延迟
+
+- **FileSystem Mounting**:
+  - 同一个VPC中的EFS文件系统可以被mount到Function的local directory
+  - 在initialization初始化的时候被mount
+  - 依赖*EFS Access Point*
+  - IAM + NFS权限管理
+  - 其他文件系统的options：
+    * 临时存储tmp或者Lambda layer，是最快的，容量较小，就像是EC2的instance store的感觉
+    * S3，Object存储，比较快，通过IAM进行权限管理，版本控制上具有原子性
+      - 在版本控制中，**原子性**指的是对代码库所进行的一个变更（如提交）要么全部成功，要么完全失败，没有中间状态。换句话说，一个提交（commit）要么完全被记录并应用，要么不会产生任何影响。完整性，一致性，回滚能力。
+  - *Cross-Account EFS mounting*需要VPC之间的peering，同时需要EFS file system policy设置对另一个账户的mount，write权限为allow
+
+### API Gateway
+
+- 暴露*HTTP端点*，*Lambda*（REST API），或者*AWS Service*为一个API服务
+- 版本控制（stages），认证，流量管理（API keys，Throttles）
+- 限制：29秒timeout，最大10MB的payload
+- 支持Canary Deployment，创建canary，设置百分比 -> 部署一个新的invoke端点 -> 当测试正常则promote canary即可
+- 构架探索：
+  - 后面坐一个S3的话，用户上传文件收到10MB的限制，不是一个好的构架，可以*使用Lambda生成一个Pre-Signed URL返回给客户*用于上传大的文件（我预想到了这个构架，很不错，是一种进步）
+- *stages*：API Gateway中的变更change，只有通过发布到stage才能影响结果，stage可以根据需要随意取名，新的stage就会有新的URL
+- **stage variables**：
+  - 可以通过context传递给Lambda functions
+  - format语法是：`${stageVariables.variableName}`
+  - stage variables可以和*Lambda Aliases*相关联，当指定lambda function的ARN的时候，植入上述语法，API Gateway就可以invoke正确的Lambda function：`${stageVariables.variableName}`指定的stage name和*function的aliase同名*即可
+
+- 部署的Endpoint类型
+  - *Edge Optimized*（默认设置）为全球用户：通过*CloudFront Edge locations*，降低延迟，虽然这时候API Gateway还是在一个region中部署的
+    - Edge Optimized API Gateway **只接受来自 us-east-1 区域的 ACM 证书**，无论 API Gateway 本身部署在哪个区域。这是 AWS 的一个特定要求。这是因为它是为全局内容分发优化的，它使用 AWS 的全球内容分发网络（CDN）来降低延迟并提高性能。为了简化和集中管理证书，AWS 选择了 us-east-1 作为集中颁发和管理 SSL/TLS 证书的区域。
+  - *Regional* 用户，使用regional端点，这种情况的安全证书certificate必须部署在同一个region
+  - *Private* 访问只能通过interface VPC endpoint（ENI）在VPC内部进行访问
+
+- import/export *OpenAPI*功能的集成：use API defination as Code
+    * *OpenAPI* 规范是一套标准，用于详细描述 RESTful API 的各个方面，包括：
+      * 端点（Endpoints）：API 提供的 URL 路径，如 /users、/orders/{id} 等。
+      * HTTP 方法：端点支持的操作类型，如 GET、POST、PUT、DELETE 等。
+      * 请求参数：需要传递给 API 的参数，包括路径参数、查询参数、请求体等。
+      * 响应格式：API 返回的数据结构，包括状态码、响应体、错误信息等。
+      * 认证方式：API 所需的身份验证机制，比如 OAuth、API 密钥等。
+    - 通过这种规范，API 开发者可以以一致的方式编写和共享 API 定义，从而实现以下功能：
+      - 生成 API 文档：工具如 Swagger UI 可以从 OpenAPI 文件中自动生成可视化的 API 文档。
+      - 代码生成：根据 OpenAPI 规范，可以生成客户端 SDK 和服务器端代码模板，简化开发工作。
+      - 测试工具：可以基于 OpenAPI 文件生成测试用例或模拟服务器，用于测试和调试 API。
+      - 因此，OpenAPI 规范为 API 的开发、测试、文档生成等多个环节提供了标准化的支持，极大地提高了开发效率和协作性。
+
+- *Gateway Cache*
+  - 0.5GB～237GB
+  - 缓存client的response
+  - TTL默认300秒（0～3600s）
+  - 可以在stage和method层面设置
+  - 可以有加密功能的选项
+
+- Error
+  - 4xx为client错误
+  - 5xx为Server错误，注意APIGateway的回复超时是29秒，会有504错误
+
+- Security和Authentication
+  - 支持SSL证书，使用Route53设置CNAME
+  - 资源权限限制，比如使用S3的bucketPolicy
+  - 资源使用权限，比如对Lambda的IAMrole，用于内部的资源访问
+  - CORS：cross-origin resource sharing：基于浏览器，控制哪个domain可以call你的API
+  - 三种认证：IAM，Lambda集成第三方认证，Cognito
+
+- 日志和监控
+  - CW Logs：
+    - 可以在stage层级开启logs
+    - 可以发送API Gateway Access Logs
+    - 可以直送日志到KinesisDataFirehose
+  - CW Metrics：
+    - IntegrationLatency，Latency，CacheHitCount，CacheMissCount
+  - X-Ray：高级构架 X-Ray API Gateway + AWS Lambda
+    - X-Ray 提供了详细的请求分析，包括响应时间、错误率、异常、冷启动等信息
+    - 支持与多种 AWS 服务集成，包括 EC2、ECS、Lambda、Elastic Beanstalk、API Gateway 等。它还支持与多种第三方框架和库集成，如 Spring、Express 等
+
+- 将API Gateway作为产品发布给客户的方法：
+  - Usage Plan
+  - API Keys
+  - 429 Too Many Requests（account limit）
+
+- WebSocket API
+  - 全双工，双向通信，实时聊天、在线游戏、金融交易
+  - 使用Lambda，DynamoDB，或HTTP endpoints
+  - URL中使用@connections关键字，用connectionId识别连接
+
+- Private APIs
+  - 使用VPC Interface Endpoint连接
+  - 每一个VPC Interface Endpoint 都可以用于连接多个Private APIs
+  - 对Interface Endpoint可以设置Endpoint Policy
+    - aws:SourceVpc/aws:SourceVpce
+
+
 
 ## Monitoring & Logging
 
