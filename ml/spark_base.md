@@ -167,6 +167,16 @@ Spark 通常被视为 Hadoop 的补充，而非完全替代。根据具体的需
 - Job是CICD的基础单位
 - Delta Live Table解决的问题：好的数据，Job管理，Query的前后依存关系
 
+- **Unity Catalog**：
+  - 它是一个数据和管理统筹的catalog服务，就像是Glue的Catalog，它内部不存储数据，只是管理数据，安全，认证，用户等，它会给你发tokken，最终还是要从object和数据库拿数据
+  - 所以它可以连接外部的catalog，从而将外部和内部的catalog一起结合使用
+  - metastore -> catalog -> schema
+  - 在数据统筹上它有ACL trees以进行灵活的数据管理
+  - Volumes用于存储非结构化数据（原本是dbfs）
+  - Grant权限管理命令
+  - 数据mask，在行和列上进行数据访问限制
+  - 可以集成Terraform进行自动化部署
+  - system.information_schema, system.operational_data, system.table_lineage
 
 - **机器学习领域：**
 - MLOps is a set of processes and automated steps for managing code, data, and models to improve performance, stability, and long-term efficiency of ML systems. It combines **DevOps, DataOps, and ModelOps**.

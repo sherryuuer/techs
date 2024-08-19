@@ -531,7 +531,115 @@ DevOps是一种结合了软件开发（Development）和IT运维（Operations）
   - 对Interface Endpoint可以设置Endpoint Policy
     - aws:SourceVpc/aws:SourceVpce
 
+### ECS
 
+* 容器的优点在于*无需依存于OS*，可以在任何机器上执行可预测行为的任何代码和服务。它是**微服务构架**的基础。
+* DockerImage存放于DockerHub（公有），或者AWS的ECR，有公有仓库/私有仓库（自建）
+* VM是操作系统级别的隔离，不共享资源，Docker是进程级别的隔离，共享底层设施资源
+* build - push/pull - run
+- Docker container on AWS = launch ECS tasks on ECS Clusters
+- ECS use case：
+  - Run MicroServices
+  - Run Batch processing/Scheduled Tasks
+  - Migrate Apps to Cloud
+- ECS concepts:
+  - ECS Cluster
+  - ECS Services
+  - Task Definitions(json file )
+  - ECS Task
+  - ECS IAM Roles
+- **ECS 集成 ALB/NLB**：
+  - ECS作为服务expose的时候使用LB
+  - 使用Dynamic Port Mapping，分配流量：可以在一个EC2实例上发布多个container
+  - ALB是标配，NLB的使用场景：需要高throughput，高性能，或者需要PrivateLink配对创建端点
+
+- **数据存储**：使用EFS文件系统，ECS container可以进行 EFS 数据和文件节点的Mount，结合Fargate就是完全的serverless
+  - 适合Multi-AZ的持久性存储分享
+  - 注意，*S3不可以mount*为它的文件系统
+
+- ECS安全：集成SSM ParameterStore和Secret Manager
+- ECS Task Networking：None，host（使用底层host的interface），bridge（虚拟网络），awsvpc（使用自己的ENI和私有IP）
+
+- **Launch方式1:使用EC2**:
+- 也就是说Cluster的集群是通过EC2组成的，只要在EC2中安装*ECS agent*，就可以将他们集成到ECS的Cluster中去
+- *ECS Agent*使用*EC2 Instance Profile*定义IAM Role，用于访问ECS，ECR，CloudWatch，SecretManager，SSM Parameter等
+- *EC2 Instance Profile*：agent使用，use case：对ECS service进行API call / 发送logs到CW logs / 从ECR拉取镜像 / 从SSM或SecretManager获取敏感数据
+- *ECS task Role*：不同的服务需要不同的*ECS Task Role*，task role是在*task definition*中定义的
+- **Launch方式2:使用Fargate**：
+- 无需管理服务器，只需要定义*task definitions*
+
+- **ECS Auto Scaling**：
+  * 使用的是AWS Application Auto Scaling，指标：
+    - ECS Service Average CPU Utilization（利用率）
+    - ECS Service Average Memory Utilization - scale on RAM
+    - ALB Request Count Per Target - metric coming from the ALB
+  * *注意*ECS的Auto Scaling不等同于EC2的Auto Scaling，它是ECS tasks层级的，而tasks坐落在EC2中，一个EC2中包含多个tasks
+    - Auto Scaling *Group*的Scaling才是基于EC2的Scaling
+    - **ECS Cluster Capacity Provider**是和ASG相伴的组件，它基于CPU，RAM利用率自动伸缩EC2 instance的数量
+  - **ECS Cluster Capacity Provider（ASG）的自动伸缩的 scope 中嵌套 ECS tasks的自动伸缩！**
+  * *Scaling方式三种*：
+    - Target Tracking：based on CloudWatch metric
+    - Step Scaling：based on CloudWatch Alarm
+    - Scheduled Scaling：based on a specified date/time（可预测的变更的场景）
+  * Fargate的Auto Scaling的设置很简单，因为它是Serverless的
+
+- 和其他服务的集成：
+  - 通过*CloudWatch*的metric进行监控，通过Alarm进行Auto Scaling操作
+  - 通过触发*EventBridge*，来进一步触发新的ECS tasks的launch和run
+  - 通过EventBridge的*Schedule*触发来间歇性run ECS tasks
+  - 通过从*SQS*pull message来触发task执行
+  - 通过*EventBridge*发送突然出问题的task的info（发送*EventPattern*）来发送*SNS*给管理员，进一步进行监管和调查
+
+- Logs
+  - 通过开启*awslogs log driver*功能发送日志到CWlogs
+  - 在task definition中设置 `logConfiguration` parameters
+  - Fargate launch类型只需要给Task Execution Role相应的日志写入权限，它支持awslogs，splunk，awsfirelens等log drivers
+  - EC2 launch类型需要CW Unified Agent & ECS Container Agent来发送日志，instance需要有相应的权限（profile），需要enable logging使用`/etc/ecs/ecs.config`的`ECS_AVAILABLE_LOGGING_DRIVERS`
+  - **Sidecar Container**：是一种专门用于收集其他container的logs的container模块，然后将logs发送到CW logs，感觉就是一种log的集成管理方式
+
+### EKS
+
+- 开源框架
+- ELB - AutoScaling - nodes - Pods
+- 三种**Nodes托管模式**：*Managed Node Group*和*Self-Managed Nodes*和*with Fargate*（use EFS）：完全托管
+- 支持On-demand/Spot Instance
+- CloudWatch监控：node上的log存储目录是`/var/log/containers`，使用*CloudWatch Agent*发送日志，*CloudWatch Container Insights*进行仪表盘监控
+- **Control Plane Logging**：是一种用于*audit & diagnostic*的控制日志，发送到CW logs
+- DataVolumes：使用*CSI（Container Storage Interface）driver*，连接到EBS，EFS，FSx
+- Kubernetes中的*Taints和Tolerations*是一种机制，用于控制哪些Pods可以调度到哪些Nodes上。这种机制通过向节点（Node）施加“污点”（Taint）来排斥Pods，然后Pods通过“容忍”（Toleration）这种污点来选择性地允许调度。
+
+### Amazon Fargate work with ECS/EKS
+
+- Fargate是一个Serverless的服务，无需构架基础设置，直接添加container
+
+### ECR
+- 支持image*漏洞扫描（on push）*，*版本控制*和*lifecycle*（通过policy rules进行images过期管理，节省存储cost）
+  - 基础漏洞扫描由ECR进行，并触发EventBridge发布通知
+  - 高级Enhanced扫描通过Inspector进行，由Inspector触发EventBridge发布通知
+- 通过*CodeBuild*可以*register和push*Images到ECR
+- 可以cross-region 或者 cross-account 地 replicate image
+- 私有和公有，公有的叫ECR Public Gallery，后端是S3
+- 通过IAM（role）管理访问权限
+
+### ECS/EKS Anywhere
+
+- ECS部署在包括你的**数据中心**的任何地方
+- 安装*ECS Container Agent和SSM Agent*
+- 使用EXTERNAL的launch type
+- 必须要有稳定的AWS Region连接
+
+- EKS则需要安装在数据中心，使用EKS Anywhere Installer
+- 使用*EKS Connector*从AWS连接到本地的EKS Cluster
+- 以上是有连接的设置
+- 无连接的设置需要安装EKS Distro，以及依赖开源工具管理Clusters
+
+### Kinesis
+
+参照Data Engineer部分的Kinesis全部内容！
+
+### Route53
+
+也可参考高级网络笔记，这里只记录重点记忆点！
 
 ## Monitoring & Logging
 

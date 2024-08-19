@@ -1057,7 +1057,7 @@
 - Kinesis Analytics是实时数据分析平台，可用SQL
 - Kinesis Firehose将数据流载入S3，Redshift，ElasticSearch和Splunk
 - 者三个服务可以相连的
-- 安全：KMS，IAM，VPC endpoints，HTTPS
+- 安全：KMS，IAM，VPC endpoints，HTTPS，API calls with CloudTrail
 
 **Kinesis Stream**
 
@@ -1066,7 +1066,7 @@
 - 实时处理和可扩展吞吐能力
 - KDS是*real-time*的，这是它和KDF的一个区别
 - KDS可以通过自己编写代码来控制生产和消费逻辑
-- 一旦数据被插入，就无法被删除，它很像是放大版的SQS，但是SQS的message是可以被删除的
+- 一旦数据被插入，就*无法被删除*，它很像是放大版的SQS，但是SQS的message是可以被删除的
 - 关于*Shard*：
   - 里面的records是有序的，是有**partitionKey**的，同分区的数据会进入同shard
   - 批处理或单个信息处理
@@ -1106,7 +1106,7 @@
 
 **Kinesis Data Firehose**
 
-- 不能存储数据，就是一个管子
+- *不能存储数据*，就是一个管子
 - 数据源中可以包括Kinesis Data Stream
 - Record批大小最小可以有1MB
 - 在KDF，可以用Lambda进行Data transformation，比如格式转换，数据变换，和压缩
@@ -1136,7 +1136,9 @@
 - 可以用Lambda作为数据pre-processing
 - 数据处理可以用SQL或者*Flink*（under the hood）
 - schema discovery
-- RANDOM_CUT_FOREST：机器学习模型，SQLFunction，用于检测数值异常
+- ML算法：
+  - *RANDOM_CUT_FOREST*：机器学习模型，SQLFunction，用于检测数值异常
+  - *HOTSPOTS*：相关数据密集区域检测，比如找到在数据中心的一块overheated服务器的密集区域
 
 ### Amazon Managed Apache Flink
 
