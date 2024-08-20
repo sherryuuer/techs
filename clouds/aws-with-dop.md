@@ -635,11 +635,32 @@ DevOps是一种结合了软件开发（Development）和IT运维（Operations）
 
 ### Kinesis
 
-参照Data Engineer部分的Kinesis全部内容！
+参照Data Engineer部分的Kinesis*全部内容！*
 
 ### Route53
 
 也可参考高级网络笔记，这里只记录重点记忆点！
+
+- 高可用性，域名注册服务，DNSResolver服务
+- Hosted Zone分为共有和私有分别解决VPC内外的名称解决问题，它是一个record合集
+- Records：CNAME不能用于example.com根域名
+- RoutingPolicy：weighted，Latency，Failover（使用health check）
+
+### RDS Read Replicas & Multi-AZ
+
+- **ReadReplica**：
+  - 目的在于数据*读取（select）*的可扩展性，减轻主DB的load负担
+  - 可以withinAZ，可以跨AZ，也可以跨Region
+  - 最多可以有15个replica
+  - 注意它是*Async*的，数据是异步不是完全同步的，遵循**最终一致性原则**
+  - replica可以升级promote为主DB
+  - 一般来说数据在AZ之间传输是产生cost的，但是对于个别managed服务，比如RDS的replica数据同步，只要在**同一个region则不会产生cost，但是跨region则产生cost**
+- **Multi-AZ**：
+  - 该设置目的是灾难恢复disaster recovery，当然也可以将该被用db用于replica
+  - 它不具备扩展目的和功能
+  - 数据是*sync*完全同步的，写入主数据库会立刻被同步
+  - 具有*相同的DNS*名，自动进行app的failover
+  - **将RDS从Single-AZ变更为Multi-AZ**：不会发生downtime，只需要对DB进行*modify*操作即可，背后原理是对主DB创建*Snapshot*，从snapshot创建stand-by DB，然后在两个数据库之间进行同步数据和以备不时之需的failover
 
 ## Monitoring & Logging
 
