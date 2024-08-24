@@ -301,8 +301,8 @@ AWS安全服务一共包括六个板块：
 - 记录人的行为，是否合规，进行审计，因为人的行为基本是通过API发出的，服务都是API。
 - 存储：CW Logs或者S3，或者其他统合服务，在S3就可以用Athena进行Query
 - 默认记录management事件，默认不记录data事件（因为操作率太高）
-- *Cloud Trail Insights*服务，持续监测不正常的write操作
-- Logs存储90天，想要长期存储需要存入S3。
+- *Cloud Trail Insights*服务，通过分析什么是正常活动，来持续监测不正常的活动，write操作等
+- Logs存储*90天*，想要长期存储需要存入S3。
 - 可以集成 EventBridge 在遇到非法API操作的时候，发送SNS通知。和 CloudWatch 的 metric filter 一起使用可以更好地过滤日志，联动SNS通知。
 - 可以进行组织 organization 层面的Trail收集。
 - Integrity Validation：完整性检查，确保日志未被修改，内部通过一个digest file进行hash算法一致性检验。
@@ -1005,7 +1005,7 @@ diff origin:www.example.com & other.example.com
 
 - 指定设置规则，记录资源设置变化（timeline变化记录的方式），检查设置是否合规，dashboard管理。
 - 可以储存日志于S3，可以集成，*EventBridge*，SNS进行通知，以及其他服务。（但是Security Hub是可以自动接收它的评估结果的）
-- 是区域服务，但是可以集合各个区域和账户的设置。
+- 是*区域服务*，但是可以集合各个区域和账户的设置。
 - Rules：可以使用AWS的rules，也可以使用Lambda设置CustomRules。
 - *无法阻止*违规设置，*只能overview设置和变化*。
 - *Remediation功能*：可以设置用SSM的document进行Automation自动修复。

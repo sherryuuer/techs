@@ -227,7 +227,7 @@ predictions_df = fs.score_batch(f"models:/feature_store_airbnb_{DA.cleaned_usern
 display(predictions_df)
 ```
 ### Managed MLflow
-- Identify the best run using the MLflow Client API.
+**Identify the best run using the MLflow Client API.**
 ```python
 # experiment包括很多run，该代码就可以列出所有的实验中的run的列表，按照顺序排列
 run_id_best = mlflow.search_runs(
@@ -239,7 +239,7 @@ model_uri = f'runs:/{run_id_best}/model'
 # PyFuncModelとしてモデルをロード
 loaded_model = mlflow.pyfunc.load_model(model_uri)
 ```
-- Manually log metrics, artifacts, and models in an MLflow Run.
+**Manually log metrics, artifacts, and models in an MLflow Run.**
 ```python
 with mlflow.start_run(run_name="LR-Log-Price") as run:
     # Take log of price
@@ -288,7 +288,7 @@ with mlflow.start_run(run_name="LR-Log-Price") as run:
     mlflow.log_figure(fig, f"{DA.username}_log_normal.png")
     plt.show()
 ```
-- Create a nested Run for deeper Tracking organization.
+**Create a nested Run for deeper Tracking organization.**
   - 两层start_run，提示nested=True。
 ```python
 # Resume the top-level training
@@ -308,7 +308,7 @@ with mlflow.start_run(run_id=run_id) as outer_run:
       return_df = pd.DataFrame([[device_id, n_used, artifact_uri, mse]],
                               columns=["device_id", "n_used", "model_path", "mse"])
 ```
-- Locate the time a run was executed in the MLflow UI.
+**Locate the time a run was executed in the MLflow UI.**
 ```python
 # Notebookの場合
 import mlflow
@@ -318,8 +318,8 @@ runs = mlflow.search_runs(exp_id)
 df_runs = spark.read.format("mlflow-experiment").load(exp_id)
 display(df_runs)
 ```
-- Locate the code that was executed with a run in the MLflow UI
-- Register a model using the MLflow Client API.
+**Locate the code that was executed with a run in the MLflow UI**
+**Register a model using the MLflow Client API.**
 ```python
 from mlflow.tracking.client import MlflowClient
 client = MlflowClient()
@@ -341,9 +341,9 @@ client.update_model_version(
     description="This model version was built using OLS linear regression with sklearn."
 )
 ```
-- Transition a model’s stage using the Model Registry UI page.
+**Transition a model’s stage using the Model Registry UI page.**
   - `client.search_model_versions(f"name = '{model_name}'")[0].current_stage`
-- Transition a model’s stage using the MLflow Client API.
+**Transition a model’s stage using the MLflow Client API.**
   - 使用`transition_model_version_stage`
 ```python
 client.transition_model_version_stage(
@@ -357,23 +357,23 @@ client.search_model_versions(f"name = '{model_name}'")[0].current_stage
 
 ## Section 2: ML Workflows
 ### Exploratory Data Analysis
-- Compute summary statistics on a Spark DataFrame using .summary()
+**Compute summary statistics on a Spark DataFrame using .summary()**
   - `display(df.summary())`
-- Compute summary statistics on a Spark DataFrame using dbutils data summaries.
+**Compute summary statistics on a Spark DataFrame using dbutils data summaries.**
   - `dbutils.data.summarize(fixed_price_df)`
-- Remove outliers from a Spark DataFrame that are beyond or less than a designated threshold.
+**Remove outliers from a Spark DataFrame that are beyond or less than a designated threshold.**
   - `display(fixed_price_df.filter(col("price") > threshhold))`
 ### Feature Engineering
-- Identify why it is important to add indicator variables for missing values that have been imputed or replaced.
+- **Identify why it is important to add indicator variables for missing values that have been imputed or replaced.**
   - 如果你对分类/数值特征进行任何插补技术，你必须包含一个额外的字段，指定该字段已被插补
   - 即使进行了缺失值插补，添加指示变量也是一种数据预处理的最佳实践，可以最大程度地保留信息、减少偏差、提高模型性能
-- Describe when replacing missing values with the mode value is an appropriate way to handle missing values.
+**Describe when replacing missing values with the mode value is an appropriate way to handle missing values.**
   - 使用众数(mode)进行缺失值插补最适合处理类别型特征(categorical features)的缺失值
   - 可以保留数据分布，无需创建新的类别
-- Compare and contrast imputing missing values with the mean value or median value.
+**Compare and contrast imputing missing values with the mean value or median value.**
   - 对于包含大量异常值或离群值的数据集，使用中位数插补会比均值插补更加稳健
   - 如果保留数据分布形状是最重要的，那么均值和中位数插补都是不错的选择,只是中位数插补可能更优
-- Impute missing values with the mean or median value.
+**Impute missing values with the mean or median value.**
 ```python
 for c in impute_cols:
     doubles_df = doubles_df.withColumn(c + "_na", when(col(c).isNull(), 1.0).otherwise(0.0))
@@ -387,7 +387,7 @@ imputed_df = imputer_model.transform(doubles_df)
 **Describe why one-hot encoding categorical features can be inefficient for tree-based models.**
   - 当应用独热编码于基数较高（high cardinality）的分类变量（具有许多不同类别值的变量）时，可能会导致效率降低。特别是在基于树的机器学习方法中（如随机森林或梯度提升），由于虚拟变量化导致连续变量更容易被重视，因此特征的重要性顺序可能变得不清晰，从而可能导致模型性能下降。
 ### Training
-- Perform random search as a method for tuning hyperparameters.
+**Perform random search as a method for tuning hyperparameters.**
 ```python
 # randome search
 # 指定したパラメータ範囲の組み合わせ(e.g. maxDepth:[2, 5, 10 ], numTrees:[5, 10])を指定した探索回数分ランダムに探索し、最も精度(評価指標)が高い組み合わせを採択する方法。
@@ -678,7 +678,9 @@ pred_df = saved_pipeline_model.transform(test_df) #指定した順番通りに�
 - 3: pandas API on spark
   - 性能接近spark（严格来说，spark > pandas API on spark），操作方式接近pandas，兼具两者的优点
 
-- Identify the usage of an InternalFrame making Pandas API on Spark not quite as fast as native Spark.
+**Identify the usage of an InternalFrame making Pandas API on Spark not quite as fast as native Spark.**
+
+Pandas API on Spark是一种在Spark上使用类似Pandas的数据处理API的方法。InternalFrame 是这个API中的一个内部结构，用于管理数据和元数据（比如列名、索引等）。由于这个额外的抽象层，可能会引入一些开销，导致在某些场景下Pandas API on Spark的执行速度不如直接使用Spark的原生API快。所以这句话是在说要识别出这个InternalFrame的使用对性能产生影响的具体原因。
 
 **Pandas api on spark在后台管理internal frame（Spark dataframe和元数据）。**
 
@@ -690,7 +692,7 @@ pred_df = saved_pipeline_model.transform(test_df) #指定した順番通りに�
   - 在这种情况下，需要更新internal frame的元数据状态和dataframe本身。
   - 以inplace方式更新时，不返回新的dataframe，而是更新内部数据的状态。
 
-- Identify Pandas API on Spark as a solution for scaling data pipelines without much refactoring.
+**Identify Pandas API on Spark as a solution for scaling data pipelines without much refactoring.**
 pandasのお作法と似ているため、ソースコードの修正は最小限で分散処理の恩恵を受けることができる
 
 - Identify how to import and use the Pandas on Spark APIs
@@ -742,7 +744,7 @@ print(f'pandas df <= pandas api on spark: {type(pandas_df)}')
 - Apache Arrow 是一个内存中的列式数据格式，设计用于支持高效的分析操作。它的主要特点包括：
   - 列式存储：数据按列存储，这样在处理数据时可以高效地访问和操作所需的列。
   - 跨语言支持：Arrow 数据格式能够在多种编程语言（如 Python、Java、C++）之间高效共享数据，而无需数据复制或转换。
-  - 零（去）序列化成本：使用 Arrow 进行数据传输时，避免了数据的序列化和反序列化，减少了开销和延迟。
+  - 零（去）序列化成本：使用 Arrow 进行数据传输时，*避免了数据的序列化和反序列化*，减少了开销和延迟。
   - 内存效率高：Arrow 旨在最大限度地利用现代内存架构，提供高性能的数据操作。
 
 - Pandas UDFs：在 Spark 2.3 及之后的版本中，Spark 支持 Pandas UDFs（用户定义函数），这是一种利用 Pandas 和 Arrow 的新型 UDF（用户定义函数），它大幅提高了 UDF 的性能。Pandas UDF 的特点是：
@@ -843,7 +845,7 @@ prediction_df = combined_df.groupby("device_id").applyInPandas(apply_model, sche
 ### Ensembling Distribution
 **Describe the basic concepts of ensemble learning.**
 - 集成学习是使用多个算法集合来获得一个在偏差和方差之间取得平衡的学习结果的技术。
-- 集成学习是一种通过结合多个模型的预测结果来提高整体模型性能的方法。这种技术的主要目标是同时减少模型的偏差（bias）和方差（variance）。偏差指的是模型对训练数据的拟合能力，而方差则是模型对不同数据集的泛化能力。通过集成多个不同类型或相同类型但不同参数的模型，集成学习可以有效提高模型的预测准确性和稳健性，常见的方法包括Bagging、Boosting和Stacking。
+- 集成学习是一种通过结合多个模型的预测结果来提高整体模型性能的方法。这种技术的主要目标是同时减少模型的偏差（bias）和方差（variance）。**偏差指的是模型对训练数据的拟合能力，而方差则是模型对不同数据集的泛化能力。**通过集成多个不同类型或相同类型但不同参数的模型，集成学习可以有效提高模型的预测准确性和稳健性，常见的方法包括Bagging、Boosting和Stacking。
 **Compare and contrast bagging, boosting, and stacking**
 - bagging: ブートストラップ(ランダム復元抽出), 並列で弱学習器を学習⇒分散に適している
 - boosting: イテレートしながら弱学習器を作成する(過去の学習の誤差を修正しながら精度向上を図る)⇒分散処理が難しい
@@ -969,6 +971,7 @@ print(f"R2 is {r2}")
 - 主要是解决实验追踪困难，代码再现困难，模型打包和部署没有标准化的问题。
 - 使用`mlflow.set_experiment()`设置实验。一组`experiment`可以管理多个`run`单位。每一个`run`可以保存参数，代码，指标，输出文件，日志等内容。
 - 注意：Spark的模型的话，MLflow只能记录`PipelineModels`的日志。
+- 这个包被预安装在ML相关的cluster上了
 - 下面是一个完整的工作流代码：
 
 ```python

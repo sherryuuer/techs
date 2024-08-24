@@ -417,7 +417,76 @@ DevOps是一种结合了软件开发（Development）和IT运维（Operations）
 - 在部署前使用*lambda function或者json schema*进行设置评估**validate**
 - *EC2*等会通过**poll**的方式取得*config changes*，然后进行变更，如果中途发生错误，会通过触发**CloudWatch Alarm**进行**rollback**操作
 
+### System Manager
+
+- 免费服务，可以对应EC2也可以对应On-Premises，系统对应Linux和Windows
+- 自动patching，增强合规性
+- 集成 CloudWatch metrics / dashboard
+- 集成 *AWS Config*，根据配置启动 Automation 来对资源进行操作，因为 Config 本身不具有操作资源的能力
+- 重要组成：**Resource Group / Document / Automation / Maintenance Windows / Parameter store / Inventory / State Manager / Run Command / Patch Manager / Session Manager**
+- Document 自动执行功能是我觉得亮眼的功能。
+- 通过自动化管理，降低instance cost，自动化创建 AMI
+
+- 必须在server上安装 **SSM Agent**，AmazonLinux2和一些Ubuntu自带agent，*一般出了问题都是因为没agent或者没对EC2授权相应的Role（Role也可以叫做：IAM instance profile，这是在hands on中看到的）*
+- lanch的新的EC2，比如已经安装了SSM Agent的AmazonLinux2的EC2，会直接出现在SSM的Fleet Manager中，作为一个舰队进行管理。
+
+- 使用 **TAGS** 对资源进行分组管理：**Resource Group**，从而进行**自动化**和**cost allocation分配**
+- **Document** 你可以定义parameters和actions，用json或者yaml格式的*文件*，实质是一个workflow脚本。（很像Github Actions或者Cloud Formation，都是IaC），Parameters也可以从 Parameter Store中取得
+  - 可以在ASG中的EC2被terminating之前发送一个命令，比如跑一个自动的document：需要在ASG中设置一个*Lifecycle Hook*，将要关闭的EC2设置为一个Terminating:Wait的状态，当EventBridege检测到了这个状态，就可以触发这个document的执行
+
+- **Run Command**功能是直接跑一个小的命令或者跑一个脚本（document=script），通过resource groups可以直接跑一个server集群，它和IAM还有*CloudTrail*集成，会被记录，*不需要通过ssh连接EC2*（而是通过SSM Agent，session manager也是通过Agent），可以控制执行速率rate（一次执行多少，或几个server），和错误控制（几个错误就停止之类），跑命令的结果可以在console表示也可以发送到S3或者CWLogs，可以给SNS发消息，也可以被EventBridge Trigger，甚至可以得到一个生成的 CLI 代码自己拿去控制台执行。
+
+- **Automation**：简化的一般性服务器维护和发布作业。这个功能也是使用Document进行操作 EC2 等。可以用 EventBridge 触发，进行系统修补等。
+- **Parameters Store**：存参数或者密码，可用KMS加密，集成 IAM Policy，可以用于 CloudFormation 的输入。层级文件夹存储方式。Advance的Parameter设置可以有8K大小，但要付费，可以*设置TTL*（expiration date，到期可以设置通知notification，也可以通知没变化）。
+  * aws ssm get-parameter 通过 with-decrption 可以解密密码，会检查你的KMS权限可否解密，挺酷。
+  * 可以通过文件夹层级递归取得 aws ssm get-parameter --path /myapp/dev/ --recursive 你创建parameter的时候名字就是一个path格式就可以了，这很特别，比如name：/myapp/dev/db-password
+- **Inventory**：收集EC2元数据，可以通过S3+Athena或者QuickSight探索。（元数据包括：软件，OS，设置，更新时间等）
+- State Manager：状态管理器，保证 EC2 满足某一设置状态。
+- **Patch Manager**：自动打补丁，可以设置有计划的 *Maintenance Windows*，可以通过*tags*，设置 *Patch Baseline* 和 *Patch Group*，进行不同的补丁计划。计划通过Document自动执行，报告可以发送到S3。
+  - AWS-RunPatchBaseline applies to both *Windows and Linux*, and AWS-DefaultPatchBaseline is the name of the default Windows patch baseline
+- **Session Manager**：不需要ssh的EC2连接，*通过Agent和role*。通过IAM可以限制执行主体和对象EC2（通过tag），甚至可以限制使用的command。访问记录会被CloudTrail记录。可以记录logs（S3，CloudWatch Logs）- `"Action": "ssm:StartSession"`
+  - 使用 *VPC Interface Endpoint* 访问在 Private subnets 中的 EC2
+
+- **DHMC: System Manager: Default Host Management Configuration**：提供一个集中化的界面来管理和配置 instances 的默认设置，简化了配置过程，不需要 EC2 instance Profile，EC2 Role 是 *Instance Identity Role*
+
+- **Hybrid Environments**：
+  - System Manager 可以管理 On-premise 上的主机，主机名以 *mi-* 开头（云中的是*i-*开头）
+- **集成IoT Greengrass**：通过将 SSM Agent 安装在 IoT Greengrass Core 上，管理 devices 集群
+  * 需要添加 *Token Excahnge Role* 给 device 用于和 SSM 进行通信许可
+  * 支持所有的 SSM 的上述功能
+- **OpsCenter**：解决操作上的问题：*Operational Issues（被叫做OpsItems）*
+  - OpsItems：issues，events，alerts
+  - 集合各种info比如config，Cloudtrail日志，CWAlarms，CFstack信息等
+  - 解决方式：run automation document
+  - 使用EventBridge或者CW Alarms创建OpsItems
+  - 提供 *recommended Runbooks* 来解决issue
+  - use case：比如通过 lambda 列出所有较老的 EBS，然后登录到 OpsItems，通过触发 Run Document 来自动删除 EBS snapshot
+
 ## Resilient Cloud Solution
+
+- 这部分的关键词就在于resilient，比如复制，冗余，容器，高可用性方面。
+- 本地和云的网络连接S2SVPN和DX的冗余构架
+- 使用CloudFormation/Beanstalk自动化构架恢复
+- *Multi-AZ* 构架，比如三层构架的 failover 高可用性构架
+- *Blue-Green* 构架：
+  - ALB listener 后的 ASG 群组的蓝绿部署
+  - Route53 + 多个 ALB 的 endpoint 的 DNS 流量切换（依存于 client 的 DNS cache 刷新）
+  - 多个 API Gateway 的不同 stages 背后坐不同的 Lambda function version 进行部署
+  - 一个 API Gateway 后坐不同的 Lambda alias（通过 Lambda 进行切换设置）
+- *Multi-Region* 构架：
+  - 使用 Route53 的 Health Check 进行 DNS 的自动 failover
+  - 在不同的 Region 配置 *ALB + ASG* 的部署，Route53 基于latancy进行 DNS 路由
+  - 在不同的 Region 配置 *APIGateway + Lambda* 的部署，Route53 基于latancy进行 DNS 路由
+- *Disaster Recovery*：
+  - **RPO**：Recovery Point Objective（目标），是你灾难后数据要恢复到的时间节点，这预示着你的data loss有多少
+  - **RTO**：Recovery Time Objective，这是你灾难恢复要花费的时间，这预示着你服务downtime是多少
+  - 这俩指标你要求的越高，那么就越贵
+  - **策略**RTO从慢到快⬇️，从便宜到贵
+    - Backup and Restore：有很高的RPO，简单不贵，花费的也就是存储快照的费用
+    - Pilot Light：持续地跑一个服务的*轻量版本*（也许只有数据库部分），恢复快
+    - Warm Standby：*整个系统*各个组件以*小的scale*在一边同时跑standby
+    - Hot Site / Multi Site Approach：*整个系统的复制版本*，都是active的，很贵，RPO和RTO都非常小
+
 
 ### Lambda
 
@@ -635,7 +704,7 @@ DevOps是一种结合了软件开发（Development）和IT运维（Operations）
 
 ### Kinesis
 
-参照Data Engineer部分的Kinesis*全部内容！*
+参照Data Engineer部分的Kinesis*全部内容！*和devops的内容基本一致
 
 ### Route53
 
@@ -662,8 +731,408 @@ DevOps是一种结合了软件开发（Development）和IT运维（Operations）
   - 具有*相同的DNS*名，自动进行app的failover
   - **将RDS从Single-AZ变更为Multi-AZ**：不会发生downtime，只需要对DB进行*modify*操作即可，背后原理是对主DB创建*Snapshot*，从snapshot创建stand-by DB，然后在两个数据库之间进行同步数据和以备不时之需的failover
 
+### Aurora
+
+- 速度是MySQL的5倍，是PostgreSQL的3倍
+- database volume最多可以有128TB
+- 最多可以有*15个read replica*
+- *Cross-region and zones* read replica复制的是整个database
+- 直接从S3，load/offload 数据，*持续备份*到S3
+- 30秒内实现master的failover
+- 储存中加密使用KMS，传输中加密为SSL
+
+- DB Cluster：
+  - 一个Writer Endpoint - MasterDB
+  - 多个Reader Endpoint - Read replica - 连接Load balancer，有Auto Scaling功能
+  - Optional：分出两个read replica 作为Custom Endpoint比如进行客户自己的分析查询
+
+- **Global Aurora**：
+  - Cross-Region read replica：高灾难恢复能力
+  - Global Database：最多可以有5个备用region，每个region最多可以有16个read replica
+  - Write Forwarding：通过对副DB的写入操作可以，forward到Primary的DB，主DB永远都会先更新，然后再复制到副DB
+
+### ElastiCache
+
+- 托管服务：Redis，Memcached（in-memory db）
+- **Redis**：
+  - Multi-AZ，高可用性，自动Failover，读取复制，备份和恢复功能，本身很像一个DB
+  - *支持 sets 和 sorted sets*
+- **Memcached**：
+  - Multi-node sharding 数据分区
+  - *数据不会persistent*
+  - *没有备份和数据恢复功能*
+  - 是一个 Multi-threaded 构架
+- 低延迟、高吞吐量的数据访问，适合需要快速响应时间的应用程序，如实时分析、游戏、金融交易等
+- 构架：
+  - *作为RDS的数据库缓存*
+  - *User Session Store*，存储客户的登录连接状态
+
+- **Replication：Cluster Mode Disabled**：意味着只有单个shard
+  - Primary - Replica node 是非同期数据同步，可以有 0～5 个 replica nodes
+  - *Scaling*：支持水平和垂直扩展，水平最多5个node，垂直是提升 node，方法是内部复制一组新的更大的nodes，然后通过DNS切换来升级
+- **Replication：Cluster Mode Enabled**：意味着数据在多个shards上进行分区扩展
+  - 所谓的集群 Cluster 就是多个 Shards 的集群，在这些Shards上进行分区数据存储
+  - 和上面的模式一样，每一个 Shard 都只能有一个Primary + 0 ～ 5个Replica Node
+  - 整个Cluster（所有的Shards）的*node上限是500*，你可以有各种组合比如500个单点shards，或者1master1replica，一共250shards也可以，当然还可以500 / 6（代表1个master和5个replica）个shards
+
+- **Redis Auto Scaling**：
+  * 自动 scale 需要的*shards*和*replicas*
+  * scale policy 支持 **Target Tracking** 或 **Scheduled** 方法
+  * Auto Scaling 只针对 Redis 和它的 Cluster Mode Enabled 模式
+  * 集成 *CloudWatch Metric* 比如 ElastiCachePrimaryEngineCPUUtilization 等指标进行 Target Tracking，然后通过 alarm 触发scale 动作
+
+- **Redis Connection Endpoint**：
+  * 如果是*standalone node*就只有一个endpoint
+  * *Cluster Mode Disabled*：
+    - Primary endpoind for write
+    - Reader endpoint for read（evenly split on all read replicas）
+    - Node endpoint for read operations
+  * *Cluster Mode Enabled*：
+    - Configuration endpoint for all read/write operations
+    - Node endpoint for read operations
+
+### DynamoDB
+
+Data Engineer 中记录的更详细！这里关注devops的重点！
+
+- 扩展到很大规模的 Workloads，比如IoT数据，分布式数据库，response性能高速度快，高扩展能力
+- Table中感觉都是object，首先要有*Primary Key*，然后每一个row都是一个*item*，有自己的*attributes*（看起来像是column），可以为null，这完全就像是object，每一个item的*size上限是400kb*，*数据类型包括 ScalarType（String/Number/Boolean/Binary），DocumentType（List，Map），SetTypes（StringSet，NumberSet，BinarySet）*等
+- 预置 Provisiond Mode & 按需 On-Demand Mode：预置模式也可以设置 Auto Scaling 的上下限 capacity 容量
+
+- **DynamoDB Accelerator（DAX）**
+  - 是一种和DynamoDB无缝连接的*cache*功能，是一种*cluster*，它会有一个endpoint，API咯
+  - 低延迟，解决HotKey问题，也就是过多reads的问题
+  - 默认5分钟的TTL
+  - Multi-AZ，推介生产环境最少3个node
+  - 安全性高，集成KMS，VPC，IAM，CloudTrail等服务
+  - *ElasticCache*可以存储*聚合数据结果*，DAX一般是存储*单个的objects，query/scan*等，可以将两者*结合*，将DDB的结果存储到ElasticCache中，重复使用
+
+- **DynamoDB Streams**
+  - 似乎在学习Kinesis的时候看到过，他和KinesisDataStream很像，是通过**Shards**分区数据流的，它自动扩展
+  - table中的*有序的，基于item变化（create/update/delete）*的数据流，数据是可以设定的，比如只发送key，或者新的，老的item数据等
+  - 可以送到：KinesisDataStreams / Lambda / KinesisClientLibraryApplications
+  - 数据可以retention（存留）24小时
+  - *无法取得回溯数据*，也就是过去数据，这种性质很像*GA*，也是只能得到新的数据，过去的数据不可重复获得
+  - UseCases：实时数据反映，实时分析，OpenSearch服务，*跨区复制*
+  - *Lambda*同步数据处理：需要赋予Lambda相应的权限，以及设置*Event Source Mapping*来读取数据流，*Lambda主动*从DDBstream拉取poll数据的方式
+
+- **TTL**：必须使用number类型*Unix Epoch timestamp*作为TTL的时间属性，它实质上是要**手动**创建了一个新的属性，然后设定开启该功能，内部会定期扫描你设置的TTL属性列（column），取得要删除的数据，进行删除操作，它不会消耗WCU
+
+- 用于 Disaster Recovery 的**Backup**：
+  * 一种是*持续备份*，使用 Point-in-time Recovery（**PITR**），可以 optional 开启过去35天的持续备份功能
+  * 一种是*On-Demand备份* 就是备份全部内容，可以使用AWS Backup服务，会一致被备份，直到显示删除
+
+- 和*S3*的集成：
+  * 输出到S3然后可以用Athena查询，必须开启PITR功能
+  * 输出到S3的数据经过处理后可以再回到DynamoDB
+  * DynamoDB -> S3 file format: Json/ION
+  * 从S3可以import文件到DynamoDB，文件格式为：CSV/Json/ION
+
+### DMS
+
+- 数据库迁移服务：Database Migration Service
+- 支持同种类数据库迁移，和不同种类，比如Mysql到Aurora的迁移
+- 可以进行持续的CDC（Change Data Capture）迁移，随着数据的不断变化进行数据迁移
+- 工作原理部分需要一个EC2来跑DMS从而完成迁移工作
+- Sourse数据库包括了On-Premise和云中的各种数据库，Targets则不仅包括On-Premise和云中的各种数据库，还包括AWS的各种服务，比如OpenSearch，Kinesis Data Stream，Amazon Kafka等
+- **SCT（Schema Conversion Tool）**：当数据库类型不一致的时候使用的schema转换工具，支持OLTP和OLAP的各种数据库之间的转换，同种类的数据库之间则不需要（注意RDS不是数据库引擎，而是一个数据库平台）
+- **Multi-AZ Deployment**：是指DMS服务器（比如EC2）部署在不同的AZ，同步更新，是一个stand by replica，提供高数据冗余，低延迟的迁移服务
+- *Replication Monitoring*：Task Status（针对task状态监控），Table State（针对迁移的数据的状态的监控）
+  - *CloudWatch* Metrics：包括针对 *tasks* 的 metrics，针对 *tables* 的 metrics 和针对 *host*（用于迁移的服务器）的 metrics
+
+### S3 Replication
+
+- CRR跨区域复制，和SRR同区域复制
+- 因为是异步复制，所以需要开启version功能
+- 支持跨账号的复制，不管是不是跨账号，都必须设置好S3相关的IAM Permission
+- *delete marker replication*可以标记被删除的文件，但是如果删除特定的版本，则不会被复制（不会在目标删除特定的版本）
+
+### Storage Gateway
+
+- 是On-premise数据和Cloud数据的桥梁
+- *数据类型*：Block 数据（EBS，EC2 instance store），File数据（EFS），Object数据（S3，Glacier）
+- *目的*：disaster recovery，backup & restore等
+- 三种类型：Volume Gateway，File Gateway，Tapes Gateway
+- **RefreshCacheAPI**：当你上传了文件到S3后并不一定能从本地访问File Gateway看到该文件，这时候用到的就是这个API，可以手动invoke，也可以通过触发Lambda事件invoke，文件多的话就会比较贵罢了，或者定期触发Lambda进行invoke
+  * 除此之外，File Gateway还有一个功能叫**Automated Cache Refresh**，这个就不需要手动 invoke 上面的 API 了
+
+### Auto Scaling
+
+- **Scaling Policies**
+  - Dynamic Scaling：根据CloudWatch的指标分为*Target Tracking* scaling 和 *Simple/Step* scaling，前者是固定维持ASG在一个指标，后者是根据指标进行instances数量的缩放
+  - Scheduled Scaling：定期缩放，如果能预知使用量的情况
+  - Predictive Scaling：预测性scaling，通过分析历史数据（肯定是机器学习）预测未来的情况来进行提前缩放
+- 适合进行Scaling的 *CloudWatch Metric*：CPU 使用率，平均 Network In/Out，RequestCountPerTarget
+- **Scaling Cooldowns**：在发生了一次Scaling之后，一般会有一个cooldown时刻，300秒，以进行metirc的更新
+  - 可以预先准备好一个 read-to-use AMI，以减少 cooldown 时间
+- *Lifecycle Hooks*：在启动或者关闭一个实例之前可以进行特定的动作的功能，比如cleanUp，抽出日志，health checks等，还可以集成其他疏结合服务，比如EventBridge（触发 System Manager Run Command 收集日志），SNS，SQS等
+- *SNS/EventBridge通知*集成：SNS通知包括EC2的 launch，terminate，launch error，terminate error，但是 EventBridge 则可以过滤事件，以及发送更多种类的事件通知
+- **Termination Policies**：
+  - Default：选择拥有最多 instances 的AZ / 关闭使用 oldest 的 Template 的 instance / 如果都是使用相同 template 的 instance，则关闭最接近下次 billing 的 instance（cost考虑）
+  - 还可以设置一个或者多个自选 policy，比如最新launch的instance，最老configuration等，可以使用多个policies组合，并且指定 policies 之间的 evaluation 评价顺序
+  - 可以用 lambda function 进行custom policy的设置，也就是通过写代码，编辑自己规定的关闭 instance 的规则
+- **Warm Pools**：解决 scale out 时候的延迟问题，说白了就是启动 instance 的时间太长
+  - 一个预初始化好的instances的pool
+  - 它里面的instance的数量，可以设置min，也就是一直维持的最低数量，而max是ASG的最大capacity上限
+  - 在Pool中的instance可以有三种状态：Running，Stopped，Hibernated（冬眠）
+  - 该Pool中的instance不会影响metric指标收集
+  - *instance reuse policy*：默认情况下，scale in 的时候关闭一个 instance，然后 warm pool 会重新创建一个新的instance，但是通过设置，也允许将 scale in 的 instance 重新归还到 warm pool 中
+  - 结合*Lifecycle Hooks*在 instance 停止和in-service前，执行一些特定的动作
+- AWS中的很多服务比如Aurora，ECS等等，都有**Application Auto Scaling**的功能，针对很多资源，进行内部底层服务器的缩放功能
+
+### ELB
+
+- **ALB** 的*Listen 规则*：
+  * 默认按顺序执行收到的 response
+  * 支持的 Actions：forward，redirect，fixed-response（比如固定的404回答）
+  * Rule Conditions：host-header/http-header/http-request-method/path-pattern/source-ip/query-string
+- ALB 的**流量权重控制和蓝绿发布**：
+  * ALB 后的 ASG 们可以根据 rule 拥有不同的流量权重，比如当需要进行app发布的时候，可以控制在新旧app群组上的流量分配
+
+- **DualStack Networking**：
+  - 允许client与ELB用IPv4或者IPv6进行通信
+  - 支持 ALB 和 NLB
+
+- *NLB*可以集成**PrivateLink**服务（VPC Endpoint interface）来 expose 另一个 VPC 中的其他服务
+
+### NAT Gateway
+
+- AWS管理，高可用性，高带宽，以小时付费
+- 存在于 AZ scope 中，有绑定一个 Elastic IP，所以要*提高它的可用性，必须设置多个 AZ，多个 NAT Gateway 构架*
+- 必须和IGW一起工作不然流量出不去
+- 5Gbps 的带宽，最大可以扩张到 100Gbps
+- 它不需要 Security Group，是AWS的托管服务
+- 注意它和 NAT instance 的区别
+
 ## Monitoring & Logging
+
+- Log的种类：应用日志，系统操作日志，访问日志，AWSManagedLogs
+- AWS Managed Logs：ELB Access Logs / CloudTrail Logs / VPC Flow Logs / Route53 Access Logs / S3 Access Logs / CloudFront Access Logs
+
+### Cloud Watch
+
+- CW **Metrics** 的单位是 namespace，拥有 Dimenssion（attribute），metric 都有自己的 timestamp，可以穿件 custom metric，比如尚且无法拿到的 RAM 数据
+- **Metric Filter**：简单的日志过滤功能，但是好用，下游集成SNS通知功能等，可以使用正则表达式
+- **Metric Streams**：可以通过近实时 near-real-time 的方式（可以 *filter metrics*）将 metrics 流发送到 Kinesis Data Firehose，然后发送到 S3/Redshift/OpenSearch 中供其他分析等用途
+- **Custom Metrics**：PutMetricData API创建
+- **Anomaly Detection**异常检测功能：使用ML算法检测 metric 中的异常值，后续可以发送 Alarm等
+- **Lookout for Metrics**：是一个比CW Anomaly detection更高级的功能，可以检测不只是 AWS 自己的服务，还有很多*第三方服务*的 metrics 异常（使用AppFlow服务，这是一个自动化应用程序数据传输的服务），并且可以**自助识别发生异常的 root cause**，后续可以发送alart到 SNS/Lambda/Slack/Webhooks 等
+- **CloudWatch logs**：*log groups*层级之下的是一个一个的*log streams*，日志存储，并且可以发送logs到其他服务，S3/OpenSearch/Kinesis/Lambda 等，安全KMS加密
+  * 日志源为各种AWS服务，EC2中安装的是**CloudWatch Logs Agent**
+  * 更新的 agent 版本是 **CloudWatch Unified Agent**，它可以发送RAM，CPU更详细数据等到Logs，还可以集成SSM服务的各种功能，是一个更新的版本
+  * *CloudWatch Logs Insights*：Query 和可视化工具，注意它*不是*一个实时的功能
+  * **S3Export**：顾名思义就是输出到S3，有一点要注意，日志需要12小时后才能被export
+  * **CloudWatch Logs Subscription**：实时将 logs 数据输出到 Kinesis 服务或者 Lambda 用于分析和处理，有*filter*功能，支持*Multi-account和Multi-region*！需要设置*IAM Role和Destination Resource Access Policy*
+- **Live Tail**：debug的时候好用，针对某Log stream进行实时的日志抽取，可以立刻返回最新的日志，实质应该是一个*流数据抽取*服务
+- **CloudWatch Alarm**：可以事件驱动和定期驱动，下游可以invoke的服务：EC2，Auto Scaling Group，SNS
+- **Composite Alarm**：一般的alarm只能有单一metric指标，composite alarm可以监控其他alarm，使用AND/OR等逻辑表达式，达到复合指标监控功能，减少 alarm noise
+
+- **CloudWatch Synthetics Canary** 是一种用于监控和验证应用程序和服务的工具，它通过*自动化的测试脚本模拟用户交互，比如API，或者URL链接检查*，以便检测潜在的问题，集成Alarm，使用Python/Node.js编写，可以跑一次也可以定期跑，有很多 Blueprints 可以用
+
+### Athena
+
+- 无服务器 Query 引擎
+- 将数据load到S3中使用 SQL 进行文件查询，因为要进行数据扫描，并且据此付费，所以使用 Parquet 格式是最省钱的
+- 经常下游和 QuickSight 集成使用
+- 适合用于分析，S3中的各种数据和日志
+- **性能提升方法**：*Columnar数据（Parquet格式按列scan），Compression data（压缩数据为压缩文件，取得数据更快），Partition Dataset（日期分区文件夹），Use Larger Files（防止overhead）*
+- **Federated Query**：使用Data Source Connection可以连接到其他的数据进行查询，查询结果还可以存储到S3中，很方便
 
 ## Incident & Event Response
 
+### EventBridge
+
+- 事件和时间驱动
+- 有**Event Filter**功能，Event会以*Json*的格式发送给下游服务，**Content-filter**功能，可以在*Event Pattern*中提供语法过滤，进行更细致的 Event filter，比如前缀后缀，数字，IP匹配等
+- **Input Transformation**：在输出到下游的target的时候，比如CW Logs的时候可以*定义输出格式的转换*，使用Event的json内容中的key-value值，定义变量，输出想要的结果格式转换，然后导入到你的Cloud Watch logs中，比如`$.detail.instance-id`
+  * 这是一种很棒的对自己的事件内容，进行自定义log输出格式的功能！
+- Partner Event Bus：支持很多第三方服务的bus
+- Custom Event Bus：可以为自己的应用创建自定义的bus
+- 支持Cross-Account，需要设置*Resource-based Policy*，方便进行Event Bus的中央管理
+- *Schema Registry*：分析bus中事件的schema，可以帮助生成你自己app的事件数据，从而提前知道event bus中数据是什么结构
+
+### S3相关
+
+- **S3 Event Notification**
+- 针对S3事件进行的通知功能
+- 可以过滤Object进行简单的filter
+- 下游服务：SQS，SNS，Lambda
+- IAM Permission：注意，这里*不定义S3的IAM Role*，而是*定义下游SQS/SNS/Lambda的Resource Policy来允许S3的access*
+- *集成 EventBrideg*，将所有的events都发送到EventBridge，就可以发挥更强的功能，下游可以驱动的服务也更多，并且可以同时驱动很多服务
+
+- **S3 Object Integrity**：使用MD5或者Etag算法进行Object的上传验证，如果无法通过则不会被上传，还有很多其他加密算法也可以使用
+
+### Health Dashboard
+
+- 在console的上方的小心脏标志，分为*Service history，Account health 和 Organization health*
+  - All region services
+- 可以发送Alart和通知，以及问题修复指导，集成**EventBridge**下游可以invoke更多丰富功能
+- 可以集成整个Organization的数据
+
+### EC2 instance status check
+
+- 是EC2面板中的一个功能
+- **System status check**：
+  - 使用Personal Health Dashboard可以检查到instance的硬件和软件问题，比如AWS自己运维的硬件问题，会自动将你的instance进行硬件设备转移（*host migration*）等，都可以确认到 -> 所以有时instance会突然publici ip变动了
+  - 它的解决方案就是stop&start服务器
+- **Instance status check**：
+  - 由于instance的软件和网络问题引起的问题，解决方案就是重启或者更改configuration
+
+- 集成**CW Metrics的自动化修复**
+  - 相关metric，以*StatusCheckFail*开头，包括system/instance
+  - CloudWatch Alarm适用于针对一个instance进行的通知和修复
+  - AutoScaling Group适用于instance集群的自动修复
+
+### CloudTrail
+
+参考安全专家内容
+
+### DLQ of SQS
+
+- SQS**DLQ**：当消息在visibility timeout的时间内多次都没被处理就会被送进dead letter queue，它适合之后的debug
+  - Redrive to source：当你的代码问题修复了，可以将这些message重新放回原本的queue进行处理
+  - 因为你可能会重复处理message，最好确保你的处理具有幂等性（Idempotency）比如upsert处理
+- SNS**DLQ**：SNS的DLQ是和*Subscription-level*绑定的，也就是说一个订阅有一个DLQ，Redirve Policy是通过Json格式，指定对应的SNS资源ARN
+
+### X-RAY
+
+- applications的*分布式*可视化*tracing分析*
+- 集成服务：
+  * EC2：安装X-ray agent
+  * ECS：安装X-ray agent or Docker Container
+  * Lambda
+  * Beanstalk：agent 是被自动安装的，有*X-ray守护进程daemon*，可以用*config文件enabled该功能*，你的代码中也可以通过x-ray sdk来集成功能
+  * API Gateway：对于debug它的error很有帮助
+- X-ray agent或者service需要相关的 IAM permission（IAM ROLE） 来访问 X-ray 服务
+
+- **AWS Distro for OpenTelemetry** 是 AWS 提供的一个开源工具，它是对 OpenTelemetry 项目的一个增强版。OpenTelemetry 是一个用于分布式系统的观测工具，用于收集、处理和转发应用程序的跟踪、度量和日志数据
+  - 如果想要开源API追踪工具，加上下游发送到多个目的地的话（可以发送到X-ray），可以从X-ray迁移到该服务
+
 ## Security & Compliance
+
+全部服务参照安全专家，包括如下重点服务：这里只记录自我简单总结
+
+### AWS Config
+
+- 实质上它背后的违规比较，应该是基于IaC的底层代码，它驱动的修补程序，也就是System Manager则是一种疏结合，System Manager中跑的Document，实质也是一种IaC基础设施重新部署
+
+- 它的*Configuration Recoder*功能，实质用的是CloudFormation StackSet功能记录了一个时间点的资源配置，该配置可以被用于各个account的资源设置
+
+- *Aggregator*用于整合各个账户的config数据，到一个账户，如果是OU设置下的不需要各个账户设置，如果不是OU则需要被整合的账户授权。只用于整合数据，不用于统一设置，如果要给各个账户统一设置，使用CloudFormation StackSets。
+
+- *Conformance Pack*也是一种Yaml文件，是一组Config Rule和Remeddiation actions的合集，实质也是IaC，*CloudFormation of the Config Rules！*因此它可以用Codepipeline和CloudFormation进行自动化部署
+
+### AWS Organization
+
+- SCP很重要，定义的是Users/Roles/RootUser的权限，不定义Management Account的权限，*就算你用SCP限制Management Account的权限，也不会起作用*，Root账户会被影响，root账户不是用来管理整个环境的，他只是一个资产所有者的单位
+- 可设置黑白名单list，可以在OU或者Account level上进行设置，OU是有层级的，SCP作用于层级，外层的限制会作用于内层
+
+### Control Tower
+
+- 是一个帮你设置OU的工具服务，一次设置就可以设置起整个OU需要的各种组件
+- 基本所有的组件都在*Landing Zone*中
+- **Account Factory**：制造各种账号给你的组内成员使用
+  - 集成**Identity Center**创建SSO服务 -> 集成On-Premise AD目录
+- 使用AWS Service Catalog来预置新的账户
+- **Guardrail**：也是一个合规服务，detect & remediate
+  - 可阻止性功能的使用SCP进行限制
+  - 检测性的只是用Config服务进行检测
+  - Guardrails的三个级别：
+  - *Mandatory* 强制性Guardrails：是应用于 AWS Control Tower 下所有账户的不可移除的护栏。它们执行关键的安全和合规要求。
+  - *Strongly Recommended* 强烈推介的Guardrails： 默认未启用，但是强烈建议，是基于best practice的
+  - *Elective* 可选的Guardrails：允许组织根据其独特的需求定制治理
+
+- **Customization for Control Tower**：自动部署服务的框架
+  - AWS自创的GitOps自定义框架，帮助使用*CloudFormation和SCP*自定义LandingZone
+  - 它和Account Factory Customization的blueprint（只能发布一个模板）不同，它可以不断集成通过CodePipeline持续发布不同的template和SCP策略
+
+- **Account Factory for Terraform**：
+  - 有一个官方维护的tf模板，帮助自动部署账户，文件名为 account-request.tf 在[aws-ia](https://github.com/aws-ia)的Github账户中有source，这官方账户全是自动化，神了
+
+### IAM Identity Center（SSO）
+
+- 前身就是AWS Sigle Sign-On
+- 登录界面后面是认证的AD池
+- 一键登录所有的AWS account，组织，还有其他第三方应用。TB案件中的AWS登录就是这样的。
+- Identity Center中的权限控制使用 *Permission Sets*
+- 权限组来自MicroAD或者该服务的built-in Identity Store，通过 group + permission sets 进行管理
+- ABAC细度管理，根据用户的属性attributes，实质是一种**tag**
+
+**External IdP（外部身份提供者）**指的是一个管理用户身份和认证的第三方服务。例如，Google、Microsoft Azure Active Directory（AD）和Okta等都是常见的身份提供者，它们可以帮助组织管理用户身份和访问权限，而不需要组织自己维护所有的用户账户信息。
+
+在AWS（Amazon Web Services）中，AWS Identity Center（之前称为AWS Single Sign-On，SSO）支持与外部身份提供者集成，以实现统一的身份管理和单点登录。以下是AWS Identity Center如何为外部身份提供者认证的基本流程：
+
+1. **配置身份提供者**：首先，你需要在AWS Identity Center中配置外部身份提供者的连接。这通常包括输入外部身份提供者的相关信息，如其元数据文件、SAML端点URL等。
+
+2. **设置SAML（安全断言标记语言）或OIDC（开放ID连接）**：AWS Identity Center支持通过SAML 2.0或OIDC协议与外部身份提供者进行集成。这些协议使得AWS Identity Center能够与外部身份提供者交换认证信息。
+
+3. **用户登录**：当用户尝试访问AWS服务时，他们会被重定向到外部身份提供者进行认证。这是通过SAML或OIDC协议的单点登录（SSO）实现的。
+
+4. **身份验证**：用户在外部身份提供者那里输入凭据并完成认证后，外部身份提供者会生成一个认证令牌或断言，并将其发送回AWS Identity Center。
+
+5. **获取访问权限**：AWS Identity Center解析认证断言或令牌，验证用户的身份，并根据预配置的访问权限授予用户对AWS资源的访问权限。
+
+6. **单点登录**：一旦认证通过，用户可以无缝访问AWS资源，无需再次登录。
+
+这种集成的主要好处是简化了用户管理和访问控制，同时确保了统一的身份认证和安全策略。如果组织已经使用了外部身份提供者进行身份管理，通过AWS Identity Center集成可以大大提高效率，并确保一致的用户体验。
+
+### WAF
+
+- Layer7
+- ALB/API Gateway/CloudFront
+
+### AWS Firewall Manager
+
+- 管理组织中所有的firewall规则
+- 新的资源被创建后会立刻适用于这些rules，有利于组织合规性管理
+- 有利于WAF*跨账户*的配置，单一账户只需要用WAF就行了
+- 可以在各个账户部署Shield服务
+
+### GuardDuty
+
+- 可以利用机器学习和行为分析技术来*检测恶意活动和未经授权的行为*。
+- GuardDuty 分析对象来自 AWS CloudTrail（针对人）、Amazon VPC 流量日志和 DNS 日志的数据（针对网络），S3 data event（针对数据），EKS logs等。
+- 后面可以加上EventBridge rules进行通知，trigger target: Lambda,SNS。
+- 防加密货币攻击。有专用的finding方法。
+- 可以在组织 Organization 层级设置一个*专用于 GuardDuty 的账户（delegated）用于管理多账户*。
+- 一种 finding *构架*：GuardDuty -> finding -> EventBridge -> SQS/SNS/Lambda -> HTTP(slack)/Email
+  - 在lambda（自动化处理）后可以进行WAF的ACL调整，block恶意ip，或者对subnet的NACL进行调整，block恶意ip。
+  - 也可以将后续动作都包在step functions中。
+- 可设置*白名单，威胁名单，还有抑制规则*（比如你不想看到的ip，已知没威胁的）。
+- 注意！GuardDuty对于DNSlogs的解析，只针对default VPC DNS resolver。其他的不出finding结果。
+
+- **Cloudformation 集成issue**：使用CF进行GuardDuty的enabled的时候，如果GuardDuty已经是enabled状态，那么部署就会失败
+  - 解决方案：使用CF的*Custom Resource*，使用Lambda构建该资源，判断只有当GuardDuty没有被enable的时候，才对它进行enabled修改和配置
+
+### Detective
+
+- 机器学习和图算法。
+- 深度分析根源问题。
+- 自动收集和输出事件：VPC Flow Logs，CloudTrail，GuardDuty
+- 生成可视化visualizations和细节details。
+- 流程：detective检测 - triage问题分类 - scoping问题界定 - response回应
+
+### Inspector
+
+- 自动（漏洞）安全评估工具
+- 对EC2通过SSM Agent(这是服务触达EC2的方式，必须设置)检查OS漏洞，以及网络触达*network reachability*（端口是不是不应该对公网开放之类的）to EC2
+- 可以检查*ECR*中上传的Container Images
+- 检查Lambda软件代码和依赖的漏洞，when deployed
+- 结果去向：可以发送到*SecurityHub*中作为报告，也可以trigger EventBridge出发其他内容
+- 重点：三种服务（EC2,ECRimages,lambda），针对漏洞，漏洞CVE更新那么他会重新检测，会给出一个risk score风险分数
+
+### Trusted Advisor
+
+- 检查和建议。
+- 六个方面：Cost-optimization，Performance，Security，FaultTolerance，ServiceLimits，OperationalExcellence。
+- 但是 Free Plan 只能用很少的一部分比如安全和服务限制的一部分check，如果要 FullSetCheck 和 supportAPI 的使用，要求 Business&Enterprise Support Plan。
+
+### Secrets Manager
+
+- 强制在X天后进行Rotation
+- 使用 Lambda 可以自动生成新的 Secrets：需要 Lambda 对 SecretManager 和数据库的访问许可，包括对subnet的网络设置（VPCEndpointorNATGateway）
+- 内部使用KMS进行加密，对称加密，发送GenerateDataKeyAPI进行信封加密，需要双方service的权限
+- 与各种DB集成用于密码存储和轮换
+- Multi-region跨区复制功能，用于灾难恢复，跨区DB和跨区应用等：Primary - Read Replica
+
+- ECS（worker/task）也集成使用SecretManager和SSMParameterStore的key进行RDS和API的连接。

@@ -37,3 +37,7 @@ src是一开始理想的有很多文件结构的代码，但是似乎测试不�
 
 - 因为我用的是公司的GCP环境所以需要认证，而我的WI认证只能在Actions中跑，所以没法本地运行terraform命令
 
+## 其他学习笔记
+
+- terraform output 命令可以查看输出
+- terraform destroy 最好用于删除整个infra，而不是个别的，删除个别资源最好使用修改tf文件的方式
