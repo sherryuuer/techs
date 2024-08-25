@@ -89,7 +89,7 @@ DevOps是一种结合了软件开发（Development）和IT运维（Operations）
   * OverWrite参数Parameter的方式：Json文件/静态文件/动态覆盖
 
 - BestPractice：
-  * 总是有一个*pre-prod*环境，进行代码审查，也就是增加*ManualApproval*的stage
+  * 总是有一个*pre-prod*环境，进行代码*手动审查*，也就是增加*ManualApproval*的stage
   * 并行parallel发布到多个deployment group
   * 并行parallel构建build到多个环境：*RunOrder*
   * 在任何阶段发生了fail等issue，总是用*EventBridge*进行后续触发，比如SNS通知，或者Lambda修复
@@ -108,7 +108,7 @@ DevOps是一种结合了软件开发（Development）和IT运维（Operations）
 - 支持的环境：各种预设的代码环境，以及DockerImage
 
 - **How it works**：
-  * 从代码仓库取得code文件和*buildspec.yml*文件
+  * 从代码仓库取得code文件和*buildspec.yml*文件，这个文件是放在Github仓库的top层的地方的
   * *pull*需要的*DockerImage*文件用于构建环境等
   * 可设置将一部分文件*cache*到S3中已备下次使用（Optional）
   * *日志*输出到S3或者CWLogs
@@ -1029,7 +1029,7 @@ Data Engineer 中记录的更详细！这里关注devops的重点！
 
 ### Control Tower
 
-- 是一个帮你设置OU的工具服务，一次设置就可以设置起整个OU需要的各种组件
+- 是一个帮你设置OU的工具服务，一次设置就可以设置起整个OU需要的各种组件：**AWS Organizations、AWS Service Catalog、AWS Single Sign-On设置的编排服务**
 - 基本所有的组件都在*Landing Zone*中
 - **Account Factory**：制造各种账号给你的组内成员使用
   - 集成**Identity Center**创建SSO服务 -> 集成On-Premise AD目录
