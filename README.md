@@ -162,6 +162,7 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [航海日志：定期思维检修1-202404](principals/checkmind1.md)
 - [航海日志：定期思维检修2-202405](principals/checkmind2.md)
 - [航海日志：定期思维检修3-202406](principals/checkmind3.md)
+- [航海日志：定期思维检修4-202408](principals/checkmind4.md)
 - [成为工程师路上的乱七八糟的思考](principals/engineer.md)
 
 ## Tools
