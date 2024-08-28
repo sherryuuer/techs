@@ -88,7 +88,7 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [机器学习系统设计：设计流程，特征工程，和Pipeline技巧](ml/ml-system-design.md)
 
 ## Software Engineer 101
-- [软件工程师101学习笔记](software/software-engineer-101.md)
+- [软件工程师101学习笔记：值得多学习几遍](software/software-engineer-101.md)
 - [编程的历史和分类：声明式和命令式](software/programing-lang.md)
 - [用Python进行统计分析](software/statistics-with-python.md)
 - [网络基础：使用Python实现的套接字编程](software/python-sockets-programming.md)

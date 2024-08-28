@@ -37,7 +37,23 @@ src是一开始理想的有很多文件结构的代码，但是似乎测试不�
 
 - 因为我用的是公司的GCP环境所以需要认证，而我的WI认证只能在Actions中跑，所以没法本地运行terraform命令
 
-## 其他学习笔记
+## ZTM 课程学习笔记
 
 - terraform output 命令可以查看输出
 - terraform destroy 最好用于删除整个infra，而不是个别的，删除个别资源最好使用修改tf文件的方式
+- variables 的设置在 apply 后都是要手动输入的，虽然变量可以放在任何地方，不管放在哪里都可以用 var 呼出
+  - 也可以用 -var option 来指定，并且可以多次指定
+
+- 实质上可以在一个文件中写所有的东西，但是进行文件夹组织是一个好的实践，机器看都一样，人看就需要更清晰
+- `terraform.tfvars` 是一个用于在 Terraform 中定义变量值的文件。这个文件用于将具体的值赋予在 `variables.tf` 文件中定义的变量。比如
+   ```hcl
+   project_id = "chaonanwang-sandbox"
+   region     = "us-central1"
+   ```
+   - 当运行 `terraform apply` 时，Terraform 会自动加载 `terraform.tfvars` 中的变量值，并将它们应用到你的 Terraform 配置
+   - 可以根据不同的环境创建不同的 `.tfvars` 文件，如 `dev.tfvars`, `prod.tfvars`。在运行 Terraform 时，使用 `-var-file` 参数指定特定的 `.tfvars` 文件：
+   ```sh
+   terraform apply -var-file="prod.tfvars"
+   ```
+   - 如果在命令行中使用 `-var` 选项指定了变量值，它将覆盖 `terraform.tfvars` 中的值，它具有最高优先权
+   - 似乎terraform都是用双引号，`"Name" = "${var.vpc_name} VPC"`
