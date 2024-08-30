@@ -116,7 +116,7 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [Google-Gimini-API上手体验和要点总结：目前最爱Gemini](clouds/gemini-api.md)
 - [GCP的ID认证服务：WorkloadIdentity是什么，如何让外部ID可以在GCP内作业](clouds/workloadidentity.md)
 - [关于云上的CI/CD服务，以及IaC服务的总结](clouds/cloud-cicd-tools.md)
-- [IaC工具Terraform部署Bigquery表的心得笔记](clouds/terraform_bq.md)
+- [IaC工具Terraform部署Bigquery表和CFn的心得](clouds/terraform_bq.md)
 
 ## Principal & Base
 - [工程师原则](principals/whats-not-change.md)
