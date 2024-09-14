@@ -147,6 +147,7 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 ## Interesting Posts
 - [*WEB3：初步接触比特币，元宇宙，以太坊，智能合约等概念](morefun/web3.md)
 - [G检定深度学习考试相关日语词汇和概念解释](morefun/gtest.md)
+- [外部链接：快速学习合集（snowflake，dbt，aifflow）](morefun/links.md)
 - [外部链接：软件工程师能力模型探讨](https://www.cnblogs.com/wintersun/p/17367384.html)
 - [外部链接：关于DataEnginner-如何成为一个数据工程师-数据处理中重要的事情](https://zerotomastery.io/blog/how-to-become-a-data-engineer/?utm_content=%5BCommunity%5D+-+May+2024+-+Academy&utm_medium=email_action&utm_source=customer.io#Step-3-Learn-Data-Engineering-concepts)
 - [外部链接：太空冒险在线网页游戏项目-它使用Threejs创建了一个不一样的世界太酷了](https://equinox.space/)
