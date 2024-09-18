@@ -60,6 +60,105 @@
 - 类似于AWS的Identity Center，统合管理
 - 实现User管理，Device管理，SSO登录管理，以及各种安全功能（威胁检测，Endpoint管理，多要素认证等）
 
+### Operation Suite
+
+- 系统监视的工具和对应，记录log进行监察等
+- **Cloud Logging**：收集几乎所有的日志，实时分析功能，定制metric
+  - 构架：Logging - Pub/Sub - Dataflow - BQ，这一连串流程依赖Logging API编码
+  - Log Bucket：日志保存用的桶，分为required（监察，存留400天不可更改设置）和default（存留40天，可以更改设置）
+  - *Cloud Audit Log*：如AWS的Cloud Trail
+    * 管理活动日志，通过SDK，API，Console进行资源操作的日志
+    * 数据访问日志
+    * 系统事件日志，非用户活动导致的事件日志
+    * Policy Denied监察日志，因IAM权限不足而被拒绝访问的情报
+
+- **Cloud Monitoring**：可视化，infra和应用的活动监控，还可以*监控其他云平台比如AWS的活动*，主要功能如下：
+  - 收集metric：
+    * 主要可以收集的是CPU利用率，Network进出流量，和DiskIO
+    * 高级metric比如memory利用率，需要安装*Monitoring Agent*，或者用*Monitoring API*则什么都可以发送
+  - 仪表盘，也就是可视化
+  - Alart，根据事先设置，发出警报
+  - Uptime Check，定期检查你的Web服务的可用性（百分之XX的指标）
+  - SLO（Service Level Objectives）指标报告书的生成
+    * SLA（agreement）则是关于服务水平和客户制定的，必须达到的协议
+
+- **Cloud Trace**：对GCP上的应用性能的瓶颈，和延迟原因，进行特定的，分散型追踪系统
+  - 分析，收集，可视化，request的详细情报
+  - 适合*微服务*构架，因为很多request发送/接收的数据
+
+- **Cloud Service Health**：健康仪表盘
+  - 可视化和通知，云服务的稼动状况，incident，未来maintainance的历史和计划等
+
+### Secret Manager
+
+- 秘密info管理
+- 有version管理功能，方便rollback
+- 和Cloud Audit Log统合，方便监察
+- Functions可以帮助自动无效化和更新密码
+- 如果没有location限制，在创建的时候会自动有效化复制Policy
+- 防止代码中秘密情报的硬编码，使用SecretManager并对API的使用，执行最小权限原则的权限赋予
+- 删除前要先无效化
+
+### Cloud KMS
+
+- Key Management Service
+- 加密键的创建，使用，管理（使用version管理，防止找不到老的键）
+- 统合IAM，进行访问控制管理
+- 统合Audit Logs，进行监察管理
+- 键可以设置为global或者region，但是global的泄露影响较大，最好还是慎重选择region
+- HSM可用
+- 第三方Key管理服务可用
+- FIPS 140-2:美国和加拿大政府，加密，安全评价标准
+
+### Security Command Center（SCC）
+
+- 有点像*AWS Config和各种异常检测服务的合体*
+- tier有Standard和Premium
+- Standard功能：
+  - Security Health Analytics健康分析，IAM，Network，数据管理构成config的问题检测
+  - Web Security Scanner：检测web应用的脆弱点（高级功能中这个是可以自动的，标准功能中需要客户手动操作）
+  - Anomaly Detection：比如VM加密货币挖掘滥用检测
+- Premium功能：
+  - Event Thread Detection：Logging数据加机器学习手法进行病毒检测
+  - Container Thread Detection：对容器不正常举动的检测
+  - VM Thread Detection：对VM的不正常举动的检测
+
+### Cloud Data Loss Prevention（DLP）
+
+- 机密info的检测，分类，保护，AWS同类服务Macie
+- 可以对机密情报进行masking，置换操作等
+- 统合Bigquery，GCS，Datastore服务，通过API可以和Custom的数据流统合
+- 根据敏感数据出现的频率，分析风险水平
+
+### Migration & Transfer
+
+- 各种服务和数据的移行服务，包括服务器，数据，数据库，SQL变换工具等，自己用过的Storage Transfer，BQ transfer，Database Migration Service（转换SQL的那个）
+
+### Disaster Recovery
+
+- 把握基本的*RPO*和*RTO*的概念，恢复点目标和恢复时间目标，两者越短，cost越高
+- 几个tier：
+  - backup&restore：最便宜，恢复时间长
+  - cold standby：发生灾害，移行数据到prod
+  - warm standby：复制一个最小构成环境，除了数据库之外基本都具备
+  - hot standby/multi-side/active-active：完全稼动的相同的prod环境
+- 各个服务都有自己的DR策略
+- **SRE（Site Reliability Engineering）**，谷歌2003开发的软件工程框架
+  * 减少手动运维，使用自动化工具管理
+  * 服务质量定量评估指标SLO，Error Budget
+  * Toil是人工手动反复操作的task，应该尽量减少这部分内容，而转向有价值的输出
+  * 防止问题反复的自动化构架
+  * 从过去的错误和故障中进行学习和反思
+  * 提高开发速度，提高运维可信赖度，这两者应该是平衡的
+
+### Tag & Lable
+
+- lable：方便资源管理整合的属性情报，metadata，用于resource管理，氪金管理
+- tag的使用场景：网络防火墙的rule使用于VM的tag群组 / CI/CD工具的version管理tag / 组织的层级用不同的tag进行Policy设置
+- tag主要用于*权限管理*，是在*组织层级*设置的，本身就是*一种resource*
+- 注意，GCP的Label对照AWS和Azure的Tag，GCP的tag则是不同的东西
+- Afiniti Lable：用于关系管理的label，比如一台VM之于node group，就是这种亲和关系
+
 ## Compute
 
 ## Storage
