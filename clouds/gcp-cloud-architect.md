@@ -161,6 +161,27 @@
 
 ## Compute
 
+### GCE
+
+- 以秒为单位计费
+- Preemptable VM & Spot VM：后者比前者更便宜，但是前者可以使用标准VM，后者则不固定
+- burst：突然的CPU高负荷，不会有追加加算费用
+- 持续存储disk：分为standard（HDD）/balanced/SSD/extreme性能区分，ZONE/Region存储位置区分
+- Local SSD是本地存储，关闭Server，数据消失
+- IP分类：静态固定IP/动态ephemeralIP/内部私有IP，固定IP会被氪金
+- Disk快照：增量备份和全量备份，有GCS料金，Meta数据和Tag不会被备份，可以在稼动中备份
+- Cstom Image：可以在稼动中创建，可用于环境迁移，是全量备份
+- Machine Image：Disk + Image + Policy的全量备份
+- 知识补充：差量备份，是和最初的备份相比的增量，所以这种备份每次都会变多，但是它restore比增量的快，因为只需要初始的部分，和最近一次备份的部分
+- 云服务器解决方案的分类：
+  * Cloud Engine：公有云解决方案
+  * Cloud VMware Engine：私有云，和OnPre的VM统合
+  * Bare Metal Solution：私有云，使用Google提供的物理机箱，高安全，低延迟需求
+- 云迁移：Migrate for Compute Engine
+- MIG（Managed Instance Group）相当于动态扩展组ASG
+  * InstanceTemplate -> 使用模板创建MIG -> LoadBalancing设置和状态检查 -> AutoScaling设置
+  * 相对的也有UIG（Unmanaged Instance Group），可以用不同种类的VM构成，但是完全需要用户手动管理和扩展
+
 ## Storage
 
 ## Network
