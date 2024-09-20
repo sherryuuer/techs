@@ -181,6 +181,67 @@
 - MIG（Managed Instance Group）相当于动态扩展组ASG
   * InstanceTemplate -> 使用模板创建MIG -> LoadBalancing设置和状态检查 -> AutoScaling设置
   * 相对的也有UIG（Unmanaged Instance Group），可以用不同种类的VM构成，但是完全需要用户手动管理和扩展
+  * 分为stateless（batch处理的构架，可以随时停止和缩小的）和statefull（连接数据库的构架）
+  * Server数量必须至少有一台，不能是min0max0
+
+### GKE
+
+- Kubernetes的所有功能，本身是一个容器编排服务，自动修复自动升级
+- 支持DockerImage的部署：通过Deployment（API）的Yaml文件指定image文件（放置于GCR），然后通过kubectl命令行部署
+- **K8S的最大单位是Cluster**：
+  - User控制是通过kubectl
+  - Control Plane(Master Node) -> Nodes(Worker Node) -> Other Services
+  - Nodes是K8S的服务器主体，有Health Check功能
+  - K8S的服务器定义可以通过manifest文件来定义，使用manifest还支持rollback
+  - Pod是部署的最小单位
+- 两种模式，一种是标准模式，需要用户手动控制，另一种是Autopilot模式，可以自动化管理
+- 两种命令行体系：gcloud用于最大scope的Cluster的管理，kubectl用于内部的Pods等的细化管理
+- API众多：Deployment，ReplicaSet，StatefullSet
+- 支持Rolling Deployment蓝绿发布，自动LB切换（使用Deployment + ReplicaSet）
+- **GKE网络构成要素**：
+  - ClusterIP：可以连接到集群内部的IP
+  - NodePort：Node和外部疏通用的Port
+  - LoadBalancer：TCP负载均衡，Layer4，通过network来的流量
+  - ingress：HTTP/S负载均衡，Layer7，通过URL和hostname来的流量
+  - ExternalName：服务的DNS命名解决通过CNAME解决
+- **冗长编排方式**：
+  - Zone Cluster：Master和Worker都在同一个Zone，抗风险能力小
+  - Multi-Zone Cluster：Master在单独一个Zone，Worker在多个Zone分布
+  - Regional Cluster：Master和Worker都在多Zone中分布
+- **自动伸缩功能Auto Scaling**：
+  - Worker Node层级：背后使用GCE，设置CA*Cluster AutoScaler*有效化，就可以伸缩Node Pool，但是不能同时有效化GCE的自动伸缩，两者会冲突
+  - Pod层级：设置HPA*Horizontal Pod AutoScaler*有效化
+  - *Pod虽然可以伸缩，但是如果Cluseter容量不足，也伸不开，两者是包含的关系*
+
+### GCK & AR
+
+- GCR是Container Register，是存放image的，有自动Scan病毒的功能
+- AR是Artifact Register：Image，SourceCode，二进制文件，构成文件，文档等的存放
+  - 安全和管理功能比较强化，RBAC，加密，Image历史记录追踪可
+
+### PaaS分类
+
+- APP分为HTTP和Event驱动两种
+- HTTP中分为需要设置K8S硬件系统的Cloud Run for Anthos和不需要设置的Cloud Run（现在内置Function了）
+- 不在不需要设置K8S（底层硬件系统）的分类中分为不受编程语言限制的Cloud Run和受到限制的Cloud Function，以及退休的App Engine
+
+### App Engine
+
+- PaaS，全托管快速发布应用，已废止使用了似乎
+- 支持蓝绿发布，和各种CI/CD工具联动可
+
+### Cloud Function
+
+- Faas，Function as a Service
+- 可以只驱动代码执行，是事件驱动型的微服务构架组件，高并发，自动伸缩
+- 安全：端点是HTTPS类型，使用IAM管理访问权限
+- TimeOut：HTTP函数的时间是60分钟，事件驱动函数的时间是9分钟
+
+### Cloud Run
+
+- 基于Docker Image的事件驱动服务
+- 统合：HTTPS，GCS，PubSub，CloudBuild（组合完成CI/CD管道流程）
+- Cloud Run for Anthos：可以使用GKE为基盘的Run，使用GKE的功能，更加灵活
 
 ## Storage
 
