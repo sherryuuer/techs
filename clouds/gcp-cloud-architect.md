@@ -212,6 +212,8 @@
   - Worker Node层级：背后使用GCE，设置CA*Cluster AutoScaler*有效化，就可以伸缩Node Pool，但是不能同时有效化GCE的自动伸缩，两者会冲突
   - Pod层级：设置HPA*Horizontal Pod AutoScaler*有效化
   - *Pod虽然可以伸缩，但是如果Cluseter容量不足，也伸不开，两者是包含的关系*
+- **Helm**：是 Kubernetes 的一个包管理工具，类似于 Linux 上的 apt 或 yum，但专门用于 Kubernetes 环境。它允许你以可重用的模板化方式定义、安装和管理 Kubernetes 应用程序。Helm 提供了一种简化部署和管理 Kubernetes 集群中复杂应用的方法，特别是在多服务和微服务架构中。
+
 
 ### GCK & AR
 
@@ -242,6 +244,25 @@
 - 基于Docker Image的事件驱动服务
 - 统合：HTTPS，GCS，PubSub，CloudBuild（组合完成CI/CD管道流程）
 - Cloud Run for Anthos：可以使用GKE为基盘的Run，使用GKE的功能，更加灵活
+
+### CI/CD工具组
+
+- Cloud Build支持并行build，创建Docker Image，并无缝连接地Push到GCR中，与firebase统合，iamge自动加密
+- 上游Git环境发生Push事件，couldbuild.yaml定义构成文件，deploy代码到各种GCP环境
+- Test策略：Canary（要考虑下位互换性），A/B测试，Shadow测试
+- Deploy策略：AllAtOnce（In-Place），Rolling，Blue/Green
+
+### Anthos
+
+- 混合云和多云应用管理服务
+- 方便将原有的应用迁移到Container环境，使用微服务构架
+- Anthos本身的*底层服务集群构架*是用K8S服务集群
+- Anthos Service Mesh：*上层服务*，可视化，监视，管理服务，可以设置Alart和SLO（Service Level Objective服务水平目标）
+- DevOps/CI/CD统合服务发布
+- 开源项目，可与第三方统合（但是我觉得现在大家很少这样做）
+- *Istio*：微服务架构中管理服务通信的工具，开源的服务网格（Service Mesh）平台，用于帮助管理、保护、连接和监控微服务架构中的网络流量。它通过抽象出应用程序的网络层，简化了微服务的管理，特别是在大规模分布式系统中
+  * 数据平面（Data Plane）：由Envoy 代理组成。Envoy 是一个轻量级的代理，它在每个服务的旁路中运行，*处理微服务之间的网络流量*，执行流量管理、安全策略、监控和日志记录。
+  * 控制平面（Control Plane）：主要组件为Pilot、Mixer 和 Citadel，负责配置代理、执行策略和管理服务身份验证。
 
 ## Storage
 
