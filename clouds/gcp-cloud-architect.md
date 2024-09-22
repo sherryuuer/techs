@@ -266,7 +266,54 @@
 
 ## Storage
 
+### GCS
+
+- object存储对象，object最大size是5TB
+- 根据使用频率可以分几个classes：
+  - Multi-regional - Part of Standard now
+    - 注意这个多区域也是在一个大陆上的，要在多个大陆复制，要用多个Multi-region桶
+  - Dual-region：可以自己控制在哪两个region的复制，比Multi-region更灵活一些
+  - Regional - Part of Standard now
+  - Nearline：30天/访问频率
+  - Coldline：90天/访问频率
+  - Archive：一年/访问频率
+- LifeCycle管理可，在class之间的移动和删除可
+- 数据保护：存储加密，传输SSL/TLS加密，Version管理（文件本身是Key，版本是ID，删除的时候是Deleted Marker，可取回）
+- Bucket Lock：为了满足Compliance要求的一定期间对桶内object，不可删除，不可修改的设置，又叫Retension（保留）Policy
+  - Object Holds：是针对单个object的锁定
+- 签名URL（署名付きURL）是临时权限的URL，两种，针对resource的和针对scope的：前者针对特定资源，后者针对特定操作权限
+  - 创建的时候需要使用特定权限的Service Account，下载SA的秘密key，Call创建签名URL的函数进行创建
+- 均一管理（Uniform）和细化管理（Fine-Grained）
+  - 均一管理针对bucket全体，不需要ACL管理object，后者则使用ACL管理object层级的权限，比较麻烦
+- 有Metadata管理功能
+- gsutil操作，它是Python应用哎，针对大object和streaming数据的上传和下载有更多的选项可以使用
+  - 大object通过并行处理和分割处理会提高传输效率
+- *Transfer Appliance*：物理数据传输，发送你黑盒子发送数据通过物理运输等方式发送到谷歌，放置于GCS中
+  - 适用于TB级别的传输，放置网络问题导致的数据破损
+  - 但是因为物理发送原因，要花费10天以上，一般来说10TB之类的，网络没问题的话，用网络传输效率更高
+
+### Firestore
+
+- NoSQL文件document数据库/Firebase是realtime数据库，是一种BaaS（Backend as a Service）
+- 高IOPS低延迟
+- 几个版本选择：
+  - Firestore Basic：文件系统，软件开发后端，GKE
+  - Firestore Enterprise：基盘应用比如SAP等
+  - Firestore High Scale：比如金融交易，HPC等
+
 ## Network
+
+### VPC
+
+- VPC是global的，subnet是可以跨zone的，但是注意，AWS中VPC时跨几个AZ，subnet是每个AZ一个
+- VPC Peering功能有，可以跨Region进行Peering，通过防火墙进行通信限制，服务本身不花钱，但是通信会花钱
+  - 和AWS一样：IP cider不能有重叠，也不支持推移传递连接，要连接哪个就需要直接连接
+  - 最大连接上限100个
+- Shared VPC：是一个host的Project的VPC分享私有网络给多个Project，成为主从关系，共享一个私有网络的IP和资源
+- VPCSC：公开API的安全境界设置，放置不安全的数据外流
+  - Context Access Manager：可以设置账号，IP等的限制，等于说在IAM的设置外多了一层防护
+- *Private Google Access*：只拥有私有IP，也可以和Google的服务/API进行连接的功能，安全
+
 
 ## Database
 
