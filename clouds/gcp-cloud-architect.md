@@ -314,6 +314,58 @@
   - Context Access Manager：可以设置账号，IP等的限制，等于说在IAM的设置外多了一层防护
 - *Private Google Access*：只拥有私有IP，也可以和Google的服务/API进行连接的功能，安全
 
+### Cloud VPN/Dedicated Connection
+
+- VPN使用Site2site的VPN，使用IPSec加密方法
+- 除了基本的VPN，还提供一种HA（High Availability）VPN
+  - 高可用VPN支持DualStack（IP4+IP6），仅仅支持动态路由BGP，支持一个VPN Gateway接两个通道
+
+- **Cloud Interconnect**：分为两种：Dedicated Interconnect和Partner Interconnect
+  - 适用于BigData，和大型Workload
+  - 前者就是完全专有（10Gbps，100Gbps），后者要依赖第三方业者（可以从50Mbps开始）
+  - 前者是Google专有提供的所以支持SLA水平99.9，后者则不支持
+
+### Cloud Firewall
+
+- 根据IP，Protocol，Port设置，优先顺序用号码定义，越小级别越高，这种明确设置的rule列表叫做静态防火墙
+- Firewall Insight是SCC的一个功能组件
+- 可以看出每个rule的使用率，识别不被使用的rule和重复的rule用于改善，还可以追迹rule的变更历史
+
+### Cloud Armor
+
+- Layer7的防火墙，强化HTTP/HTTPS的通信保护
+- DDoS防御功能：检测异常，确保通信带宽，block特定通信源
+- WAF功能，防御OWASP Top10（web应用top10安全风险清单）等一般的脆弱性防御
+- IP黑白名单设置
+- 机器学习通信Pattern，Block异常通信
+- 地域地理区域通信保护和限制
+
+### Cloud Router
+
+- 支持静态路由和动态路由的功能的总称
+
+### Cloud NAT
+
+- 私有IP和公有IP的转换功能
+- 高冗长和可用性，统合Operation Suite有监控支持，可以自动灾害恢复
+- 对外变换和对内变换，对内变换的时候推介增加使用Firewall过滤
+
+### Cloud Load Balancing
+
+- 不需要Pre-Warming，几秒就可以扩展的高可用性托管型服务
+- 分类：三个维度分类
+  - Global/Region
+  - 内部还是外部
+  - HTTP/S（应用）还是TCP/UDP（网络）
+- Proxy（代理模式）和PassThrough（直通模式）：
+  - 代理是不通过VM直接和代理连接，但是有Port和Protocol的限制
+  - PassThrough是直接和VM连接，需要光缆回线支持，支持全Port和Protocol
+  - 代理模式适合需要集中管理和优化流量的场景，如SSL/TLS终止、内容缓存和流量路由等
+  - 直通模式则适合对延迟敏感、需要直接与后端服务器通信的场景，特别是在客户端和服务器之间需要端到端加密时
+- Health Check功能
+  - 针对Layer4：TCP健康检查，UDP健康检查
+  - 针对Layer7：HTTP/S健康检查，gRPC健康检查
+  - 从而实现MIG（托管型Instance集群）的自动恢复
 
 ## Database
 
