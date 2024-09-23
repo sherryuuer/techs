@@ -616,4 +616,4 @@ Thompson Sampling 是一种有效的策略，用于解决探索与利用的权�
 
 **预计送餐时间系统**
 
-![系统构架图]()
+![系统构架图](food-delivery-ml-system.png)

@@ -86,6 +86,7 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [Databricks-ML-spark-考试](ml/databricks-ml-spark.md)
 - [✨Spark✨&Databricks学习和文档阅读笔记](ml/spark_base.md)
 - [机器学习系统设计：设计流程，特征工程，和Pipeline技巧](ml/ml-system-design.md)
+- [量子机器学习：初探他到底是什么，概念，应用和意义](ml/what-is-quantum-ml.md)
 
 ## Software Engineer 101
 - [软件工程师101学习笔记：值得多学习几遍](software/software-engineer-101.md)
