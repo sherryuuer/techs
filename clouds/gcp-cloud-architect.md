@@ -367,7 +367,82 @@
   - 针对Layer7：HTTP/S健康检查，gRPC健康检查
   - 从而实现MIG（托管型Instance集群）的自动恢复
 
+### Cloud CDN
+
+- CDN的目的：减轻Origin的负担，提高对Client的requests的响应速度
+- *Max-age*指标，是刷新CDN内容的时间长度指标，trade-off：信息的新鲜度和Origin服务器的负担
+- *Expires*指标，明确指定cache的过期时间，但是优先度上Max-age存在（因为它优先度高）的话，这个指标会被无视
+- 通过对*Cache Key*的调整，可以提高*hit率*，降低对Origin服务器的负荷
+- *ETag*是内容的version，如果有较老的version内容，它会向Origin服务器要求更新
+- *Last-Modifed*表示了内容最后一次更新的时间
+- 一般会和*LB负载均衡配合*使用，Origin服务器不会留下CDN的访问日志，但是LB会留下CND的Access Log
+
+### Cloud DNS
+
+- Record：
+  - A：IPv4
+  - AAAA：IPv6
+  - CNAME：别名，应该和AWS一样无法别名不带www的
+  - MX：针对mail的
+  - SOA（Start of Authority）记录是每个DNS区域（zone）的起点和权威信息来源。它包含该区域的关键管理数据，用于定义域名服务器如何处理区域内的DNS查询和同步。SOA记录是任何DNS区域文件的第一个记录，通常用于指定管理信息。
+  - NS：Name Server，指定DNS服务器
+- 高性能，高检索能力，100%可用性，自动伸缩
+
+### Apigee
+
+- API的设计，开发，测试服务
+- OAuth功能，流量异常检测，API使用情况和性能等分析功能
+- HTTP，REST，gRPC，GraphQL等多种接口
+- 支持本地环境和混合环境
+- API Gateway，Cloud Endpoints等服务可联动使用
+
 ## Database
+
+- DBaaS操作简单，高性能，Point-In-Time-Recovery，BuckUp
+
+### Cloud SQL
+
+- 关系型数据库
+- Cloud SQL Auth Proxy：不使用公有IP，而是使用私有IP的代理进行安全的（TLS/SSL）通信转发，不需要新的IP地址，使用IAM可以管理权限
+- 创建instance类型后就可以创建database，这里面的database创建=schema创建，一开始会有一些系统schema：sys,information_schema,performance_schema等
+- 执行了操作后，都会被记录，在控制台也可以通过operation tab进行确认
+
+### Cloud Spanner
+
+- 支持全球范围的水平伸缩
+- 高可用性99.999的SLA
+- OLTP强事务处理整合性（global动态伸缩下的高整合性是很难的）
+- 托管型，标准SQL使用
+- 加密，IAM访问管理，监察log
+- ACID属性复习：
+  - 原子性（Automicity）：要么成要么不成
+  - 一致性（Consistency）：动作前后数字总额一致
+  - 独立性（Isolation）：每个处理是独立的不相互干涉，前后顺序当然要正确
+  - 耐久性（Durability）：数据会永久保存不会丢失
+- Sharding：数据水平分割扩展，使用random的分割方式，更容易均等分割
+- 它的workspace写query的地方和BQ的还是挺像的，同时左边有information_schema等信息情报，同时table的情报比较详细，包括key之类的
+- 支持从Dataflow的数据流入，和对GCS的数据输出
+
+### BigTable nosqlDB
+
+- 用例和特点：金融数据，IoT数据，时间序列数据，低延迟，高吞吐，实时应用，大数据批处理
+- 表由单一的主key和列群（Column-family）构成，自动伸缩
+  - 一个record，是一个Partition单位
+  - Column-family中都是key-value组合数据，每一个record可以有不同的key-value数据
+- Hadoop Eco System互换，相关应用可以立刻移植，HBase互换，支持HBase API
+- 支持多种数据源：API连接，Streaming处理的数据，batch处理服务来的数据
+
+### Firebase appDB
+
+- 适合移动应用开发，NoSQL的document数据库
+- 数据层级是：Collection（document的集群单位）- Document以filed区分，每一个filed又有自己的Collection单位
+- 在线数据是实时同步的，这对应用开发是很重要的
+- 多region，高可用性，耐灾害性
+- 作为app的后端使用即可
+- 两种mode：
+  * Native的Firestore：document类型
+  * Datastore：key-value类型
+  * 这两种都是强整合类型，Native支持Android，IOS，C++，Unity等手机应用库，后者不支持
 
 ## Data Analytics
 
