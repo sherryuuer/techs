@@ -399,6 +399,14 @@
 ## Database
 
 - DBaaS操作简单，高性能，Point-In-Time-Recovery，BuckUp
+- 数据库的指标主要是吞吐（Throughput 读写速度）和延迟（Latency 网络延迟）
+- 数据库瓶颈原因主要从软件和硬件分析：
+  - 软件：应用构造，DB构造，Query原因
+  - 硬件：CPU，RAM，Storage（容量/IO/HDD/SSD）
+- 解决方案：
+  - Read Replica：提高读写吞吐
+  - In MemoryDB：提高处理速度
+  - 分布式处理：数据分散和并行处理比如 Hadoop
 
 ### Cloud SQL
 
@@ -443,7 +451,83 @@
   * Native的Firestore：document类型
   * Datastore：key-value类型
   * 这两种都是强整合类型，Native支持Android，IOS，C++，Unity等手机应用库，后者不支持
+- 可以设置TTL，数据的生存时间
+- 可以设置复合index，这和DynamoDB有点像
+
+### Cloud MemoryStore
+
+- 支持 Redis 和 Memcached 两种开源数据库，RAM 存储所以很快很贵，也因为它的性质，所以最好定期存储到storage中
+- Redis 相对于 Memcached 的优点是：
+  - Snapshot功能，和AOF选项（Append Only File）利于数据备份和存储恢复
+  - 支持事务处理transaction
+  - Clustering集群化高可用性
+- 实时分析，Messaging，Job Queue等use case
+- 全托管，高可用性，自动伸缩
 
 ## Data Analytics
+
+- 两个数据仓库
+### BigQuery
+
+- 实时数据处理，流数据插入，高可用性，高扩展性，操作简易，标准SQL，可以连动SpreadSheet
+- 列存储，降低I/O负担，支持列的压缩，更加降低了I/O的数据量
+- 多样性的使用方法：
+  - 无缝模型创建训练和预测（BigQueryML）
+  - Connected Sheet，可以直接对ss进行查询
+  - BQ GIS，可以直接对地理数据进行分析和查询
+- 费用包括分析和存储两个部分
+
+### Dataproc
+
+- 使用 Hadoop 和 Spark 服务的服务
+- 将存储和计算分离，存储主要使用 GCS
+- 支持高速启动和关闭 Hadoop/Spark 集群，可以使用临时集群（长期集群则是固定的不会被删除）降低费用，通过对Yarn内存的监控，进行自动伸缩
+- Hadoop系统层级：从上到下：
+  - MapReduce（分布式计算框架）
+  - YARN（集群的资源管理系统）/HBase（分布式数据库，补全了HDFS的功能，支持碎片化的小的数据处理）
+  - HDFS（大规模分布式文件系统）
+- 支持大规模的分布式ETL处理或者机器学习，商业报告
+- Dataproc Hub是在GCP上的Jupyter Lab笔记本
+
+### Pub/Sub
+
+- 有Queue的非同期处理
+- Topic-Subscription
+- Publisher-Puller
+- Ack通信，受信确认，在被ack之前，信息是会被复制的，确保不丢失
+- *At-least-Once*：最少一次配信，配信可能回超过1次，如果确保只一次的话需要其他的功能加持
+  - 比如Dataflow的 Deduplication 可以确保 *Exactly-once* 的配信
+  - 默认不确保配信顺序，但是顺序和伸缩以及可用性是一种trade-off
+  - 再送信可以设置指数退避策略
+- 支持Global接收信息，可以将信息保存在地理最近便的地方，当然如果有Region限制的话，也可以设置
+- 针对Topic可以创建Snapshot
+- 发送的message的形式可以通过schema tab进行具体设置
+
+
+- 下面的是数据处理服务
+### Dataflow
+
+- 大规模分散型数据处理，基于**Apache Beam**，支持Java和Python快速编码，支持batch和流处理
+- 组件：Data Source -> I/O Transform -> PCollection ... -> Data Sink
+  - PCollection是数据Pipeline
+  - Transform是数据处理的node
+- Job也有可视化的视图
+
+- 流数据处理中将一定范围的数据分割进行处理的单位是**Window**
+  - *滚动窗口（Tumbling Window）*是长度固定且不重叠的窗口。它们将数据流按固定时间段（如每5秒、每分钟等）切分成连续、互不重叠的块。每个事件只属于一个窗口。适用于需要在固定时间间隔内进行统计和计算的场景，如每小时的销售统计、每分钟的流量分析。
+  - *滑动窗口（Sliding Window）*与滚动窗口类似，但窗口之间可以重叠。窗口的起始位置根据一个滑动间隔（Slide Interval）来确定，这个间隔可以小于窗口长度，从而导致窗口重叠。适用于需要在重叠时间段内持续进行计算的场景，如实时平均值计算、异常检测等，需要更细粒度地观察数据变化。
+  - *会话窗口（Session Window）*根据事件之间的“静默期”（即没有事件发生的间隔）来定义窗口的边界。窗口会在数据活跃时继续延长，如果在设定的静默期内没有新事件到来，窗口就会关闭。会话窗口常用于跟踪用户会话、用户活跃度分析等场景，如电商网站用户的购物会话、网络流量的会话分析。
+
+### Data Fusion
+
+- 可视化GUI功能的数据处理工具，支持*Batch和Spark Streaming*
+- 通过Pipeline，Node，DAG表现
+
+### Dataprep
+
+- 数据前处理和清理服务，可以*自动检测数据不整合和欠损*
+- 也是一个可以GUI纯操作的服务，在可视化的界面进行数据预处理
+- 自动伸缩，和其他服务联动，处理好的数据可以用于数据存储或者机器学习
+
 
 ## AI & ML
