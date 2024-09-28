@@ -82,7 +82,7 @@
   - SLO（Service Level Objectives）指标报告书的生成
     * SLA（agreement）则是关于服务水平和客户制定的，必须达到的协议
 
-- **Cloud Trace**：对GCP上的应用性能的瓶颈，和延迟原因，进行特定的，分散型追踪系统
+- **Cloud Trace**：对GCP上的应用性能的瓶颈，和延迟原因，进行特定的，*分散型*追踪系统
   - 分析，收集，可视化，request的详细情报
   - 适合*微服务*构架，因为很多request发送/接收的数据
 
@@ -244,6 +244,7 @@
 - 基于Docker Image的事件驱动服务
 - 统合：HTTPS，GCS，PubSub，CloudBuild（组合完成CI/CD管道流程）
 - Cloud Run for Anthos：可以使用GKE为基盘的Run，使用GKE的功能，更加灵活
+- *Anthos*适合混合云的移行
 
 ### CI/CD工具组
 
@@ -531,3 +532,9 @@
 
 
 ## AI & ML
+
+- Cloud Vision：图像识别，物体检出，文字检出，实时
+- Speech-To-Text/Text-To-Speech：多语言支持的声音文字转换
+- Cloud Natural Language：文字内容和情感分析，分类
+- Cloud Translation：翻译
+- Cloud Video Intelligence：视频中的物检，注释功能
