@@ -420,7 +420,7 @@ NoSQL代表“Not only sql”，而不是“not“，我自己也已开始理解
 1. **复制和分片**：
    - 复制和分片是用于提高分布式系统可用性和吞吐量的常用技术。
    - 复制是一种横向扩展。纵向扩展就是不断增加数据。但是数据不断增加，就需要分片技术。NoSQL很适合切片。形成分布式系统。
-  
+
 2. **复制**：
    - 用于处理单个数据库无法应对的请求量。
    - 包括领导者leader（主数据库）和追随者follower（从数据库）。（or master and slave）
@@ -517,6 +517,16 @@ MapReduce 涉及大数据处理，能够处理大量数据、对其执行计算�
 
 stream处理现在很重要的是SparkFlink服务，在Amazon的kinesis中占据Analysis服务的位置。
 
-### 系统设计图ZTM
+## ZTM Thinking model
 
-![picture](IMG_0119.PNG)
+![picture](system-design.png)
+
+### Web is the most important
+
+- 网络是最重要的，因为他是传递服务的唯一手段
+- Components: Client (DNS / CDN) - (Load Balancer) WebServer（Application Logic / Database）
+
+- **Web Server**先发送所有的页面渲染文件，HTML/CSS/JS等，然后通过Restapi不断发送json文件来动态改变内容
+- **WAF**很重要
+- **资源调度**关系到服务器**性能**的是什么：CPU算力，Memory（RAM），Storage，Network带宽
+- **Scaling**：Vertical（垂直） & Horizontal（水平增加服务器数量）

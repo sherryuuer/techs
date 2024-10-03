@@ -264,6 +264,7 @@ codelabs：https://codelabs.developers.google.com/codelabs/cloud-app-engine-pyth
   - Coldline：90天/访问频率
   - Archive：一年/访问频率
 
+- 现在使用的cli是gcloud storage了！
 - 可托管静态网页，和S3一样。
 - 可署名URL
   - 使用Service Account的私钥来为生成的 URL 生成加密签名
@@ -271,6 +272,7 @@ codelabs：https://codelabs.developers.google.com/codelabs/cloud-app-engine-pyth
   - 需要的包：`pip3 install pyopenssl`
   - 创建url：`gsutil signurl -d 10m -u gs://[bucket_name]/demo.txt`
 - 创建bucket的时候不指定location，就会默认美国区使用。
+- *Transfer Applicance* 数据传送设备，适合传送从*On-premise到云端*的*PB*级别的数据，一般需要花费10天以上的时间，如果是网络传送一天就能结束的话，那么网络传送比较好
 
 ### Bigtable
 

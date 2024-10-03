@@ -62,11 +62,11 @@
 
 ### Operation Suite
 
-- 系统监视的工具和对应，记录log进行监察等
+- 系统监视的工具和对应，记录log进行监察等，Log explora功能
 - **Cloud Logging**：收集几乎所有的日志，实时分析功能，定制metric
-  - 构架：Logging - Pub/Sub - Dataflow - BQ，这一连串流程依赖Logging API编码
+  - 构架（log router）：*Logging - Pub/Sub - Dataflow - BQ*，这一连串流程依赖Logging API编码
   - Log Bucket：日志保存用的桶，分为required（监察，存留400天不可更改设置）和default（存留40天，可以更改设置）
-  - *Cloud Audit Log*：如AWS的Cloud Trail
+  - *Cloud Audit Log*（监察日志）：如AWS的Cloud Trail
     * 管理活动日志，通过SDK，API，Console进行资源操作的日志
     * 数据访问日志
     * 系统事件日志，非用户活动导致的事件日志
@@ -77,7 +77,7 @@
     * 主要可以收集的是CPU利用率，Network进出流量，和DiskIO
     * 高级metric比如memory利用率，需要安装*Monitoring Agent*，或者用*Monitoring API*则什么都可以发送
   - 仪表盘，也就是可视化
-  - Alart，根据事先设置，发出警报
+  - Alart，根据事先设置，发出警报，通知到webhook，slack等
   - Uptime Check，定期检查你的Web服务的可用性（百分之XX的指标）
   - SLO（Service Level Objectives）指标报告书的生成
     * SLA（agreement）则是关于服务水平和客户制定的，必须达到的协议
@@ -85,6 +85,7 @@
 - **Cloud Trace**：对GCP上的应用性能的瓶颈，和延迟原因，进行特定的，*分散型*追踪系统
   - 分析，收集，可视化，request的详细情报
   - 适合*微服务*构架，因为很多request发送/接收的数据
+  - 追踪**性能瓶颈问题**
 
 - **Cloud Service Health**：健康仪表盘
   - 可视化和通知，云服务的稼动状况，incident，未来maintainance的历史和计划等
@@ -129,10 +130,16 @@
 - 可以对机密情报进行masking，置换操作等
 - 统合Bigquery，GCS，Datastore服务，通过API可以和Custom的数据流统合
 - 根据敏感数据出现的频率，分析风险水平
+- **处理信用卡机密情报的时候，使用token化技术，将机密情报转换为非机密情报进行存储，是一种泛用的方法，不知道的话那就不知道了**
 
 ### Migration & Transfer
 
 - 各种服务和数据的移行服务，包括服务器，数据，数据库，SQL变换工具等，自己用过的Storage Transfer，BQ transfer，Database Migration Service（转换SQL的那个）
+- 移行的几种方式复习：
+  - *Lift&Shift*：将现有环境，原封不动地移行到云端，这种方式的workload是最小的，很快
+    * *Modernize*：这种方式的移行后，使用container等，使得服务更加适合云环境的生长方式
+  - *Improve&Move*：为了适应云的环境会对config进行修改，workload稍微大一点
+  - *Rip&Replace*：完全使用新的config方式进行移行，我所做的第二个GCP项目就是这种类型的移行，完全使用了新的batch和服务
 
 ### Disaster Recovery
 
@@ -151,13 +158,37 @@
   * 从过去的错误和故障中进行学习和反思
   * 提高开发速度，提高运维可信赖度，这两者应该是平衡的
 
+- **灾害恢复，需要考虑的事项：（影响最小，速度最快）**
+  * 数据恢复：数据备份和恢复方法，多区域配置方案，大数据的话需要考虑传输速率
+  * 服务冗长构成：多区域构成
+  * 网络构成：VPC/DNS构成是否合适和有弹性
+  * 安全：
+    - *standby环境*应当和prod环境有同样的安全构成和Compliance构成
+    - *权限*应当用*IaC*来构成
+    - *网络设置*上，防火墙和VPC构成都是必须要素
+    - *监察日志和秘密情报的保护*
+  * 用户训练和测试：是必备的
+
+
 ### Tag & Lable
 
-- lable：方便资源管理整合的属性情报，metadata，用于resource管理，氪金管理
+- lable：方便*资源管理*整合的属性情报，metadata，用于resource管理，*氪金管理*
 - tag的使用场景：网络防火墙的rule使用于VM的tag群组 / CI/CD工具的version管理tag / 组织的层级用不同的tag进行Policy设置
 - tag主要用于*权限管理*，是在*组织层级*设置的，本身就是*一种resource*
-- 注意，GCP的Label对照AWS和Azure的Tag，GCP的tag则是不同的东西
-- Afiniti Lable：用于关系管理的label，比如一台VM之于node group，就是这种亲和关系
+  - docker发布的时候用的那个tag，注意如果你用latest作为tag的话那么每次都会被覆盖丢失
+  - 在*CI/CD*等版本管理中的那个tag如果使用commit的hash数值，则比较好，因为那个东西不会重复
+- **注意，GCP的Label对照AWS和Azure的Tag，GCP的tag则是不同的东西**
+- **Afiniti Lable*：用于关系管理的label，比如一台VM之于node group，就是这种亲和关系
+
+### 测试和发布方法
+
+- 金丝雀测试：小环境和prod环境同等配置只是范围较小，影响范围基本没有，可以快速rollback，同时可以测试在prod环境中早期容易发现的性能问题等
+- AB测试：一部分装载了新功能，目的是效果比较
+- 影子测试：完全是和prod环境同样的环境进行测试，用LB连接，这种测试cost较高要注意
+- 一次性再生性发布：一下子发布，中间会有downtime，对于服务水平的维持有影响
+- rolling发布：会比较慢，环境是新旧混合的，但是没有downtime，要处理好客户的session
+- 蓝绿发布/红黑发布：两个环境会一起跑，费用较高，*基本没有rollback*，比较安全，维持SLA的最好选择
+- 将一个基盘，分割成许多*microservice*进行发布和运维，也可以降低rollback的概率，因为各个组件是疏结合的，相互之间的影响很小
 
 ## Compute
 
@@ -170,7 +201,7 @@
 - Local SSD是本地存储，关闭Server，数据消失
 - IP分类：静态固定IP/动态ephemeralIP/内部私有IP，固定IP会被氪金
 - Disk快照：增量备份和全量备份，有GCS料金，Meta数据和Tag不会被备份，可以在稼动中备份
-- Cstom Image：可以在稼动中创建，可用于环境迁移，是全量备份
+- Custom Image：可以在稼动中创建，可用于环境迁移，是全量备份
 - Machine Image：Disk + Image + Policy的全量备份
 - 知识补充：差量备份，是和最初的备份相比的增量，所以这种备份每次都会变多，但是它restore比增量的快，因为只需要初始的部分，和最近一次备份的部分
 - 云服务器解决方案的分类：
@@ -194,6 +225,7 @@
   - Nodes是K8S的服务器主体，有Health Check功能
   - K8S的服务器定义可以通过manifest文件来定义，使用manifest还支持rollback
   - Pod是部署的最小单位
+  - Node的集合是Cluster，Pod的集合是Service，多Pod进行负荷分散（Ingress）
 - 两种模式，一种是标准模式，需要用户手动控制，另一种是Autopilot模式，可以自动化管理
 - 两种命令行体系：gcloud用于最大scope的Cluster的管理，kubectl用于内部的Pods等的细化管理
 - API众多：Deployment，ReplicaSet，StatefullSet
@@ -215,7 +247,7 @@
 - **Helm**：是 Kubernetes 的一个包管理工具，类似于 Linux 上的 apt 或 yum，但专门用于 Kubernetes 环境。它允许你以可重用的模板化方式定义、安装和管理 Kubernetes 应用程序。Helm 提供了一种简化部署和管理 Kubernetes 集群中复杂应用的方法，特别是在多服务和微服务架构中。
 
 
-### GCK & AR
+### GCR & AR
 
 - GCR是Container Register，是存放image的，有自动Scan病毒的功能
 - AR是Artifact Register：Image，SourceCode，二进制文件，构成文件，文档等的存放
@@ -225,7 +257,7 @@
 
 - APP分为HTTP和Event驱动两种
 - HTTP中分为需要设置K8S硬件系统的Cloud Run for Anthos和不需要设置的Cloud Run（现在内置Function了）
-- 不在不需要设置K8S（底层硬件系统）的分类中分为不受编程语言限制的Cloud Run和受到限制的Cloud Function，以及退休的App Engine
+- 在不需要设置K8S（底层硬件系统）的分类中分为不受编程语言限制的Cloud Run和受到限制的Cloud Function，以及退休的App Engine
 
 ### App Engine
 
@@ -256,7 +288,7 @@
 ### Anthos
 
 - 混合云和多云应用管理服务
-- 方便将原有的应用迁移到Container环境，使用微服务构架
+- 方便将原有的应用迁移到Container环境，使用*微服务构架*
 - Anthos本身的*底层服务集群构架*是用K8S服务集群
 - Anthos Service Mesh：*上层服务*，可视化，监视，管理服务，可以设置Alart和SLO（Service Level Objective服务水平目标）
 - DevOps/CI/CD统合服务发布
@@ -292,6 +324,8 @@
 - *Transfer Appliance*：物理数据传输，发送你黑盒子发送数据通过物理运输等方式发送到谷歌，放置于GCS中
   - 适用于TB级别的传输，放置网络问题导致的数据破损
   - 但是因为物理发送原因，要花费10天以上，一般来说10TB之类的，网络没问题的话，用网络传输效率更高
+- *allUsers*这个用户权限选项可以用于静态网页全公开！
+
 
 ### Firestore
 
