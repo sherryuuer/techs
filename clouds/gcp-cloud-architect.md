@@ -390,7 +390,7 @@
 - 不需要Pre-Warming，几秒就可以扩展的高可用性托管型服务
 - 分类：三个维度分类
   - Global/Region
-  - 内部还是外部
+  - 内部还是外部（设置中会进行选择，是internet to serverless还是serverless之间）
   - HTTP/S（应用）还是TCP/UDP（网络）
 - Proxy（代理模式）和PassThrough（直通模式）：
   - 代理是不通过VM直接和代理连接，但是有Port和Protocol的限制

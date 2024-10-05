@@ -523,10 +523,21 @@ stream处理现在很重要的是SparkFlink服务，在Amazon的kinesis中占据
 
 ### Web is the most important
 
+- **Full Picture**：
 - 网络是最重要的，因为他是传递服务的唯一手段
-- Components: Client (DNS / CDN) - (Load Balancer) WebServer（Application Logic / Database）
+- Components / Simple Architecture:
+  - Client (DNS / CDN) - (Load Balancer) WebServer（Application Logic / Database）
 
 - **Web Server**先发送所有的页面渲染文件，HTML/CSS/JS等，然后通过Restapi不断发送json文件来动态改变内容
-- **WAF**很重要
-- **资源调度**关系到服务器**性能**的是什么：CPU算力，Memory（RAM），Storage，Network带宽
-- **Scaling**：Vertical（垂直） & Horizontal（水平增加服务器数量）
+  - 安全：**WAF**很重要
+
+- **Load Balancer**：降低负荷策略
+  - **资源调度**关系到服务器**性能**的是什么：CPU算力，Memory（RAM），Storage，Network带宽
+  - **Scaling**：Vertical（垂直） & Horizontal（水平增加服务器数量）
+  - **Latency**：一切都是为了解决延迟问题，假设所有的client的延迟都是一样的，这是round robin策略的原因
+  - **Session Persistence**：如何确保新的server可以接手原本的user的*session*信息，相关策略：
+    - **Reverse Proxy**：（反向代理）代理分配资源，这里是为服务器代理，**Weighted Round Robin**：每台服务器的资源是不同的，这可以决定权重分配
+  - **Redundant LB**：因为如果只有一台LB它本身就是一个single point failure
+  - **Server Clustering**：服务器集群加上Healthy Check，比如GCE的集群，或者k8s的集群，他们作为node存在（k8s中是Pods作为服务）
+    - 这个node集群的强大之处在于，他们之间是sync互相之间的信息的，当一台node失效，其他的nodes之间会进行信息同步
+    - 这个nodes集群中可能有一部分是passive的，他们不做事但是他们和其他active同步，当需要的时候他们会接手服务，他们已经保有session信息
