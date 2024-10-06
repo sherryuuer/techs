@@ -435,9 +435,9 @@
 
 - DBaaS操作简单，高性能，Point-In-Time-Recovery，BuckUp
 - 数据库的指标主要是吞吐（Throughput 读写速度）和延迟（Latency 网络延迟）
-- 数据库瓶颈原因主要从软件和硬件分析：
+- **数据库瓶颈原因**主要从软件和硬件分析：
   - 软件：应用构造，DB构造，Query原因
-  - 硬件：CPU，RAM，Storage（容量/IO/HDD/SSD）
+  - 硬件：CPU，RAM，*Storage*（disk容量/IO/HDD/SSD）
 - 解决方案：
   - Read Replica：提高读写吞吐
   - In MemoryDB：提高处理速度

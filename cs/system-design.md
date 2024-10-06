@@ -519,9 +519,9 @@ stream处理现在很重要的是SparkFlink服务，在Amazon的kinesis中占据
 
 ## ZTM Thinking model
 
-![picture](system-design.png)
+### Components
 
-### Web is the most important
+![picture](system-design.png)
 
 - **Full Picture**：
 - 网络是最重要的，因为他是传递服务的唯一手段
@@ -530,6 +530,7 @@ stream处理现在很重要的是SparkFlink服务，在Amazon的kinesis中占据
 
 - **Web Server**先发送所有的页面渲染文件，HTML/CSS/JS等，然后通过Restapi不断发送json文件来动态改变内容
   - 安全：**WAF**很重要
+  - 主要的host **Business Logic**的地方，这里的逻辑代码基本上等于，针对clients的
 
 - **Load Balancer**：降低负荷策略
   - **资源调度**关系到服务器**性能**的是什么：CPU算力，Memory（RAM），Storage，Network带宽
@@ -537,7 +538,41 @@ stream处理现在很重要的是SparkFlink服务，在Amazon的kinesis中占据
   - **Latency**：一切都是为了解决延迟问题，假设所有的client的延迟都是一样的，这是round robin策略的原因
   - **Session Persistence**：如何确保新的server可以接手原本的user的*session*信息，相关策略：
     - **Reverse Proxy**：（反向代理）代理分配资源，这里是为服务器代理，**Weighted Round Robin**：每台服务器的资源是不同的，这可以决定权重分配
-  - **Redundant LB**：因为如果只有一台LB它本身就是一个single point failure
+  - **Redundant LB**：因为如果只有一台LB它本身就是一个single point failure，所以可以有多个LB
   - **Server Clustering**：服务器集群加上Healthy Check，比如GCE的集群，或者k8s的集群，他们作为node存在（k8s中是Pods作为服务）
-    - 这个node集群的强大之处在于，他们之间是sync互相之间的信息的，当一台node失效，其他的nodes之间会进行信息同步
+    - 这个node集群的强大之处在于，和一般的LB控制的server集群不同，他们*有一个同样的entry point*，是*作为一个整体存在的*，他们之间是*sync互相之间的信息的*，当一台node失效，其他的nodes之间会进行信息同步
     - 这个nodes集群中可能有一部分是passive的，他们不做事但是他们和其他active同步，当需要的时候他们会接手服务，他们已经保有session信息
+    - 这种情况的LB构架就是：LB -> server clustering(many nodes)
+
+- **Database**：数据库不只是存储和取回数据的地方，它和web server之间的数据交互速度是容易成为瓶颈的
+  - 所以**Caching**服务相当重要
+  - 相对于reliability，*avilability和speed更加重要*，因为时间成本很高
+
+- **Job Server**：为处理数据库上游数据的逻辑
+  - 相对于Web server中的business logic，这里处理的是*application logic*，也就是将上游的*Data sources*，进行job处理，然后送入web server需要使用的数据输入**Database**，这就是job的作用
+  - 我所处理的数据仓库的job系统，虽然是不接入web server的，但是它可以
+  - **Job Queue**：整个job系统通过queue来接收job，通过*优先级*和*先入先出*来控制job的顺序
+    - 分布式系统的Job有自己的调度系统，比如我的airflow的Job schedular
+    - 又比如用户的处理请求，比如文件处理，或者邮件认证的mail服务，就是event trigger类型
+    - 定时处理的cron类型任务，比如数据处理
+    - 消息队列系统比如像 Kafka 来处理微服务之间的异步消息通信，实现事件驱动架构。比如，当订单系统创建订单时，它可以发布一个事件，库存服务会订阅该事件并相应地更新库存
+    - 第三方API任务，比如与外部系统的交互产生的任务，比如从支付网关、社交媒体、物流服务中接收到的任务
+
+- **Services**：它是对一个整体服务的分解，一个大的服务包括了哪些小的features，这些就是services，而每一个service，都可以看成是一个复杂的项目系统，比如用户**内容请求服务**，**认证服务**都是首先单独存在的
+  - *每一个service*都是一个*domain*，他们都有*独立的任务*，并且每个任务都可以做的非常好
+  - 认证服务中的**Access Token**是一个非常重要的东西，通过它，web server的逻辑中，就知道了是哪个用户，那么在对其他*services*的交互中，就能够知道该用哪个用户的信息进行请求任务了，也就能知道用户的**session**，甚至用户的**权限是什么**，这就是**认证（authetication）和认可（authorization）**，它促成了服务之间的交互，**微服务构架，疏结合**
+  - 结构：**Client -> LB -> Web Server -> Services**
+  - ![picture](system-design-services.png)
+
+- **Data hose**&**Data warehouse**：从web server拿到的数据，存入数据库，仅此无他
+- **Cloud Storage**：存储所有形式的各种数据，数据湖，或者任何web server的数据文件
+  - **CDN**则是用于deliver文件数据的组件，它从Storage中得到文件，CDN 具备缓存的特性，可以被视为 Web Server 缓存的一种高级形式，但它的功能远超出缓存，主要目标是通过分布式架构加速内容传输、内容动态优化，负载均衡，提升用户体验，并提供附加的安全性功能，诸如 DDoS 防护、Web 应用防火墙（WAF）等，它是一个更加**Global**的服务
+
+### Important Things
+
+- 实际的经验是无可取代的
+- 系统设计的目标要明确
+- **Engineer and build systems that meet the needs of the business in a coherent, efficient and organized way.**(以连贯、高效和有组织的方式设计和构建满足业务需求的系统。)
+- **Design the architecture, interfaces, and data.**
+- Core Principles: **Availability** and **Reliability**
+- 可用性和可靠性都关系到**时间**，1个9到9个9，可用性和cost是一种trade-off
