@@ -576,3 +576,14 @@ stream处理现在很重要的是SparkFlink服务，在Amazon的kinesis中占据
 - **Design the architecture, interfaces, and data.**
 - Core Principles: **Availability** and **Reliability**
 - 可用性和可靠性都关系到**时间**，1个9到9个9，可用性和cost是一种trade-off
+- 网络模型TCP/IP
+- **Proxy**：客户端代理是Forward Proxy，代理服务的是反向代理Reverse Proxy，可以是**LB**，也可以是NGNIX这种服务器
+  - 反向代理的作用比如caching
+- **数据库**和数据，是一个和网络同样重要的模块
+- **CAP**理论：对于一个分布式数据存储系统，不能同时完美地满足以下三个特性，一致性（Consistency），可用性（Availability），分区容错性（Partition Tolerance），因为是分布式系统，P总是需要的，如果CA那就要放弃分布式系统只用一个数据库了
+  - 在设计分布式系统时，必须根据具体的业务需求来选择系统的优先级
+  - 如果业务对数据一致性要求非常高，可以选择**CP**系统，但需要考虑到可用性在网络故障时可能受到影响
+  - 而如果系统的可用性是优先级，**AP**系统会更合适
+  - 这个理论对理解分布式数据库（如NoSQL数据库）的设计选择非常有帮助，帮助架构师在系统设计中做出适当的权衡
+- **ACID**：atomic原子性，consistent一致性，isolated隔离性保证多个并发事务处理不会相互影响，durability持久性保证数据永久存在不会丢失，主要针对**relational-db**
+- **BASE**：基本可用性（Basic Availability）、软状态（Soft state）和最终一致性（Eventual consistency），在一定程度上牺牲强一致性，来换取系统的可扩展性和高可用性，主要针对**NoSql**数据库
