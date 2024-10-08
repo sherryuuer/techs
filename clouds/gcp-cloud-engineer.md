@@ -287,7 +287,7 @@ codelabs：https://codelabs.developers.google.com/codelabs/cloud-bigtable-intro-
 
 - 经济高效的现代数据云仓库。关键词：分析，历史数据，SQL语法
 - BigQuery Data Transfer Service支持从 Google SaaS 应用（Google Ads、Cloud Storage）、Amazon S3 和其他数据仓库（Teradata、Redshift）将数据传输到 BigQuery。
-- 可以使用 Cloud Dataflow pipeline、Cloud Dataproc jobs或直接使用 BigQuery 流提取 API 将流数据（例如日志或 IoT 设备数据）写入 BigQuery。
+- 可以使用 Pub/Sub或者Cloud Dataflow pipeline、Cloud Dataproc jobs或直接使用 BigQuery 流提取 API 将流数据（例如日志或 IoT 设备数据）写入 BigQuery。
 - `bq query --use_legacy_sql=false --dry_run 'SELECT * FROM bigquery-public-data.stackoverflow.posts_answers LIMIT 1000'`其中的`dry_run`可以提示计算成本。
 - Partitioning and Clustering（提高查询效率，降低成本）：分区是将数据分割成较小的独立单元，以提高性能和可扩展性，而聚类是将相关数据放在一起以提高查询性能和减少磁盘 I/O 操作。分区通常是水平的，而聚类则是垂直的。水平分区是按行分割数据，减少单个存储单元上的数据量，而垂直分区是按列分割数据，将相关的数据物理上放置在一起。
 - Load data to BQ 的方式：
@@ -300,6 +300,7 @@ codelabs：https://codelabs.developers.google.com/codelabs/cloud-bigtable-intro-
 
 - 不需要载入数据就可以query：
   Dataproc使用Spark在GCS上生成**Hive的分区数据**，然后就可以用BQ进行查询
+- *in memory shuffle*，在worker之间进行任务传递的时候，这个功能重新分配任务，降低overhead，分散型数据库的高级构架
 
 ### Cloud SQL
 
@@ -462,12 +463,17 @@ codelabs：https://codelabs.developers.google.com/codelabs/cloud-bigtable-intro-
 6. 容错 - 具备自动重试和重新恢复能力
 7. 监控 - 提供丰富的监控和日志记录能力
 
-Dataflow广泛应用于ETL、实时数据处理、数据集成、数据分析等场景。用户可以在托管集群环境或自己的私有集群上运行Dataflow管道。它与BigQuery、Cloud Storage、Cloud Pub/Sub等GCP产品紧密集成。总的来说,Dataflow提供了一种简单、统一且富有弹性的方式来处理大规模数据。
+Dataflow广泛应用于ETL、实时数据处理、数据集成、数据分析等场景。用户可以在托管集群环境或自己的私有集群上运行Dataflow管道。它与BigQuery、**Cloud Storage、Cloud Pub/Sub**等GCP产品紧密集成。总的来说,Dataflow提供了一种简单、统一且富有弹性的方式来处理大规模数据。
 
 Dataflow vs. Cloud Composer:
 
 - Dataflow 主要用于数据处理和转换，尤其是需要高效处理流数据和批数据的场景。
 - Cloud Composer 是一个工作流编排工具，用于管理和调度复杂的工作流，适合在跨系统或跨服务的任务之间进行协调和自动化。
+
+- 三种窗口设定：
+  - 固定窗口: 适合处理周期性聚合。
+  - 滑动窗口: 用于需要重叠计算的场景。
+  - 会话窗口: 最适合不规则的用户活动聚合。
 
 ## developer
 
