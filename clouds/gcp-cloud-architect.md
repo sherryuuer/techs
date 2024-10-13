@@ -1,3 +1,17 @@
+## GCP哲学
+
+- 责任共担
+- 最小权限原则
+- 在组织层级上进行governance
+- 权利分割，这和最小权限原则是共通的
+- 无状态应用：将web server的状态放在其他的DB上进行管理，对web servers进行更方便的伸缩和负载均衡策略
+- 不可变的infra设施：活用terraform等环境构建工具
+- 可伸缩，可用性，监牢性
+- CI/CD管道的构建
+- 通过自动化缩减cost
+- 监视和警报系统功能完备的运维系统
+
+
 ## Management
 
 ### Resource Manager
@@ -54,6 +68,7 @@
 - 适合开发者和应用程序构建者，用于为面向终端用户的应用实现身份验证和管理，它支持多种身份验证方式，广泛适用于 Web 和移动应用的场景
 - AaaS（Authentication as a Service）
 - 步骤：选择IdP，追加用户，创建login和认证界面
+- 这个很像AWS的Cognito
 
 ### Cloud Identity
 
@@ -217,8 +232,8 @@
 
 ### GKE
 
-- Kubernetes的所有功能，本身是一个容器编排服务，自动修复自动升级
-- 支持DockerImage的部署：通过Deployment（API）的Yaml文件指定image文件（放置于GCR），然后通过kubectl命令行部署
+- Kubernetes的所有功能，本身是一个容器编排服务，自动修复自动升级，rolling发布非常适合，适合微服务构架，它的部署方式更像是IaC
+- 支持DockerImage的部署：通过Deployment（API）的Yaml文件（*定义最终状态的文件*）指定image文件（放置于GCR），然后通过kubectl命令行部署
 - **K8S的最大单位是Cluster**：
   - User控制是通过kubectl
   - Control Plane(Master Node) -> Nodes(Worker Node) -> Other Services
@@ -226,7 +241,7 @@
   - K8S的服务器定义可以通过manifest文件来定义，使用manifest还支持rollback
   - Pod是部署的最小单位
   - Node的集合是Cluster，Pod的集合是Service，多Pod进行负荷分散（Ingress）
-- 两种模式，一种是标准模式，需要用户手动控制，另一种是Autopilot模式，可以自动化管理
+- 两种模式，一种是标准Standard模式，需要用户手动控制，另一种是Autopilot模式，可以自动化管理
 - 两种命令行体系：gcloud用于最大scope的Cluster的管理，kubectl用于内部的Pods等的细化管理
 - API众多：Deployment，ReplicaSet，StatefullSet
 - 支持Rolling Deployment蓝绿发布，自动LB切换（使用Deployment + ReplicaSet）
@@ -340,7 +355,7 @@
 
 ### VPC
 
-- VPC是global的，subnet是可以跨zone的，但是注意，AWS中VPC时跨几个AZ，subnet是每个AZ一个
+- VPC是global的，subnet是可以跨zone的，但是注意，AWS中VPC是跨几个AZ，subnet是每个AZ一个
 - VPC Peering功能有，可以跨Region进行Peering，通过防火墙进行通信限制，服务本身不花钱，但是通信会花钱
   - 和AWS一样：IP cider不能有重叠，也不支持推移传递连接，要连接哪个就需要直接连接
   - 最大连接上限100个
@@ -372,7 +387,7 @@
 - DDoS防御功能：检测异常，确保通信带宽，block特定通信源
 - WAF功能，防御OWASP Top10（web应用top10安全风险清单）等一般的脆弱性防御
 - IP黑白名单设置
-- 机器学习通信Pattern，Block异常通信
+- 机器学习通信Pattern，Block异常通信，Adaptive Protection
 - 地域地理区域通信保护和限制
 
 ### Cloud Router
@@ -410,7 +425,7 @@
 - 通过对*Cache Key*的调整，可以提高*hit率*，降低对Origin服务器的负荷
 - *ETag*是内容的version，如果有较老的version内容，它会向Origin服务器要求更新
 - *Last-Modifed*表示了内容最后一次更新的时间
-- 一般会和*LB负载均衡配合*使用，Origin服务器不会留下CDN的访问日志，但是LB会留下CND的Access Log
+- 一般会和*LB负载均衡配合*使用，Origin服务器不会留下CDN的访问日志，但是LB会留下CDN的Access Log
 
 ### Cloud DNS
 
