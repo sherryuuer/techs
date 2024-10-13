@@ -193,7 +193,7 @@
   - docker发布的时候用的那个tag，注意如果你用latest作为tag的话那么每次都会被覆盖丢失
   - 在*CI/CD*等版本管理中的那个tag如果使用commit的hash数值，则比较好，因为那个东西不会重复
 - **注意，GCP的Label对照AWS和Azure的Tag，GCP的tag则是不同的东西**
-- **Afiniti Lable*：用于关系管理的label，比如一台VM之于node group，就是这种亲和关系
+- *Afiniti Lable*：用于关系管理的label，比如一台VM之于node group，就是这种亲和关系
 
 ### 测试和发布方法
 
