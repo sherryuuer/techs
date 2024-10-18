@@ -34,6 +34,13 @@
 
 ## 云构架和系统设计方案关键组件
 
+- Cloud Native
+  - Availability and Scalability
+  - Ship feature quickly by
+  - Microservices 疏结合，API连接
+  - Containers <- Orchestrator (k8s): detect and repair, load balance, control runs
+  - DevOps: CI/CD: Plan -> Code -> Build -> Test -> Release -> Deploy -> Operate -> Monitor
+  - Cloud Native Open Standards
 
 
 

@@ -89,3 +89,48 @@ graph LR
 - *CDN*：用文件分发系统（read-only）
 - *PubSub* 处理新创建的tweet -> *Cluster/Worker*处理 -> 创建client可以立刻查阅的*Feed Cache*，所以多个cache有多种功能也是常态
   - 这些都是为了**降低延迟**
+
+
+## Discord/Slack/Teams
+
+- background: groups, chaneels, chats
+- arch: users -(web socket)-> server --> databases(MongoDB)
+  - server --> cache
+
+- *messages db*:
+  - id, uid, memtionId, serverId, channelId, sent_at
+- *User Activity db*:
+  - id, uid, serverId, channelId, last_read_at
+  - (so user can return to where they left the channel)
+
+## Youtube
+
+- *functional*: upload, watch, and search, recommendation, comments, analytics and so on
+- focus on upload and watch video
+
+- *non-functional*:
+  - reliability: scale
+  - availibility
+  - consistary
+  - secure: bots, rate limiter
+  - low latency
+
+- *arch*:
+  - users - CDN(popular videos) fetch files from storage (mobiles, pcs)
+  - users - load balancer - App Servers
+  - users - Object Stores / metadata (upload(title, uid, video)) in NoSQL MongoDB
+                          - compression video files - Message Queue - encoding - Object Storage
+                          - video is chunked!!
+
+## Google Drive
+
+- file system (HDFS) / object store (GCS) --> object store is good
+- arch:
+  - users --> App servers --> cache --> kv store
+                          --> object store
+                          --> ZooKeeper handle heartbeat
+                          --> Garbage Collection
+
+- reduce cost:
+  - block-level storage 块存储，降低数据传输量
+  - deduplication 去重技术
