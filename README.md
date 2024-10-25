@@ -126,6 +126,7 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [数学思维模型](principals/math-theory.md)
 
 ## Computer Science
+- [compTIA基础知识Core1](cs/compTIA-core1.md)
 - [操作系统的基础知识和学习笔记](cs/c-operating-system.md)
 - [软件开发和程序员基础知识/基础情报技术](cs/programming-base.md)
 - [系统设计概念：System Design concepts](cs/system-design.md)

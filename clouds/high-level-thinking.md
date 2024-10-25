@@ -31,6 +31,10 @@
 - 认证和认可：
   - STS无处不在
   - SSO很强大
+- **关注Monitering和Alarting**！
+- **Communication**：和非技术人员的交流非常重要
+- DevSecOps，自动部署相当重要
+
 
 ## 云构架和系统设计方案关键组件
 
@@ -41,6 +45,32 @@
   - Containers <- Orchestrator (k8s): detect and repair, load balance, control runs
   - DevOps: CI/CD: Plan -> Code -> Build -> Test -> Release -> Deploy -> Operate -> Monitor
   - Cloud Native Open Standards
+
+## 云原生
+
+### Service Mesh
+
+微服务构架的挑战：
+- business logic
+- communication logic
+- security logic
+- retry logic
+- metric and tracing logic
+
+服务网格，就是将上面的除了business logic之外的逻辑封装为proxy，通过sidecar服务模式，分布在各个服务节点上，作为一个sidecar存在，并通过kubenetes这样的control plane，在每次启动服务时候，将非业务需求的部分，装载到每个pod中，妙啊
+
+**Istio**就是这种服务网格的实现。Istiod是Control Plane，开源的Envoy Proxy就是这种分布式的代理。
+- 管理流量控制问题
+- 服务之间的通信问题
+- 分流和重试策略
+- 服务发现
+- 安全
+- Metric和tracing功能
+
+
+### Kubenetes
+### Security
+### DevOps
 
 
 
