@@ -15,7 +15,22 @@
 - 主板（Motherboard）：input，output，processing，storage，有不同规格的主板，可以插不同的卡
 - CPU中64位才够吧，ARM（苹果的就是）可以延长电池寿命哦！并且释放热量更少，除了Windows似乎都是这种芯片
 
+### Networks
 
+- **layers**
+- Link layer: local
+- Internet layer: where to send
+- Transport layer: how (TCP/UDP) to send
+- Application layer: what to send
+
+- **Ports and Protocols**
+- port is a communication endpoint: inbound and outbound
+- SFTP/SSH, all 22 port
+- DHCP: 67, 68 port，is UDP connection
+- HTTP: 80, basic / HTTPS: 443 port
+- POP3: receive mail, 110 port
+- *TCP*：ssh，http，https
+- *Remote access servers*: Telnet23(不安全，发送的是纯文本), ssh22, RDP(远程桌面)
 
 ### TroubleShoting
 - **六步故障排除法TroubleShoting**：
