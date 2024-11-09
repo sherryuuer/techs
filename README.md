@@ -127,10 +127,11 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 
 ## Computer Science
 - [compTIA基础知识Core1](cs/compTIA-core1.md)
-- [操作系统的基础知识和学习笔记](cs/c-operating-system.md)
+- [Linux操作系统的基础知识和学习笔记](cs/linux.md)
 - [软件开发和程序员基础知识/基础情报技术](cs/programming-base.md)
 - [系统设计概念：System Design concepts](cs/system-design.md)
 - [系统设计模式思考：System Design CaseStudy](cs/system-design-casestudy.md)
+- [系统设计概念：数据库设计方法](cs/system-design-database.md)
 - [*GithubActions实现workload工作流：自动化GCS部署和notification](cs/ghactions-autodeploy.md)
 - [Git和Github复习手册](cs/git.md)
 - [*网络安全分类：访问控制、身份管理、数据加密与网络防护的清晰分类](cs/network-security-tree.md)
@@ -142,7 +143,9 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [网络基础：链路层，以太网，MAC地址](cs/internet-base-link-layer.md)
 - [网络限流(throttling)，指数退避(ExponentialBackoff)和Python的代码实现](cs/exponential-backoff.md)
 - [网络安全：Cyber Security foundation](cs/cybersecurity.md)
+- [网络故障对应指南](cs/troubleshooting.md)
 - [道德黑客：Ethical Hacking Technology](cs/ethical-hacking.md)
+- [Search Engine Optimization (SEO)：搜索引擎优化！](cs/seo.md)
 
 > 当我学习计算机网络，那些概念就像是一个一个的点，散落一地，我想我需要一本书或者一些方法，比如计算机网络自顶向下，将他们串联起来，形成一个故事。我想所有的学习体系都是这样，直到将每一个点都搞清楚，并将他们串联起来，并将串联起来的东西都串联起来，世界才是一棵真正的树。
 

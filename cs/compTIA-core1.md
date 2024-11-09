@@ -41,6 +41,8 @@
   5. *Verify full system functionality*：查看整个系统是否有影响，如果在这个阶段就找到将问题完全解决的方法，长久对应则最好
   6. *Document the findings，actions and outcome*
 
+
+
 ### knowledge
 - 驱动Driver是一种将command转换为针对硬件的操作command的工具，相当于命令翻译。
 - b=bits, B=bytes，他们相差8倍，所以Gb和GB不是一个概念，小心被骗
