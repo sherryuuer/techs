@@ -732,6 +732,9 @@ vNIC扮演了连接虚拟机与网络之间的桥梁角色，负责将虚拟机�
 - **企业网络**：常使用WPA2-Enterprise或WPA3-Enterprise，提供更强的安全性和用户管理。
 - **公共Wi-Fi热点**：未来将逐步采用WPA3增强安全性。
 
+### Network Operations
+
+- SNMP：简单网络管理协议
 
 ## 自顶向下
 
