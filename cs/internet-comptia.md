@@ -735,6 +735,8 @@ vNIC扮演了连接虚拟机与网络之间的桥梁角色，负责将虚拟机�
 ### Network Operations
 
 - SNMP：简单网络管理协议
+- network device log: traffic logs, audit logs, syslog
+- 物理环境：数据中心的sensor，温度控制，电力控制等
 
 ## 自顶向下
 
