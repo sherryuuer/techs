@@ -737,6 +737,22 @@ vNIC扮演了连接虚拟机与网络之间的桥梁角色，负责将虚拟机�
 - SNMP：简单网络管理协议
 - network device log: traffic logs, audit logs, syslog
 - 物理环境：数据中心的sensor，温度控制，电力控制等
+- Plan and Procedures:
+  - change management
+  - incident response plan
+  - disaster recovery plan
+  - system life cycle
+  - SOP: standard operating procedure
+- Hardening and Security Policies
+- SLA
+- Load Balancing, Multipathing and Network Interface Cards (NIC) Teaming
+- Redundant Hardware and Clusters，Power distribution units + generators(储存电)（基础设施维护）
+
+### Network Security
+- CIA 数据的机密性，完整性，可用性（data）
+- Least Privilege（people access）
+- detailed defense mechanism 针对各个 layer 的防卫（network）
+
 
 ## 自顶向下
 
