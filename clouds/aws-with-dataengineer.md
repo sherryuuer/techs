@@ -425,6 +425,7 @@
 
 - RDS Proxy可以只对Read Replica进行端点连接
 
+- Multi-Master 是一个region多个AZ的 read replica 同时具有读写能力
 - Global Aurora：
   - Cross-Region read replica：高灾难恢复能力
   - Global Database：最多可以有5个备用region，每个region最多可以有16个read replica

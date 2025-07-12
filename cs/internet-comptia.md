@@ -752,10 +752,61 @@ vNIC扮演了连接虚拟机与网络之间的桥梁角色，负责将虚拟机�
 - CIA 数据的机密性，完整性，可用性（data）
 - Least Privilege（people access）
 - detailed defense mechanism 针对各个 layer 的防卫（network）
+- Threats and Vulnerabilities 包括内部和外部的威胁
+  - CVE 是通用病毒的意思，每个病毒都有一个ID标识，用于企业设置防火墙？
+- Defense：
+  - 网络分区（network segmentation），进行网络隔离，减小影响范围
+  - DMZ 非军事区，比如 public subnet
+  - least privilege：无需多说的原则
+  - seperation of duties：职责分离，或者RBAC这种最小化权限
+  - Zero Trust：一种安全理念，每次要对用户和设备进行验证和授权，在Cloud中常用
+  - NAC：网络访问控制，网络安全中的防火墙
+  - Honeypots 是一种安全机制，通过设置诱饵系统或服务，吸引攻击者进行攻击，从而监控、分析威胁行为并提升网络安全
+- Authentication, Authorization and Accounting (AAA) Servers：三个A服务，有意思
+  - *RADIUS*（Remote Authentication Dial-In User Service）是一种网络协议，用于集中认证、授权和记录用户访问网络的活动
+    - UDP 连接，单向通信
+    - *Diameter* 则是 TCP 连接，双向通信，安全性更高，是增强版，同样用于认证，授权，和计费
+  - *TACACS*（Terminal Access Controller Access-Control System）是一种网络协议，用于集中管理用户身份验证、授权和审计，常用于网络设备的访问控制。
+  - *EAP*（Extensible Authentication Protocol）是一种灵活的认证框架，允许不同的认证方法（如密码、智能卡或生物识别）在网络访问中进行扩展和使用。
+  - 其他认证方法：token，证书，port，地理位置认证，比如收到的不同位置的登陆确认邮件，就是云端的数据库存储数据（NoSQL数据库存储device的信息）
+  - MFA：多要素认证
+  - AD/LDAP
+  - SSO 单点登录，Kerberos 是一种实现 SSO 的技术和协议
+  - Transitive Trust（传递信任） 是一种信任关系的模型，常见于网络认证和身份验证体系中，特别是在 Active Directory 或 Kerberos 的环境下
+  - OAuth2.0
+  - OpenID connect
+  - Biometrics：指纹认证等
+- *SIEM*(security information and events management)管理系统，包括real time monitoring，log analysis，incident response，compliance management
+- 物理安全，无线安全，社会工程
+
+### Network troubleshooting
+
+- 建立假设
+  - 对观察到的现象进行更多的提问，一开始不要立刻对原因做出假设
+  - 自顶向下，自底向上，进行多种 approch 的调查
+  - 分而治之，按照组件进行个别排查
+  - 验证假设是否正确
+  - 明确目标 Objective
+  - 确定任务的优先级
+  - 锁定对应资源
+  - 制定时间线策略
+  - 和各方 stakeholders 沟通
+  - 缓解潜在影响
+  - 建立应急计划
+  - 与各方进行协作
+  - document 计划
+- 确定问题
+  - 收集信息包括系统和配置信息等
+  - 向用户提问
+  - 确认问题症状，是否有什么变更
+  - 重现问题
+  - 使用诊断工具
+  - 合作和记录过程
+
+
 
 
 ## 自顶向下
-
 
 **协议**（protocol）定义了在两个或多个通信实体之间交换的*报文的格式和顺序*，以及报文发送和/或接收一条报文或其他事件所采取的*动作*。
 

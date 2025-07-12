@@ -302,9 +302,16 @@ NAT(Network Address Translation，网络地址转换)和NAT Network在VirtualBox
 
 ### Python 扫描工具
 
+使用Python的socket包可以创建脚本，用于port扫描。Python大法好～实际上就是用这些包扫描ip的端口。
+
 ## Vulnerability Analysis
 
+- 三个search工具：`nmap，searchsploit，nessus`，三个扫描工具中似乎nessus比较好，有GUI工具界面使用
+
 ## Exploitation & Gaining Access
+
+- Reverse Shells, Bind Shells，控制脚本
+- Metasploit Framework 是一个用于开发、测试和执行安全漏洞利用的开源渗透测试工具框架
 
 ## Post Exploitation
 

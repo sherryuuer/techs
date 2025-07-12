@@ -299,6 +299,12 @@ Chain of Density Prompting的优点是能够充分利用人工示例,更高效�
 
 Self-Consistency > Greedy Decoding
 
+### ReAct Prompting
+
+Thought - > Action - > Observation
+
+### Applied Prompt Engineering with CRISPR
+
 ### Tree of Thoughts
 
 阿尔法GO的算法也是树决策。

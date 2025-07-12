@@ -273,6 +273,8 @@ codelabs：https://codelabs.developers.google.com/codelabs/cloud-app-engine-pyth
   - 创建url：`gsutil signurl -d 10m -u gs://[bucket_name]/demo.txt`
 - 创建bucket的时候不指定location，就会默认美国区使用。
 - *Transfer Applicance* 数据传送设备，适合传送从*On-premise到云端*的*PB*级别的数据，一般需要花费10天以上的时间，如果是网络传送一天就能结束的话，那么网络传送比较好
+- **强整合性**，所以适合*数据处理一致性*要求
+
 
 ### Bigtable
 

@@ -124,6 +124,7 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [计算机思维](principals/computeritize.md)
 - [数学&机器学习](principals/math-ml.md)
 - [数学思维模型](principals/math-theory.md)
+- [零碎笔记](principals/零碎笔记.md)
 
 ## Computer Science
 - [compTIA基础知识Core1](cs/compTIA-core1.md)
@@ -171,6 +172,7 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [航海日志：定期思维检修4-202408](principals/checkmind4.md)
 - [航海日志：定期思维检修5-202408](principals/checkmind5.md)
 - [航海日志：定期思维检修6-202409](principals/checkmind6.md)
+- [航海日志：定期思维检修7-202412年末resolution](principals/checkmind7(2025resolution).md)
 - [成为工程师路上的乱七八糟的思考](principals/engineer.md)
 
 ## Tools
