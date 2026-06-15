@@ -1,6 +1,22 @@
+## Region & AZ
+- 不同的区域有不同的政策和法律支持
+- 每个区域可用服务不同，最新的服务可能只有美国弗吉尼亚区域才有
+- 各个区域价格不同，并且在价格页面上是透明的
+- 所谓的Region其实是3～6个AZ之间用高带宽连接起来的共同网络
+- Edge Location存在于90多个城市，40多个国家用于降低客户传输延迟的前端端点
+- *Global* Services: IAM, Route 53, CloudFront, WAF
+- Region scoped services:
+  - Infra as a Service (EC2)
+  - Platform as a Service (Elastic Beanstalk)
+  - Function as a Service (Lambda)
+  - Software as a Service (Rekogonition and so on...)
+- AWS现在可以进行单个浏览器多session（account id）的操作了，只要在右上角account中点 add session
+
 ## Identity & Federation
 
 ### IAM Policies精细控制用户权限
+- IAM Role 中的sts:asumerole，指的是sts服务，指定，哪个service可以消费这个权限
+  - AWS中策略分为信任策略和权限策略，先给予这个权限（一顶帽子），再定义这个权限包括哪些可用操作
 - IAM Role和Resource Based Policies：
   - IAM Role是用户赋予一个Role进行资源操作（这个时候，完全无法使用user原有的权限了）
   - RBP是在资源中进行Polies限制（比如S3 Bucket Policies）（这个时候user不需要放弃自己的其他权限）
@@ -11,6 +27,7 @@
   - 设置Zone of Trust：表示对一个资源的信任主体集合，超出这个集合的，都会被finding记录
   - 自动生成Policy的功能构架：通过Cloud Trail记录过去90天的资源的API call记录，来自动生成Policy，这种构架默认你90天内的活动是合规的，但是如何保证是合规的呢，如果有人错误使用了该服务进行了外部连接？
     - 不过说回来，是可以通过人工检查进行细节调整的
+- 最小权限原则：Least privilege principle
 
 ### STS认证
 - 跨账户的临时用户权限，通过发行token，使得其他账户的用户可以使用自己账户的临时Role进行操作
