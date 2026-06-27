@@ -112,6 +112,7 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [GCP机器学习工程师学习笔记](clouds/gcp-cloud-ml.md)
 - [GCP云构架专家学习笔记](clouds/gcp-cloud-architect.md)
 - [GCP数据工程师学习笔记](clouds/gcp-cloud-engineer.md)
+- [Cloud Data Analytics Consultant 咨询 Playbook](clouds/cloud-consultant-data-analytics整理版.md)
 - [AWS-Bedrock项目实践1：Code Generation (APIGateway,S3,bedrock)](clouds/bedrock-pj1.md)
 - [AWS-Bedrock项目实践2-3：Notes Summarisation & Image Generation & 模型评估 & RAG](clouds/bedrock-pj2-3.md)
 - [Google-Gimini-API上手体验和要点总结：目前最爱Gemini](clouds/gemini-api.md)
