@@ -1,238 +1,680 @@
 # Google Cloud Consultant 技术面试准备
 
-> 目的：准备 Google Cloud Consultant, Data Analytics 的非编码技术面试。
-> 定位：不是纯开发者，而是从 Data Engineer 走向 Cloud/Data Consultant。
+> 目的：准备 Google Cloud Consultant, Data Analytics 后续技术面试。
+> 本文件保存面试结构、学习路线、主题要点和项目映射。
+> 具体练习问答保存到 `google-cloud-consultant-technical-qa.md`。
 
-## 0. 回答总框架
+## 0. 文档分工
 
-技术面试不要只回答“用什么服务”。尽量按下面顺序组织：
+- 主技术文档：`google-cloud-consultant-technical-interview.md`
+  - 面试结构。
+  - 主题目录。
+  - Sally 的准备优先级。
+  - 各领域核心知识点。
+  - 项目映射。
+- 技术 Q&A 文档：`google-cloud-consultant-technical-qa.md`
+  - 已练习问题。
+  - 简洁面试答案。
+  - 速记版。
+  - SQL / architecture 示例。
 
-```text
-Business objective
--> Current architecture
--> Pain points
--> Constraints
--> Target architecture
--> Technology choices
--> Trade-offs
--> Migration plan
--> Risks
--> Success metrics
-```
-
-日语核心句：
+之后练习规则：
 
 ```text
-単にサービスを置き換えるのではなく、まずビジネス目的、既存構成、運用上の課題、データ利用者への影響を整理したうえで、段階的に移行することが重要だと考えます。
+概念框架 / 学习路线 -> 写入本文件
+具体问题答案 -> 写入 technical-qa.md
 ```
 
-## 1. Legacy DWH Migration to GCP
+## 1. 面试结构
 
-### 想定質問
+后续技术部分包含两个面试方向：
 
-```text
-If a customer wants to migrate a legacy DWH such as Teradata with batch jobs to Google Cloud, how would you approach it?
-```
+1. `Domain-specific skills`
+2. `Code evaluation and systems solutioning (non-Cloud) / architectural patterns (Cloud)`
 
-### 回答要点
+## 2. Domain-Specific Skills 总览
 
-- 先确认 business objective。
-- 不要直接说 Teradata -> BigQuery。
-- 盘点 existing DWH / batch / reports / users / SLA。
-- 找出 pain points：cost, scalability, performance, operation, development speed。
-- Target：Cloud Storage + BigQuery + Dataform + Looker。
-- Workflow：Cloud Composer / Airflow。
-- Event-driven：Pub/Sub / Dataflow。
-- 分阶段迁移，parallel run。
-- 做 data validation。
-- 成功指标：cost, performance, data quality, user adoption。
+这个面试不是单纯问 Google Cloud 服务。它会按 domain 检查基础知识、项目经验、问题分析能力，以及能否把技术解释给客户。
 
-### 日语回答骨架
+可以分成两大类：
 
-```text
-まず、Teradata を BigQuery に単純に置き換えるのではなく、ビジネス目的と現在の利用状況を整理します。
+1. `Non-Cloud domain-specific skills`
+2. `Cloud domain-specific skills`
 
-現在の DWH、batch job、重要な report、下流ユーザー、SLA、データ品質課題を確認します。そのうえで、コスト、性能、運用負荷、開発スピード、既存業務への影響を整理します。
+Sally 的主线应该放在：
 
-ターゲットアーキテクチャとしては、Cloud Storage を landing zone とし、BigQuery を中心に DWH / data mart を構築し、Dataform で ELT と mart 管理、Looker で reporting / semantic layer を整備する構成が考えられます。batch workflow は Cloud Composer、event-driven な処理は Pub/Sub や Dataflow を検討します。
+- `Databases / SQL`
+- `Data`
+- `Platforms & Infrastructure`
+- `Application Modernization`
+- `Security`
 
-移行は一括ではなく、重要度の低い領域や特定の data mart から段階的に進め、既存システムとの並行稼働、件数比較、集計結果比較、業務ユーザー確認を行います。
+其他领域如 Web Technologies、AI/ML 也要准备基础理解，但不是主打。
 
-主なリスクは、データ定義の違い、batch 依存関係、性能、コスト、下流 report への影響です。そのため、stakeholder alignment、data validation、運用設計を含めて進めることが重要です。
-```
+## 3. Non-Cloud Domain-Specific Skills
 
-## 2. Target GCP Data Architecture
+### 3.1 Web Technologies
 
-### 基本構成
+这个方向不会要求 coding，但可能考察 web / internet 的理论知识。
 
-```text
-Source systems
--> Cloud Storage landing zone
--> Dataflow / batch ingestion / transfer
--> BigQuery raw / staging / mart
--> Dataform for ELT and data mart management
--> Looker for reporting and semantic layer
--> Cloud Composer for workflow orchestration
--> Cloud Logging / Monitoring for operation
-```
+需要理解：
 
-### 技术选择理由
+- Frontend / backend data transfer。
+- HTTP request / response。
+- TCP/IP 基础。
+- Browser 与 server 之间如何通信。
+- REST API。
+- JSON。
+- CORS。
+- Cookie / session / token。
+- Asynchronous processing。
+- Troubleshooting / debugging。
+- Compatibility / UI / UX。
+- Scaling web services。
 
-| 组件 | 用途 | 说明 |
-| --- | --- | --- |
-| Cloud Storage | landing / raw data | cheap, scalable, decoupled storage |
-| BigQuery | DWH / analytics | serverless, scalable, low operation |
-| Dataform | ELT / data mart | SQL-based, version control friendly |
-| Looker | BI / semantic layer | KPI, dimension, measure standardization |
-| Cloud Composer | batch workflow | dependency, schedule, retry, visibility |
-| Pub/Sub | messaging | event-driven ingestion |
-| Dataflow | stream / batch processing | managed Apache Beam |
-| Dataproc | Spark / Hadoop workloads | use when existing Spark ecosystem is needed |
+高频问题：
 
-## 3. Airflow / Cloud Composer vs Pub/Sub
+- What happens when you type a URL in a browser?
+- How does data move between frontend and backend?
+- What is HTTP? What is TCP/IP?
+- What is the difference between synchronous and asynchronous processing?
+- How would you troubleshoot a slow web application?
+- How are web services scaled?
 
-### 判断标准
+Sally 的准备定位：
 
-- Airflow / Cloud Composer：定期 batch、依赖关系、顺序控制、retry、可视化。
-- Pub/Sub：event-driven、异步消息、解耦、需要 near real-time 的场景。
-- 不是二选一，经常组合使用。
+- 不是主战场，回答保持基础清楚即可。
+- 可以连接到 API / upstream / downstream integration。
+- 可以连接到 batch vs event-driven。
+- 可以连接到 client-facing troubleshooting。
 
-### 日语回答骨架
+### 3.2 Databases / SQL
 
-```text
-Cloud Composer は、依存関係や実行順序が明確な batch workflow に向いています。たとえば日次処理、複数 step の ETL、失敗時の retry、実行状況の確認が必要な場合です。
+这是 Sally 的强项之一，必须重点准备。
 
-一方で Pub/Sub は、ファイル到着やイベント発生をきっかけに非同期で処理を開始したい場合に向いています。システム間を疎結合にできる点がメリットです。
+需要准备：
 
-そのため、すべてを event-driven にするのではなく、定期処理は Composer、即時性が必要なイベント処理は Pub/Sub というように、用途に応じて使い分けます。
-```
+- SELECT / WHERE / GROUP BY / HAVING / ORDER BY。
+- JOIN: INNER / LEFT / RIGHT / FULL。
+- Subquery。
+- CTE。
+- Window function。
+- Aggregation。
+- CASE WHEN。
+- UNION / UNION ALL。
+- NULL handling。
+- Deduplication。
+- Ranking。
+- Date functions。
+- Transaction basics。
+- Index basics。
+- Relational vs non-relational databases。
+- OLTP vs OLAP。
+- Star schema。
+- Fact / dimension。
+- SCD。
+- Big Data / Data Analysis。
 
-## 4. Dataflow vs Dataproc
+可能被要求写 SQL：
 
-### 判断标准
-
-- Dataflow：managed, serverless, streaming/batch, Apache Beam, lower ops。
-- Dataproc：managed Spark/Hadoop, existing Spark jobs, more control, migration of Spark workloads。
-
-### 日语回答骨架
-
-```text
-Dataflow は Apache Beam ベースの managed service で、batch と streaming の両方に対応でき、運用負荷を抑えたい場合に向いています。
-
-Dataproc は Spark / Hadoop workload を GCP 上で実行したい場合に向いています。既存の Spark job や Hadoop ecosystem を活かしたい場合には Dataproc が選択肢になります。
-
-新規設計で運用負荷を抑えたい場合は Dataflow を優先し、既存 Spark 資産の移行や Spark 固有の処理を活かす場合は Dataproc を検討します。
-```
-
-## 5. Batch vs Streaming
-
-### 判断标准
-
-- Batch：daily / hourly, cost efficient, simpler operation, report use cases。
-- Streaming：low latency, event-driven, fraud / monitoring / real-time dashboard。
-- 先问业务是否真的需要 real-time。
-
-### 日语回答骨架
-
-```text
-まず、本当に real-time が必要かを確認します。多くの reporting や daily analytics では batch で十分な場合があります。
-
-Batch は構成が比較的シンプルで、コストや運用を管理しやすいです。一方で streaming は低遅延で処理できますが、設計、監視、障害対応、コスト管理が複雑になります。
-
-そのため、業務上必要な latency、データ量、障害時の影響、運用体制を確認したうえで選択します。
-```
-
-## 6. ETL vs ELT
-
-### 判断标准
-
-- ETL：load 前に変換。外部処理、複雑変換、機微情報制御。
-- ELT：先に DWH に load、その後 SQL で変換。BigQuery + Dataform と相性が良い。
-
-### 日语回答骨架
-
-```text
-BigQuery のような scalable DWH を使う場合、まず raw data を取り込み、その後 BigQuery 上で ELT として変換する設計が有効な場合が多いです。
-
-Dataform を使うことで、SQL ベースで data mart の変換ロジックを管理でき、version control や review もしやすくなります。
-
-ただし、機微情報を load 前に除外する必要がある場合や、外部システム側でしかできない処理がある場合は ETL を選ぶこともあります。
-```
-
-## 7. DWH vs Data Lake vs Lakehouse
-
-### 简单定义
-
-- DWH：structured data, analytics, SQL, performance, governed。
-- Data Lake：raw/semi-structured/unstructured, cheap storage, flexible。
-- Lakehouse：data lake storage + table management + analytics governance。
-
-### 日语回答骨架
-
-```text
-DWH は構造化データを分析しやすい形で管理する基盤で、reporting や business analytics に向いています。
-
-Data Lake は raw data や多様な形式のデータを柔軟に保存できる一方で、管理ルールが弱いと data swamp になるリスクがあります。
-
-Lakehouse は data lake の柔軟性を活かしながら、Iceberg や Delta Lake のような table format によって schema evolution、snapshot、複数 engine からの利用をしやすくする考え方です。
-```
-
-## 8. Data Quality and Validation
-
-### 确认点
-
-- row count。
-- null count。
-- duplicate。
-- key consistency。
-- aggregation result comparison。
-- schema changes。
-- business definition。
-- upstream/downstream confirmation。
-
-### 日语回答骨架
-
-```text
-Data quality は技術的な validation だけでなく、業務上の定義確認も重要です。
-
-移行時には、件数比較、NULL、重複、key consistency、集計結果の比較、schema 差分などを確認します。
-
-また、上流仕様、変換ロジック、下流 report の解釈がずれている場合もあるため、関係者とデータ定義を確認し、変更通知や確認ルールを整備することが重要です。
-```
-
-## 9. Data Governance
-
-### 关键词
-
-- data ownership。
-- access control。
-- PII / sensitive data。
-- consent。
-- lineage。
-- data catalog。
+- 多表 join。
+- 每组最新记录。
+- Top N per group。
+- 去重。
+- 累计值。
+- moving average。
+- conversion rate。
 - retention。
-- audit。
-- metric definition。
+- missing data check。
+- duplicate check。
+- data quality validation SQL。
+- source vs target migration validation。
 
-### 日语回答骨架
+Sally 的项目连接：
+
+- Wholesale：MySQL -> Glue / Spark SQL -> Redshift。
+- Pharmaceutical：SQL Server scheduled SQL -> Tableau。
+- Furusato：join 后 NULL、key mismatch、validation。
+- Gaming：BigQuery / Dataform data mart。
+- PayPay：data consistency / downstream validation。
+
+回答核心：
 
 ```text
-Data governance では、誰が data owner なのか、どのデータを誰が利用できるのか、機微情報をどう扱うのかを明確にする必要があります。
-
-特に個人情報や user consent が関係する場合、access control、masking、監査、利用目的の管理が重要です。
-
-また、Looker の semantic layer や Data Catalog を活用して、KPI やデータ定義を標準化し、利用者ごとの解釈のばらつきを減らすことも重要だと考えます。
+SQL 不是只写查询，而是把业务定义、数据粒度、join key、aggregation logic、data quality 一起整理清楚。
 ```
 
-## 10. Project Mapping
+## 4. Cloud Domain-Specific Skills
 
-| 技术问题 | 使用项目 | 重点 |
+### 4.1 AI/ML
+
+Sally 不要包装成 ML specialist。定位为：
+
+```text
+I have practical exposure to ML projects, especially data preparation, feature understanding, model validation, and collaboration with ML specialists.
+```
+
+需要理解：
+
+- Supervised learning。
+- Unsupervised learning。
+- Regression / classification。
+- Linear regression。
+- Logistic regression。
+- Decision tree。
+- Random forest。
+- SVM。
+- Clustering。
+- Feature engineering。
+- Train / validation / test split。
+- Overfitting。
+- Bias-variance tradeoff。
+- Model performance。
+- Precision / recall / F1。
+- Deep learning 基础。
+- CNN / RNN 基础概念。
+- Recommendation / collaborative filtering。
+- Generative AI / LLM basics。
+
+项目连接：
+
+- Highway AI Traffic Prediction。
+- Redshift data。
+- SageMaker / Python。
+- Historical traffic data。
+- Weather data。
+- Road segment information。
+- scikit-learn initial trial。
+- SARIMA / SARIMAX with another team。
+
+回答核心：
+
+```text
+The model itself is important, but the quality of input data, feature design, time-series characteristics, and business definition are also critical.
+```
+
+### 4.2 Platforms & Infrastructure
+
+这个方向会讨论 distributed systems infrastructure。
+
+需要理解：
+
+- Compute。
+- Storage。
+- Networking。
+- Distributed systems。
+- Monitoring。
+- Logging。
+- Load balancing。
+- Protocols。
+- Virtualization。
+- Containerization。
+- PaaS。
+- Automation。
+- Tooling。
+- Big data infrastructure。
+- File storage / distributed storage。
+
+Google Cloud 相关关键词：
+
+- Compute Engine。
+- Cloud Storage。
+- BigQuery。
+- VPC。
+- Load Balancing。
+- Cloud Monitoring。
+- Cloud Logging。
+- GKE。
+- Cloud Run。
+- Cloud Functions。
+- Pub/Sub。
+- Cloud Composer。
+- Dataflow。
+- Dataproc。
+
+项目连接：
+
+- Highway Cloud：Lambda, EC2 snapshot, CloudWatch alarm, JP1。
+- Gaming：Airflow, Pub/Sub, CI/CD。
+- PayPay：Lakehouse operations, data integration。
+- Furusato：Cloud Composer, Slack alarm, GitHub DAG management。
+
+回答核心：
+
+```text
+Infrastructure is not only about creating resources. It also includes automation, monitoring, operational visibility, failure handling, and maintainability.
+```
+
+### 4.3 Application Modernization
+
+这个方向关注 migration 和 architecture。
+
+需要理解：
+
+- Cloud migration。
+- Application architecture。
+- Monolith vs microservices。
+- Containers。
+- Serverless。
+- CI/CD。
+- DevOps。
+- Platform operations。
+- SRE / observability。
+- API strategy。
+- Hybrid / multi-cloud / edge。
+- High availability。
+- Resilience。
+
+项目连接：
+
+- Gaming：AWS analytics platform -> GCP。
+- PayPay：legacy Teradata / A-Auto -> Lakehouse modernization。
+- Furusato：manual / immature operations -> DataOps foundation。
+
+回答核心：
+
+```text
+Modernization is not just replacing old technology. It requires understanding existing business logic, operational constraints, risk, cost, and phased migration.
+```
+
+### 4.4 Data
+
+这是最重要领域。
+
+需要理解：
+
+- Distributed data processing。
+- Hadoop。
+- Spark。
+- Beam。
+- Batch processing。
+- Streaming processing。
+- EDW modernization。
+- Teradata。
+- Snowflake。
+- Databricks。
+- Lakehouse。
+- Data lake。
+- DWH。
+- Database migration。
+- PostgreSQL。
+- MySQL。
+- SQL Server。
+- AlloyDB。
+- Transactional database。
+
+Google Cloud 相关关键词：
+
+- BigQuery。
+- Cloud Storage。
+- Dataflow。
+- Dataproc。
+- Datastream。
+- Database Migration Service。
+- Cloud SQL。
+- AlloyDB。
+- Spanner。
+- Pub/Sub。
+- Dataform。
+- Looker。
+- Cloud Composer。
+- Dataplex。
+- Data Catalog。
+
+项目连接：
+
+- PayPay：Teradata / A-Auto, Iceberg, BigQuery, Lakehouse。
+- Gaming：Redshift / Glue / Lambda / QuickSight -> BigQuery / Dataform / Looker / Airflow / Pub/Sub。
+- Furusato：GCP data lake, SFTP, batch, Dataform, data quality。
+- Wholesale：MySQL, Glue, Spark SQL, Redshift。
+- Pharmaceutical：SQL Server, Tableau。
+
+回答核心：
+
+```text
+For data architecture, I first clarify business usage, current data flow, data quality, latency requirement, governance, and operation model. Then I choose DWH, data lake, lakehouse, batch, or streaming based on those requirements.
+```
+
+### 4.5 Security
+
+Security 不一定是主领域，但 Cloud Consultant 一定会被看基础意识。
+
+需要理解：
+
+- Compliance。
+- PCI DSS。
+- HIPAA。
+- GDPR。
+- FedRAMP。
+- Zero Trust。
+- Identity verification。
+- Device validation。
+- Access control。
+- Encryption at rest。
+- Encryption in transit。
+- Encryption in use。
+- Key management。
+- Data classification。
+- PII / sensitive data。
+- Application security。
+- API security。
+- Container security。
+- Serverless security。
+- Logging / monitoring。
+- Incident response。
+
+Google Cloud 相关关键词：
+
+- IAM。
+- Service Account。
+- VPC Service Controls。
+- Cloud KMS。
+- Secret Manager。
+- Cloud Armor。
+- Cloud Audit Logs。
+- Security Command Center。
+- Data Loss Prevention。
+- BigQuery policy tags。
+- Row-level security。
+- Column-level security。
+
+项目连接：
+
+- PayPay：sensitive data exclusion / transformation, user consent, secure DLH。
+- Furusato：data quality and upstream/downstream controls。
+- Gaming：migration risk and operational control。
+
+回答核心：
+
+```text
+Security should be designed from the beginning, especially around identity, access control, data classification, encryption, audit logs, and usage purpose.
+```
+
+## 5. Sally 的优先级
+
+必须重点准备：
+
+1. Databases / SQL。
+2. Data。
+3. Application Modernization。
+4. Platforms & Infrastructure。
+5. Security basics。
+
+需要基础准备：
+
+1. Web Technologies。
+2. AI/ML。
+
+## 6. 项目映射表
+
+| Topic | Best project | Keywords |
 | --- | --- | --- |
-| Legacy DWH migration | PayPay / Gaming | Teradata, BigQuery, phased migration |
-| GCP architecture | Gaming | BigQuery, Dataform, Looker, Airflow, Pub/Sub |
-| Airflow vs Pub/Sub | Gaming | batch vs event-driven |
+| SQL | Wholesale / Pharma / Gaming / Furusato | joins, aggregation, validation, Dataform |
+| Data architecture | PayPay / Gaming / Furusato | DWH, data lake, lakehouse, BigQuery |
+| EDW modernization | PayPay / Gaming | Teradata, Redshift, BigQuery |
+| Lakehouse | PayPay | Iceberg, secure DLH, data sharing |
+| Batch vs event-driven | Gaming | Airflow, Pub/Sub |
 | Data quality | Furusato / PayPay | NULL, key mismatch, validation |
-| Governance | PayPay | sensitive data, consent, sharing scope |
-| Data Lake / Lakehouse | PayPay / Furusato | Iceberg, GCP data lake |
-| AWS to GCP migration | Gaming | Redshift/Glue/Lambda to GCP |
+| Infrastructure | Highway Cloud / Furusato | Lambda, CloudWatch, JP1, Composer |
+| AI/ML | Highway AI | SageMaker, Redshift, scikit-learn, SARIMA |
+| Security | PayPay | sensitive data, consent, access scope |
 
+## 7. Code Evaluation and Systems Solutioning / Architectural Patterns
+
+这个面试不是 hands-on coding，但会看三件事：
+
+1. 能不能理解并评估代码。
+2. 能不能设计 end-to-end system。
+3. 能不能清楚解释思考过程、提出 trade-off，并接受 interviewer poke holes。
+
+Cloud role 不一定只问 GCP，但能自然提到 Google Cloud 产品会加分。
+
+## 8. 第二个技术面试的核心评价点
+
+面试官在看：
+
+- 是否理解问题。
+- 是否主动问 clarifying questions。
+- 是否能把 abstract problem 转成 system design。
+- 是否能清楚、简洁地解释思路。
+- 是否能识别 constraints。
+- 是否能讨论 trade-offs。
+- 是否能设计 robust system。
+- 是否理解 limitations。
+- 是否考虑 resource estimation。
+- 是否能评价 code 的 bug / complexity / optimization。
+
+Sally 的回答姿势：
+
+```text
+Before jumping into the design, I would like to clarify the goal, users, data volume, latency requirement, availability requirement, and operational constraints.
+```
+
+日语：
+
+```text
+すぐに設計に入る前に、まず目的、利用者、データ量、latency、可用性、運用制約を確認したいです。
+```
+
+## 9. System Design Answer Framework
+
+系统设计题统一按这个顺序：
+
+```text
+1. Clarify requirements
+2. Define scope
+3. Identify users and use cases
+4. Estimate scale
+5. Design high-level architecture
+6. Define interfaces / APIs
+7. Design data model
+8. Discuss processing flow
+9. Discuss reliability / scalability / security
+10. Explain trade-offs and limitations
+```
+
+Clarifying questions：
+
+- What is the business goal?
+- Who are the users?
+- What is the expected traffic or data volume?
+- Is this batch, real-time, or near-real-time?
+- What is the required latency?
+- What availability is required?
+- What are the security / compliance requirements?
+- What systems do we need to integrate with?
+- What is in scope and out of scope?
+
+## 10. Architecture Discussion Checklist
+
+设计时要覆盖：
+
+- Feature set。
+- Interfaces。
+- API design。
+- Data model。
+- Class / component responsibility。
+- Distributed system boundary。
+- Storage choice。
+- Compute choice。
+- Sync vs async。
+- Batch vs streaming。
+- Reliability。
+- Scalability。
+- Observability。
+- Security。
+- Cost。
+- Simplicity。
+- Known limitations。
+
+核心句：
+
+```text
+I would start with a simple design that satisfies the core requirements, then add scalability, reliability, and operational controls where the requirements justify the complexity.
+```
+
+## 11. Code Evaluation
+
+虽然不是 coding interview，但可能给一段代码让你评价。
+
+需要看：
+
+- Correctness。
+- Edge cases。
+- Null / empty input。
+- Time complexity。
+- Space complexity。
+- Readability。
+- Maintainability。
+- Error handling。
+- Input validation。
+- Security issue。
+- Concurrency issue。
+- Resource usage。
+
+回答顺序：
+
+```text
+1. First, I would confirm what the code is expected to do.
+2. Then I would check correctness and edge cases.
+3. After that, I would look at time and space complexity.
+4. Finally, I would suggest improvements for readability, maintainability, and robustness.
+```
+
+## 12. Data Analytics System Design Example
+
+想定问题：
+
+```text
+Design a system for a customer who wants to collect event data, process it, and provide analytics dashboards.
+```
+
+Simple architecture：
+
+```text
+Event source
+-> Pub/Sub
+-> Dataflow
+-> BigQuery raw / curated tables
+-> Dataform for marts
+-> Looker dashboards
+-> Cloud Monitoring / Logging
+```
+
+Trade-offs：
+
+- Pub/Sub + Dataflow gives near-real-time processing, but adds operational and cost complexity。
+- Batch ingestion is simpler and cheaper if daily reporting is enough。
+- BigQuery is good for analytical queries, but not for high-QPS transactional workloads。
+- Looker semantic layer helps standardize metrics, but requires governance around metric definitions。
+
+## 13. Migration System Design Example
+
+想定问题：
+
+```text
+Design a migration approach from a legacy DWH to a modern cloud data platform.
+```
+
+Approach：
+
+- Understand current DWH, jobs, reports, and users。
+- Identify critical data domains。
+- Define target architecture。
+- Start with low-risk data marts。
+- Run old and new systems in parallel。
+- Compare row counts and aggregated results。
+- Validate with business users。
+- Cut over gradually。
+- Monitor cost, latency, quality, and adoption。
+
+Risks：
+
+- Data definition mismatch。
+- Batch dependency。
+- Performance regression。
+- Cost surprise。
+- Downstream report impact。
+- User adoption。
+
+## 14. Cloud Architectural Patterns
+
+需要会讨论：
+
+- Load balancing。
+- Horizontal scaling。
+- Stateless service。
+- Async messaging。
+- Queue-based load leveling。
+- Retry with backoff。
+- Idempotency。
+- Circuit breaker。
+- Blue-green deployment。
+- Canary release。
+- Data partitioning。
+- Caching。
+- Multi-region / DR。
+- Observability。
+
+Google Cloud 可连接：
+
+- Cloud Load Balancing。
+- Managed Instance Groups。
+- Cloud Run。
+- GKE。
+- Pub/Sub。
+- Cloud Tasks。
+- Cloud Storage。
+- BigQuery。
+- Memorystore。
+- Cloud Monitoring。
+- Cloud Logging。
+
+## 15. 面试中的互动方式
+
+如果 interviewer 挑战你的设计，不要防御。
+
+可以说：
+
+```text
+That's a good point. If the latency requirement is stricter, I would change the design from batch to event-driven processing.
+```
+
+```text
+If cost is the main constraint, I would start with a simpler batch architecture and only introduce streaming where the business really needs it.
+```
+
+```text
+I made that assumption for the initial design. If the data volume is much larger, I would revisit partitioning, processing framework, and monitoring.
+```
+
+日语：
+
+```text
+ご指摘の通りです。その前提であれば、設計を少し変える必要があります。
+```
+
+```text
+もし latency がより厳しい要件であれば、batch ではなく event-driven / streaming の構成を検討します。
+```
+
+## 16. Sally 的准备重点
+
+优先准备：
+
+1. 解释自己的设计思路。
+2. Clarifying questions。
+3. Data analytics system design。
+4. Migration system design。
+5. Batch vs streaming trade-off。
+6. Code evaluation checklist。
+7. Reliability / scalability / security。
+8. 用自己的项目作为 evidence。
+
+不需要准备成算法竞赛。重点是：
+
+```text
+Can Sally understand an open-ended technical problem, structure it, explain trade-offs, and design a practical system?
+```
+
+备考：提前联系doc的写入方式，练习画图等
