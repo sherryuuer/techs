@@ -101,6 +101,7 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 - [Java基础学习笔记](software/java-base.md)
 
 ## Clouds
+- [Google 入职前准备：意识、方向与 Agent 构想](clouds/google-onboarding-preparation.md)
 - [关于云服务构架，系统设计等的上层思考](clouds/high-level-thinking.md)
 - [AWS机器学习系统的构架和服务](clouds/aws-with-ml.md)
 - [AWS安全专家认证考试相关内容](clouds/aws-with-security.md)
@@ -156,6 +157,7 @@ Welcom to my home page -- > ❤️[S's Home](https://sherryuuer.github.io/web-ap
 > 当我学习计算机网络，那些概念就像是一个一个的点，散落一地，我想我需要一本书或者一些方法，比如计算机网络自顶向下，将他们串联起来，形成一个故事。我想所有的学习体系都是这样，直到将每一个点都搞清楚，并将他们串联起来，并将串联起来的东西都串联起来，世界才是一棵真正的树。
 
 ## Interesting Posts
+- [工作场景商务英语学习笔记](morefun/business-english.md)
 - [*WEB3：初步接触比特币，元宇宙，以太坊，智能合约等概念](morefun/web3.md)
 - [G检定深度学习考试相关日语词汇和概念解释](morefun/gtest.md)
 - [外部链接：快速学习合集（snowflake，dbt，aifflow）](morefun/links.md)
